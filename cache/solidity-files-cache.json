@@ -178,8 +178,8 @@
       ]
     },
     "/home/lucascullen/GitHub/modadao/moda-token/contracts/Vesting.sol": {
-      "lastModificationDate": 1620608862839,
-      "contentHash": "efc597c62c29579fb408dbcc1202d98f",
+      "lastModificationDate": 1620621233942,
+      "contentHash": "c3f76b49f52468f6ecae852eee0314e0",
       "sourceName": "contracts/Vesting.sol",
       "solcConfig": {
         "version": "0.7.6",
@@ -209,7 +209,7 @@
         "@openzeppelin/contracts/token/ERC20/IERC20.sol"
       ],
       "versionPragmas": [
-        ">=0.4.22 <0.9.0"
+        ">=0.7.0 <0.9.0"
       ],
       "artifacts": [
         "Vesting"
