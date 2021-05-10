@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.7.6;
+pragma solidity ^0.7.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -52,13 +52,13 @@ contract Token is Ownable, ERC20 {
     function distribute() public {
         
         // do only once a month
-        require(condition, message);
+        // require(condition, "Function already called this period");
 
         // % non sent
     }
 
     // Vesting
-    function inVestingPeriod() returns (bool) {
+    function inVestingPeriod() public returns (bool) {
         return true;
     }
 
@@ -84,10 +84,10 @@ contract Token is Ownable, ERC20 {
     }
 
     function accept() public {
-        _members[msg.sender] = 
+        // _members[msg.sender] = address(0);
     }
 
     function reject() public {
-
+        // _members[msg.sender] = address(0);
     }
 }

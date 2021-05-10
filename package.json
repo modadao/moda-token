@@ -1,9 +1,18 @@
 {
+  "name": "moda-dao",
+  "scripts": {
+    "test": "npx hardhat --network localhost test"
+  },
   "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^3.4.1",
     "@openzeppelin/test-helpers": "^0.5.10",
     "@truffle/hdwallet-provider": "^1.2.3",
+    "chai": "^4.3.4",
     "dotenv": "^8.2.0",
+    "ethereum-waffle": "^3.3.0",
+    "ethers": "^5.1.4",
     "truffle-flattener": "^1.5.0"
   },
   "devDependencies": {
