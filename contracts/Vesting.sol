@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 struct Deposit {
     uint256 amount;
     uint256 date;
+    uint256 release;
 }
 
 contract Vesting is Ownable {
@@ -63,20 +64,23 @@ contract Vesting is Ownable {
         uint256 bonus = getCurrentBonus();
         amount = amount.add(bonus);
 
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
+        _deposits[msg.sender] = Deposit(amount, block.timestamp, block.timestamp + 30 days);
         emit DepositReceived(amount, msg.sender);
     }
 
-    function claim() public {
-        // do only once a month
-        // require(condition, "Function already called this period");
+    function withdraw(uint256 amount) public {
+        require(_deposits[msg.sender].amount >= amount, "Insufficient funds");
+        require(inVestingPeriod(msg.sender), "Too early");
 
-        // % non sent
+        IERC20(_token).allow(address(this), amount);
+        IERC20(_token).transferFrom( address(this), address(msg.sender), amount);
+
+        _deposits[msg.sender].amount = _deposits[msg.sender].amount.sub(amount);
     }
 
     // Vesting
-    function inVestingPeriod() public returns (bool) {
-        return true;
+    function inVestingPeriod(address who) public returns (bool) {
+        return _deposits[who].release < block.timestamp;
     }
 
     function accept(address who) public onlyOwner {
