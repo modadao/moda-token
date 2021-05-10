@@ -1,54 +1,12 @@
-// const Token = artifacts.require("Token");
-
-// const {
-//   BN,
-//   expectEvent,
-//   expectRevert,
-//   time,
-//   constants: { ZERO_ADDRESS },
-// } = require("@openzeppelin/test-helpers");
-
-// const { expect } = require("chai");
-
-// contract("Token", (accounts) => {
-//   let token;
-
-//   beforeEach(async () => {
-//     token = await Token.new();
-//   });
-
-//   describe("deployment", () => {
-//     it("should get standard ERC20 properties", async () => {
-//       const symbol = await token.symbol();
-//       expect(symbol).to.be.equal("MODA");
-
-//       const name = await token.name();
-//       expect(name).to.be.equal("moda");
-
-//       const decimals = new BN("18");
-//       const expected = new BN("10000000").mul(new BN("10").pow(decimals));
-
-//       const totalSupply = await token.totalSupply();
-//       expect(totalSupply).to.be.bignumber.equal(expected);
-//     });
-
-//     it("should have holder count as 1", async () => {
-//       const actual = await token.holderCount();
-//       const expected = new BN("1");
-
-//       expect(actual).to.be.bignumber.equal(expected);
-//     });
-//   });
-// });
-
 const { expect } = require("chai");
 
 describe("Token", () => {
-  it("Should return the new greeting once it's changed", async () => {
+  it("Should return total supply once deployed", async () => {
     const Token = await ethers.getContractFactory("Token");
     const token = await Token.deploy();
     
     await token.deployed();
-    expect(await token.totalSupply()).to.equal(10000000000000000000000000);
+    const expected = ethers.BigNumber.from('10000000000000000000000000')
+    expect(await token.totalSupply()).to.equal(expected);
   });
 });

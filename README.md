@@ -27,13 +27,10 @@ The dependencies require Node -v 14.15.4
 
 The source code will need to be flattened to register a contract on Etherscan.
 
+## Verify
 To verify the contract code:
 
 ```bash
 cd /path/to/project/files/
-truffle run verify Token Grants --network kovan
+yarn run verify Token Grants --network kovan
 ```
-
-## Verify 
-
-`truffle run verify Token --network kovan`
