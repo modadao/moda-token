@@ -9,7 +9,14 @@ A tokenised, music-centered creative technology company and innovation fund, wou
 
 We propose the MODA membership token as a mechanism to unite members at all levels of the foundation from the board to the community. We proposed a ‘path to decentralization’ approach that matures alongside technological and regulatory maturation.
 
+# Vesting
 
+
+
+# Grants
+
+
+# Techincal
 ## Node 14.15.4
 The dependencies require Node -v 14.15.4
 
