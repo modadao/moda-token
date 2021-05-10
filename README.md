@@ -10,7 +10,28 @@ A tokenised, music-centered creative technology company and innovation fund, wou
 We propose the MODA membership token as a mechanism to unite members at all levels of the foundation from the board to the community. We proposed a ‘path to decentralization’ approach that matures alongside technological and regulatory maturation.
 
 # Vesting
+Feb - Outlier announcement and governance token launch teaser
+Feb - Initial light paper release / private sale round 1
+EMT Lock stage 1 (30% MODA BONUS)
 
+### March - Promo/advisors/community build / private sale round 2
+EMT Lock stage 2  (20% MODA BONUS)
+Emanate native app release
+
+### April - Promo/advisors/community/PR/ private sale round 3
+EMT Lock stage 3 (10% MODA BONUS)
+
+### May - Sale registration period/KYC/LBP sale timing (Window according to market conditions)
+
+### June - Sale registration period/KYC/LBP sale timing (Window according to market conditions)
+Late stage EMT/MODA SWAP (Community level - no bonus)
+
+### July - Contingency window/full token release
+### August - new listings 
+### September - Pilot publishing arm launch
+### October - NFT standard release
+### November - DDEX integration
+### December - Begin MODA Protocol build (off EOS)
 
 
 # Grants

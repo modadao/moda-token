@@ -19,12 +19,6 @@ contract Token is Ownable, ERC20 {
     uint256 private _holderCount;
     uint256 private _startBlock;
 
-    mapping(address => bool) private _members;
-
-    function isMember(address who) public view returns (bool) {
-        return _members[who];
-    }
-
     function holderCount() public view returns (uint256) {
         return _holderCount;
     }
@@ -49,19 +43,6 @@ contract Token is Ownable, ERC20 {
         _startBlock = block.number;
     }
     
-    function distribute() public {
-        
-        // do only once a month
-        // require(condition, "Function already called this period");
-
-        // % non sent
-    }
-
-    // Vesting
-    function inVestingPeriod() public returns (bool) {
-        return true;
-    }
-
     function mintWithCount(address who, uint256 amount) private {
         if (balanceOf(who) == 0 && amount > 0) {
             _holderCount = _holderCount.add(1);
@@ -81,13 +62,5 @@ contract Token is Ownable, ERC20 {
 
         _transfer(_msgSender(), recipient, amount);
         return true;
-    }
-
-    function accept() public {
-        // _members[msg.sender] = address(0);
-    }
-
-    function reject() public {
-        // _members[msg.sender] = address(0);
     }
 }
