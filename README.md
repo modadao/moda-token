@@ -10,6 +10,9 @@ A tokenised, music-centered creative technology company and innovation fund, wou
 We propose the MODA membership token as a mechanism to unite members at all levels of the foundation from the board to the community. We proposed a ‘path to decentralization’ approach that matures alongside technological and regulatory maturation.
 
 # Contracts
+# ERC-20 $MODA Token
+The $MODA ERC-20 token is designed as a DAO membership token, bringing with it the ability to vote on proposals and earn rewards in exchange for participation within the DAO. MODA tokens will be the value capture and delivery mechanism for an otherwise non-profit organisation meaning that all value created by the DAO is driving back into the ecosystem, not out to exrernal shareholders. Additional detail of the token will be communicated via https://modadao.io.
+
 ## Token Contract
 The token contract is a standard ERC20 contract based off the OpenZepplin framework.  It has been extended to include a holders count as required by our DAPP.
 
@@ -37,16 +40,6 @@ EMT Lock stage 1 (30% MODA BONUS)
 ### March - Promo/advisors/community build / private sale round 2
 EMT Lock stage 2  (20% MODA BONUS)
 Emanate native app release
-# ERC-20 $MODA Token
-The $MODA ERC-20 token is designed as a DAO membership token, bringing with it the ability to vote on proposals and earn rewards in exchange for participation within the DAO. MODA tokens will be the value capture and delivery mechanism for an otherwise non-profit organisation meaning that all value created by the DAO is driving back into the ecosystem, not out to exrernal shareholders. Additional detail of the token will be communicated via https://modadao.io.
-
-# Vesting
-
-# Grants
-
-# Proposals
-
-
 
 
 
