@@ -1,5 +1,5 @@
 # modadao-token
-ModaDAO Token Contract
+MODA DAO Token Contract ($MODA)
 
 # Problem Statement
 The music industry is designed to fail. The middlemen who soak up value in the ecosystem have no interest in driving change because these failures line their pockets. Even the most innovative music tech companies start-up trying to serve the needs of the artists end up selling out to big labels or big tech companies.
@@ -37,27 +37,20 @@ EMT Lock stage 1 (30% MODA BONUS)
 ### March - Promo/advisors/community build / private sale round 2
 EMT Lock stage 2  (20% MODA BONUS)
 Emanate native app release
+# ERC-20 $MODA Token
+The $MODA ERC-20 token is designed as a DAO membership token, bringing with it the ability to vote on proposals and earn rewards in exchange for participation within the DAO. MODA tokens will be the value capture and delivery mechanism for an otherwise non-profit organisation meaning that all value created by the DAO is driving back into the ecosystem, not out to exrernal shareholders. Additional detail of the token will be communicated via https://modadao.io.
 
-### April - Promo/advisors/community/PR/ private sale round 3
-EMT Lock stage 3 (10% MODA BONUS)
-
-### May - Sale registration period/KYC/LBP sale timing (Window according to market conditions)
-
-### June - Sale registration period/KYC/LBP sale timing (Window according to market conditions)
-Late stage EMT/MODA SWAP (Community level - no bonus)
-
-### July - Contingency window/full token release
-### August - new listings 
-### September - Pilot publishing arm launch
-### October - NFT standard release
-### November - DDEX integration
-### December - Begin MODA Protocol build (off EOS)
-
+# Vesting
 
 # Grants
 
+# Proposals
 
-# Techincal
+
+
+
+
+# Technical
 ## Node 14.15.4
 The dependencies require Node -v 14.15.4
 
