@@ -18,4 +18,9 @@ describe("Token", () => {
     const expected = ethers.BigNumber.from('1')
     expect(await token.holderCount()).to.equal(expected);
   });
+
+  it("Should set holders allocations on deploy", async () => {
+    const expected = ethers.BigNumber.from('10000000000000000000000000')
+    expect(await token.balanceOf("0x0364eAA7C884cb5495013804275120ab023619A5")).to.equal(expected);
+  });
 });

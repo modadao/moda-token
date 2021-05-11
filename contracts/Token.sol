@@ -4,8 +4,9 @@ pragma solidity ^0.7.6;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./ICount.sol";
 
-contract Token is Ownable, ERC20 {
+contract Token is Ownable, ERC20, ICount {
     using SafeMath for uint;
 
     address immutable private _existing_holders;
@@ -17,9 +18,9 @@ contract Token is Ownable, ERC20 {
     address immutable private _curve;
 
     uint256 private _holderCount;
-    uint256 private _startBlock;
+    uint256 immutable private _startBlock;
 
-    function holderCount() public view returns (uint256) {
+    function Count() external override view returns (uint256) {
         return _holderCount;
     }
 
@@ -44,6 +45,7 @@ contract Token is Ownable, ERC20 {
     }
     
     function mintWithCount(address who, uint256 amount) private {
+        require(who != address(0), "Invalid address");
         if (balanceOf(who) == 0 && amount > 0) {
             _holderCount = _holderCount.add(1);
         }
