@@ -17,6 +17,6 @@ describe("Grants", () => {
 
   it("Should return total supply once deployed", async () => {
     const expected = ethers.BigNumber.from("0");
-    expect(await grants.grantsCount()).to.equal(expected);
+    expect(await grants.Count()).to.equal(expected);
   });
 });

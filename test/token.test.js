@@ -16,7 +16,7 @@ describe("Token", () => {
 
   it("Should have holder count as 1", async () => {
     const expected = ethers.BigNumber.from('1')
-    expect(await token.holderCount()).to.equal(expected);
+    expect(await token.Count()).to.equal(expected);
   });
 
   it("Should set holders allocations on deploy", async () => {

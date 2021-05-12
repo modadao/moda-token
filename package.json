@@ -1,6 +1,7 @@
 {
   "name": "moda-dao",
   "scripts": {
+    "node": "npx hardhat node",
     "test": "npx hardhat --network localhost test"
   },
   "dependencies": {
