@@ -28,13 +28,12 @@ contract Members is Ownable, ICount {
         erc20 = IERC20(token);
     }
 
-    function accept(address who) public {
-        require(who != address(0), "Invalid address");
+    function accept() public {
         require(_members[msg.sender] == false, "Already a member");
         require(erc20.balanceOf(msg.sender) > 1, "Must hold MODA DAO tokens");
         _members[msg.sender] = true;
         _memberCount = _memberCount.add(1);
-        emit MemberAdded(who);
+        emit MemberAdded(msg.sender);
     }
 
     function revoke(address who) public onlyOwner {

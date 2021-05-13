@@ -402,8 +402,8 @@
       ]
     },
     "/home/lucascullen/GitHub/modadao/moda-token/contracts/Members.sol": {
-      "lastModificationDate": 1620802119686,
-      "contentHash": "0e4ba52a3ff0d12fc5aed845fbdc5317",
+      "lastModificationDate": 1620868638344,
+      "contentHash": "16c93d47aa4291cde68231934413fc1f",
       "sourceName": "contracts/Members.sol",
       "solcConfig": {
         "version": "0.7.6",

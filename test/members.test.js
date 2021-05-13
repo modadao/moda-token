@@ -12,13 +12,15 @@ describe("Members", () => {
     await token.deployed();
 
     const Members = await ethers.getContractFactory("Members");
-    const contract = await Members.deploy(token.address);
+    contract = await Members.deploy(token.address);
     await contract.deployed();
   })
 
   it("Should have 1 member when accepted", async () => {
     const [owner, addr1] = await ethers.getSigners();
     await token.connect(owner).transfer(addr1.address, 100);
+
+    await contract.connect(addr1).accept();
 
     const expected = ethers.BigNumber.from("1")
     expect(await contract.Count()).to.equal(expected);
