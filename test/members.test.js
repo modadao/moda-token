@@ -24,5 +24,20 @@ describe("Members", () => {
 
     const expected = ethers.BigNumber.from("1")
     expect(await contract.Count()).to.equal(expected);
+    expect(await contract.isMember(addr1.address)).to.be.true;
+  });
+
+  it("Should reject an existing member", async () => {
+    const [owner, addr1] = await ethers.getSigners();
+
+    await token.connect(owner).transfer(addr1.address, 100);
+    await contract.connect(addr1).accept();
+    expect(await contract.isMember(addr1.address)).to.be.true;
+
+    await contract.connect(owner).revoke(addr1.address);
+    expect(await contract.isMember(addr1.address)).to.be.false;
+
+    const expected = ethers.BigNumber.from("0")
+    expect(await contract.Count()).to.equal(expected);
   });
 });

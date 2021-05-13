@@ -37,8 +37,8 @@ contract Members is Ownable, ICount {
     }
 
     function revoke(address who) public onlyOwner {
-        require(_members[msg.sender] == true, "Not a member");
-        _members[msg.sender] = false;
+        require(_members[who] == true, "Not a member");
+        _members[who] = false;
         _memberCount = _memberCount.sub(1);
         emit MemberRevoked(who);
     }
