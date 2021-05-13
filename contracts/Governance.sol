@@ -39,25 +39,6 @@ contract Governance is ICount, Ownable {
         _members = Members(members);
     }
 
-    // function grant(address who, uint256 tokens) public onlyOwner() {
-    //     require(who != address(0), "Invalid address");
-    //     // _balances[who] = _balances[who].add(tokens);
-    // }
-
-    // function revoke(address who, uint256 tokens) public onlyOwner() {
-    //     require(who != address(0), "Invalid address");
-    //     // _balances[who] = _balances[who].sub(tokens);
-    // }
-
-    // function claim(uint256 index) public {
-    //     require(msg.sender == proposals[index].owner, "Must be owner");
-    //     // require(inFundingPeriod(index) == false, "In funding period");
-    //     address owner = proposals[index].owner;
-    //     address rewards = address(this);
-    //     erc20.transferFrom(rewards, owner, proposals[index].balance);
-    //     proposals[index].balance = 0;
-    // }
-
     function inVotingPeriod(uint index) public view returns (bool) {
         return proposals[index].expires > block.timestamp;
     }
@@ -95,7 +76,7 @@ contract Governance is ICount, Ownable {
         require(erc20.balanceOf(msg.sender) >= 1, "Need more tokens");
         _vote(index, true, 1);
 
-        emit Accepted(index, msg.sender);(index, msg.sender);
+        emit Accepted(index, msg.sender);
     }
 
     function rejectProposal(uint256 index) public {

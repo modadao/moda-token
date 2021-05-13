@@ -26,10 +26,13 @@ describe("Governance", () => {
     await contract.deployed();
   })
 
-  // it("Should have 0 proposals when deployed", async () => {
-  //   const expected = ethers.BigNumber.from("0")
-  //   expect(await contract.Count()).to.equal(expected);
-  // });
+  it.only("Should have 0 proposals when deployed", async () => {
+    // const expected = ethers.BigNumber.from("0");
+    const actual = await contract.proposals();
+
+    console.log(actual);
+    // expect(await contract.Count()).to.equal(expected);
+  });
 
   // it("Should not allow non members to add proposal", async () => {
   //   expect(await contract.Count()).to.equal(expected);

@@ -328,8 +328,8 @@
       ]
     },
     "/home/lucascullen/GitHub/modadao/moda-token/contracts/Governance.sol": {
-      "lastModificationDate": 1620857939210,
-      "contentHash": "be1769108ccf22d2ac3adab1b2608b56",
+      "lastModificationDate": 1620872390562,
+      "contentHash": "6a670f85d08e2ab85ef871560f507a57",
       "sourceName": "contracts/Governance.sol",
       "solcConfig": {
         "version": "0.7.6",
