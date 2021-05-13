@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 describe("Grants", () => {
 
-  let grants;
+  let contract;
 
   beforeEach(async() => {
     const foundation = "0x34ac70849AF62a97036b73BcF5A49e17B29Ba19B";
@@ -12,12 +12,12 @@ describe("Grants", () => {
     await token.deployed();
 
     const Grants = await ethers.getContractFactory("Grants");
-    grants = await Grants.deploy(token.address, foundation);
-    await grants.deployed();
+    contract = await Grants.deploy(token.address, foundation);
+    await contract.deployed();
   })
 
   it("Should return total supply once deployed", async () => {
     const expected = ethers.BigNumber.from("0");
-    expect(await grants.Count()).to.equal(expected);
+    expect(await contract.Count()).to.equal(expected);
   });
 });
