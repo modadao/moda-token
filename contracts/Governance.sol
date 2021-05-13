@@ -4,6 +4,9 @@ pragma solidity ^0.7.6;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./ICount.sol";
+import "./Members.sol";
+
 
 struct Proposal {
     string issue;
@@ -15,19 +18,25 @@ struct Proposal {
     uint max;
 }
 
-contract Governance is Ownable {
+contract Governance is ICount, Ownable {
     using SafeMath for uint;
 
     mapping (uint256 => mapping(address => bool)) public votes;
     Proposal[] public proposals;
 
-    IERC20 immutable private erc20; // Token
+    IERC20 immutable private erc20; // MODA DAO Token
     address immutable private _foundation;
+    Members immutable private _members;
 
-    constructor(address token, address foundation) {
+    function Count() public override view returns (uint256) {
+        return proposals.length;
+    }
+
+    constructor(address token, address foundation, address members) {
         require(token != address(0) && foundation != address(0), "Invalid address");
         erc20 = IERC20(token);
         _foundation = foundation;
+        _members = Members(members);
     }
 
     // function grant(address who, uint256 tokens) public onlyOwner() {
@@ -54,6 +63,7 @@ contract Governance is Ownable {
     }
 
     function addProposal(string memory issue) public returns(uint256) {
+        require(_members.isMember(msg.sender) == true, "Only members can add proposals");
         require(erc20.balanceOf(msg.sender) >= 1, "Need at least one token");
 
         erc20.transferFrom(msg.sender, address(this), 1);
@@ -78,21 +88,24 @@ contract Governance is Ownable {
         } else {
             proposals[index].reject = proposals[index].accept.add(amount);
         }
-        
-        emit Voted(index, msg.sender);
     }
 
     function acceptProposal(uint256 index) public {
-        // do we need to check for members?
+        require(_members.isMember(msg.sender) == true, "Only members can vote");
         require(erc20.balanceOf(msg.sender) >= 1, "Need more tokens");
         _vote(index, true, 1);
+
+        emit Accepted(index, msg.sender);(index, msg.sender);
     }
 
     function rejectProposal(uint256 index) public {
-        // do we need to check for members?
+        require(_members.isMember(msg.sender) == true, "Only members can vote");
         require(erc20.balanceOf(msg.sender) >= 1, "Need more tokens");
         _vote(index, false, 1);
+
+        emit Rejected(index, msg.sender);
     }
 
-    event Voted(uint256 index, address indexed who);
+    event Accepted(uint256 index, address indexed who);
+    event Rejected(uint256 index, address indexed who);
 }

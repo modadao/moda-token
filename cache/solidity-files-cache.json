@@ -255,8 +255,8 @@
       ]
     },
     "/home/lucascullen/GitHub/modadao/moda-token/contracts/Token.sol": {
-      "lastModificationDate": 1620802119686,
-      "contentHash": "e9344cb1a2a88e921103ccc2f2888858",
+      "lastModificationDate": 1620867455648,
+      "contentHash": "d1c13623e54dba5ae55f75d2bdd0eebe",
       "sourceName": "contracts/Token.sol",
       "solcConfig": {
         "version": "0.7.6",
@@ -328,8 +328,8 @@
       ]
     },
     "/home/lucascullen/GitHub/modadao/moda-token/contracts/Governance.sol": {
-      "lastModificationDate": 1620802119686,
-      "contentHash": "36b417a691f8d2839d1716f75ad99b5e",
+      "lastModificationDate": 1620857939210,
+      "contentHash": "be1769108ccf22d2ac3adab1b2608b56",
       "sourceName": "contracts/Governance.sol",
       "solcConfig": {
         "version": "0.7.6",
@@ -356,7 +356,9 @@
       "imports": [
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/math/SafeMath.sol",
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "./ICount.sol",
+        "./Members.sol"
       ],
       "versionPragmas": [
         "^0.7.6"
