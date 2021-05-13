@@ -16,7 +16,7 @@ describe("Members", () => {
     await contract.deployed();
   })
 
-  it.skip("Should have 1 member when accepted", async () => {
+  it("Should have 1 member when accepted", async () => {
     const [owner, addr1] = await ethers.getSigners();
     await token.connect(owner).transfer(addr1.address, 100);
 
