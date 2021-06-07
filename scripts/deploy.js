@@ -19,12 +19,21 @@ const deploy = async () => {
   const accounts = JSON.parse(rawdata);
 
   for (const account of accounts) {
-  //accounts.forEach((account) => {
-    const tx = await token.mint(account.address, accounts.amount);
-    console.log(account);
+    const sql = `SELECT tx FROM Transactions WHERE Account = ?`;
 
-
-  };
+    db.serialize(() => {
+      db.get(sql, [account.address], (err, row) => {
+        if (err) {
+          console.error(err.message);
+        }
+        // console.log(row.id + "\t" + row.name);
+        console.log(row.id);
+      });
+    });
+    // const tx = await token.mint(account.address, accounts.amount);
+    // console.log(account);
+  }
 };
 
 deploy();
+db.close();
