@@ -16,9 +16,8 @@ const deploy = async () => {
   const accounts = JSON.parse(rawdata);
 
   for (const account of accounts) {
-    const sql = `SELECT tx FROM Transactions WHERE Address = ?`;
+    const sql = `SELECT tx FROM transfer WHERE Address = ?`;
     const result = await db.query(sql, [account.address]);
-    // res.render("books", { model: result.rows });
 
     console.log(result.rows);
 
