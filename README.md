@@ -31,13 +31,11 @@ Similar to the grants contract, however users can fund projects that their passi
 ## Vesting
 MODA DAO members can stake their tokens to the foundation, to be used in grant applications.  Token holders are rewarded interest for their amount staked.
 
-
-## Vesting
 Feb - Outlier announcement and governance token launch teaser
 Feb - Initial light paper release / private sale round 1
 EMT Lock stage 1 (30% MODA BONUS)
 
-### March - Promo/advisors/community build / private sale round 2
+March - Promo/advisors/community build / private sale round 2
 EMT Lock stage 2  (20% MODA BONUS)
 Emanate native app release
 
