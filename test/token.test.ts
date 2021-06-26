@@ -8,7 +8,7 @@ describe('Token', () => {
 
 	beforeEach(async () => {
 		const TokenFactory = await ethers.getContractFactory('Token');
-		token = (await upgrades.deployProxy(TokenFactory)) as Token;
+		token = (await upgrades.deployProxy(TokenFactory, { kind: 'uups' })) as Token;
 		await token.deployed();
 	});
 
@@ -21,6 +21,11 @@ describe('Token', () => {
 		expect(await token.balanceOf('0x0364eAA7C884cb5495013804275120ab023619A5')).to.equal(
 			ethers.utils.parseEther('6500000') // 6,500,000 balance
 		);
+		expect(await token.balanceOf('0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C')).to.equal(
+			ethers.utils.parseEther('3500000') // '3,500,000 balance
+		);
+		expect(await token.totalSupply()).to.equal(ethers.utils.parseEther('10000000'));
+		expect(await token.holderCount()).to.equal(BigNumber.from('2'));
 	});
 
 	it('Should allow a transfer of 100 tokens from owner', async () => {
@@ -49,9 +54,14 @@ describe('Token', () => {
 		expect(await token.holderCount()).to.equal(BigNumber.from('2'));
 	});
 
-	it(
-		'Should allow calls directly to the underlying contract, but they should not effect proxy storage state'
-	);
+	it('Should not be able to read proxy storage state from underlying calls (and is effectively bricked in that pattern as there are no holders)', async () => {
+		const TokenFactory = await ethers.getContractFactory('Token');
+		const [firstLog] = await token.queryFilter(token.filters.Upgraded());
+		const implementation = TokenFactory.attach(firstLog.args.implementation) as Token;
+
+		expect(await implementation.holderCount()).to.equal(BigNumber.from('0'));
+	});
+
 	it('Should allow a large approval');
 	it('Should reject a transferFrom if not approved');
 

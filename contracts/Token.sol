@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable {
+contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgradeable {
     using SafeMath for uint;
 
     uint256 public holderCount;
@@ -34,6 +35,8 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
         startBlock = block.number;
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     function _updateCountOnTransfer(address from, address to, uint256 amount) private {
         if (balanceOf(to) == 0 && amount > 0) {
