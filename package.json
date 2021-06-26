@@ -6,7 +6,7 @@
 		"deploy": "hardhat run scripts/deploy.js",
 		"node": "hardhat node",
 		"test": "hardhat test",
-		"typecheck": "yarn compile && yarn test && tsc --noEmit"
+		"typecheck": "yarn compile && tsc --noEmit"
 	},
 	"dependencies": {
 		"@openzeppelin/contracts": "4.1.0",
