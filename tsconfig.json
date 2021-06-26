@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"module": "commonjs",
+		"strict": true,
+		"esModuleInterop": true,
+		"outDir": "dist",
+		"resolveJsonModule": true,
+		"noImplicitAny": true
+	},
+	"include": ["./scripts", "./test", "work-in-progress/test/governance.test.js"],
+	"files": ["./hardhat.config.ts"]
+}

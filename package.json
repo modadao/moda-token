@@ -1,23 +1,36 @@
 {
-  "name": "moda-dao",
-  "scripts": {
-    "node": "npx hardhat node",
-    "test": "npx hardhat --network localhost test",
-    "deploy": "npx hardhat run --network localhost scripts/deploy.js"
-  },
-  "dependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "^3.4.1",
-    "@openzeppelin/test-helpers": "^0.5.10",
-    "chai": "^4.3.4",
-    "dotenv": "^8.2.0",
-    "ethereum-waffle": "^3.3.0",
-    "ethers": "^5.3.0",
-    "sqlite3": "^5.0.2"
-  },
-  "devDependencies": {
-    "hardhat": "^2.2.1",
-    "truffle-plugin-verify": "^0.5.7"
-  }
+	"name": "moda-dao",
+	"scripts": {
+		"clean": "hardhat clean",
+		"compile": "hardhat compile",
+		"deploy": "hardhat run scripts/deploy.js",
+		"node": "hardhat node",
+		"test": "hardhat test",
+		"typecheck": "yarn compile && yarn test && tsc --noEmit"
+	},
+	"dependencies": {
+		"@openzeppelin/contracts": "4.1.0",
+		"@openzeppelin/contracts-upgradeable": "4.1.0"
+	},
+	"devDependencies": {
+		"@nomiclabs/hardhat-ethers": "2.0.2",
+		"@nomiclabs/hardhat-waffle": "2.0.1",
+		"@openzeppelin/hardhat-upgrades": "1.8.2",
+		"@openzeppelin/test-helpers": "0.5.10",
+		"@typechain/ethers-v5": "7.0.1",
+		"@typechain/hardhat": "2.1.0",
+		"@types/chai": "4.2.19",
+		"@types/mocha": "8.2.2",
+		"@types/node": "15.12.4",
+		"chai": "4.3.4",
+		"dotenv": "8.2.0",
+		"ethereum-waffle": "3.3.0",
+		"ethers": "5.3.1",
+		"hardhat": "2.2.1",
+		"sqlite3": "5.0.2",
+		"truffle-plugin-verify": "0.5.7",
+		"ts-node": "10.0.0",
+		"typechain": "5.1.1",
+		"typescript": "4.3.4"
+	}
 }

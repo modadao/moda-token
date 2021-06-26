@@ -1,68 +1,62 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./ICount.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract Token is Ownable, ERC20, ICount {
+contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     using SafeMath for uint;
 
-    address immutable private _existing_holders;
-    address immutable private _outlier_ventures;
-    address immutable private _investors;
-    address immutable private _foundation;
-    address immutable private _growth;
-    address immutable private _advisors;
-    address immutable private _curve;
+    uint256 public holderCount;
+    uint256 public startBlock;
 
-    uint256 private _holderCount;
-    uint256 immutable private _startBlock;
+    address public constant _existing_holders = 0x0364eAA7C884cb5495013804275120ab023619A5;
+    address public constant _outlier_ventures = 0x0364eAA7C884cb5495013804275120ab023619A5;
+    address public constant _investors = 0x0364eAA7C884cb5495013804275120ab023619A5;
+    address public constant _foundation = 0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C;
+    address public constant _growth = 0x0364eAA7C884cb5495013804275120ab023619A5;
+    address public constant _advisors = 0x0364eAA7C884cb5495013804275120ab023619A5;
+    address public constant _curve = 0x0364eAA7C884cb5495013804275120ab023619A5;
 
-    function Count() external override view returns (uint256) {
-        return _holderCount;
+    function initialize() public initializer {
+        __Ownable_init();
+        __ERC20_init("moda", "MODA");
+
+        _mintWithCount(_existing_holders, 2000000 * 10 ** 18);
+        _mintWithCount(_outlier_ventures, 300000 * 10 ** 18);
+        _mintWithCount(_investors, 500000 * 10 ** 18);
+        _mintWithCount(_foundation, 3500000 * 10 ** 18);
+        _mintWithCount(_growth, 1000000 * 10 ** 18);
+        _mintWithCount(_advisors, 1200000 * 10 ** 18);
+        _mintWithCount(_curve, 1500000 * 10 ** 18);
+
+        startBlock = block.number;
     }
 
-    constructor() ERC20("moda", "MODA") {
-        _existing_holders = 0x0364eAA7C884cb5495013804275120ab023619A5;
-        _outlier_ventures = 0x0364eAA7C884cb5495013804275120ab023619A5;
-        _investors = 0x0364eAA7C884cb5495013804275120ab023619A5;
-        _foundation = 0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C;
-        _growth = 0x0364eAA7C884cb5495013804275120ab023619A5;
-        _advisors = 0x0364eAA7C884cb5495013804275120ab023619A5;
-        _curve = 0x0364eAA7C884cb5495013804275120ab023619A5;
-
-        mintWithCount(0x0364eAA7C884cb5495013804275120ab023619A5, 2000000 * 10 ** 18);
-        mintWithCount(0x0364eAA7C884cb5495013804275120ab023619A5, 300000 * 10 ** 18);
-        mintWithCount(0x0364eAA7C884cb5495013804275120ab023619A5, 500000 * 10 ** 18);
-        mintWithCount(0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C, 3500000 * 10 ** 18);
-        mintWithCount(0x0364eAA7C884cb5495013804275120ab023619A5, 1000000 * 10 ** 18);
-        mintWithCount(0x0364eAA7C884cb5495013804275120ab023619A5, 1200000 * 10 ** 18);
-        mintWithCount(0x0364eAA7C884cb5495013804275120ab023619A5, 1500000 * 10 ** 18);
-
-        _startBlock = block.number;
-    }
-    
-    function mintWithCount(address who, uint256 amount) private {
-        require(who != address(0), "Invalid address");
-        if (balanceOf(who) == 0 && amount > 0) {
-            _holderCount = _holderCount.add(1);
+    function _updateCountOnTransfer(address from, address to, uint256 amount) private {
+        if (balanceOf(to) == 0 && amount > 0) {
+            holderCount = holderCount.add(1);
         }
 
-        _mint(who, amount);
+        if (balanceOf(from) == amount && amount > 0) {
+            holderCount = holderCount.sub(1);
+        }
+    }
+
+    function _mintWithCount(address to, uint256 amount) private {
+        _updateCountOnTransfer(_msgSender(), to, amount);
+        _mint(to, amount);
     }
 
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-        if (balanceOf(recipient) == 0 && amount > 0) {
-            _holderCount.add(1);
-        }
+        _updateCountOnTransfer(_msgSender(), recipient, amount);
+        return super.transfer(recipient, amount);
+    }
 
-        if (balanceOf(msg.sender).sub(amount) == 0 && amount > 0) {
-            _holderCount.sub(1);
-        }
-
-        _transfer(_msgSender(), recipient, amount);
-        return true;
+    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+        _updateCountOnTransfer(sender, recipient, amount);
+        return super.transferFrom(sender, recipient, amount);
     }
 }
