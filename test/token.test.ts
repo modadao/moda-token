@@ -1,9 +1,6 @@
-import chai, { expect } from 'chai';
-import { solidity } from 'ethereum-waffle';
+import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { Token, UpgradeTestToken } from '../typechain';
-
-chai.use(solidity);
 
 describe('Token', () => {
 	let token: Token;
@@ -168,5 +165,39 @@ describe('Token', () => {
 		await expect(token.connect(addr1).transferOwnership(addr1.address)).to.be.revertedWith(
 			'Ownable: caller is not the owner'
 		);
+	});
+
+	it('Should reject requests to mint from a non-vesting contract address', async () => {
+		const [owner] = await ethers.getSigners();
+		await expect(token.vestingMint(owner.address, 1)).to.be.revertedWith(
+			'Token: caller is not the vesting contract'
+		);
+	});
+
+	it('Should reject requests to change the vesting contract from a non-owner', async () => {
+		const [owner, addr1] = await ethers.getSigners();
+
+		await expect(token.connect(addr1).setVestingContract(owner.address)).to.be.revertedWith(
+			'Ownable: caller is not the owner'
+		);
+	});
+
+	it('Should allow requests to change the vesting contract from an owner', async () => {
+		const [owner] = await ethers.getSigners();
+		const current = await token.vestingContract();
+
+		await expect(token.setVestingContract(owner.address))
+			.to.emit(token, 'VestingContractChanged')
+			.withArgs(current, owner.address);
+	});
+
+	it('Should increase total supply on vesting', async () => {
+		const [owner] = await ethers.getSigners();
+		const current = await token.totalSupply();
+
+		await token.setVestingContract(owner.address);
+		await token.vestingMint(owner.address, ethers.utils.parseEther('100'));
+
+		expect(await token.totalSupply()).to.equal(current.add(ethers.utils.parseEther('100')));
 	});
 });

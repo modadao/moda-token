@@ -14,7 +14,7 @@ contract UpgradeTestToken is Initializable, OwnableUpgradeable, ERC20Upgradeable
     using SafeMath for uint;
 
     uint256 public holderCount;
-    uint256 public startBlock;
+    address public vestingContract;
 
     address public constant _existing_holders = 0x0364eAA7C884cb5495013804275120ab023619A5;
     address public constant _outlier_ventures = 0x0364eAA7C884cb5495013804275120ab023619A5;

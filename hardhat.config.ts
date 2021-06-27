@@ -1,6 +1,6 @@
-import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import '@openzeppelin/hardhat-upgrades';
+import '@nomiclabs/hardhat-waffle';
 
 const INFURA_PROJECT_ID = '';
 
