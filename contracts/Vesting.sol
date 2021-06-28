@@ -36,7 +36,7 @@ contract Vesting is Ownable {
         emit ScheduleChanged(to, schedule[to]);
     }
 
-    event ScheduleChanged(address to, VestingSchedule[] newSchedule);
+    event ScheduleChanged(address indexed to, VestingSchedule[] newSchedule);
 
     function seal() external onlyOwner {
         vestingSealed = true;
