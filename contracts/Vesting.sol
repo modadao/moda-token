@@ -69,7 +69,8 @@ contract Vesting is Ownable {
         // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
         // iterate the loop to avoid a second iteration.
         VestingSchedule[] memory entries = schedule[msg.sender];
-        for (uint i = 0; i < entries.length; i++) {
+        uint count = entries.length; // Gas optimisation
+        for (uint i = 0; i < count; i++) {
             VestingSchedule memory entry = entries[i];
             if (entry.releaseDate <= block.timestamp && entry.released == false) {
                 schedule[msg.sender][i].released = true;
