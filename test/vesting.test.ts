@@ -1,5 +1,6 @@
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { ethers, network, upgrades } from 'hardhat';
+import { ethers, upgrades } from 'hardhat';
 import { Vesting, Token } from '../typechain';
 import { add, addTimestamp, fastForward, fromTimestamp } from './utils';
 
@@ -8,8 +9,10 @@ describe('Vesting', () => {
 	let vesting: Vesting;
 	let start = new Date();
 
+	let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
+
 	beforeEach(async () => {
-		const [_, addr1, addr2] = await ethers.getSigners();
+		[owner, addr1, addr2] = await ethers.getSigners();
 
 		// These tests need to wander through time on each one, as HardHat won't let us go backwards.
 		// We always construct the vesting schedule based on this 'now' value.
@@ -21,48 +24,47 @@ describe('Vesting', () => {
 		await token.deployed();
 
 		const VestingFactory = await ethers.getContractFactory('Vesting');
-		vesting = (await VestingFactory.deploy(token.address, [
+		vesting = (await VestingFactory.deploy(token.address)) as Vesting;
+		await vesting.deployed();
+
+		await token.setVestingContract(vesting.address);
+
+		await vesting.addToSchedule(addr1.address, [
 			{
-				to: addr1.address,
 				amount: ethers.utils.parseEther('100'),
 				releaseDate: addTimestamp(start, { years: 1 }),
 				released: false,
 			},
 			{
-				to: addr1.address,
 				amount: ethers.utils.parseEther('100'),
 				releaseDate: addTimestamp(start, { years: 2 }),
 				released: false,
 			},
 			{
-				to: addr1.address,
 				amount: ethers.utils.parseEther('100'),
 				releaseDate: addTimestamp(start, { years: 3 }),
 				released: false,
 			},
+		]);
+
+		await vesting.addToSchedule(addr2.address, [
 			{
-				to: addr2.address,
 				amount: ethers.utils.parseEther('50'),
 				releaseDate: addTimestamp(start, { months: 6 }),
 				released: false,
 			},
 			{
-				to: addr2.address,
 				amount: ethers.utils.parseEther('50'),
 				releaseDate: addTimestamp(start, { years: 1, months: 6 }),
 				released: false,
 			},
-		])) as Vesting;
-		await vesting.deployed();
-
-		await token.setVestingContract(vesting.address);
+		]);
 
 		currentBlock = await ethers.provider.getBlock(ethers.provider.getBlockNumber());
-		start = fromTimestamp(currentBlock.timestamp);
 	});
 
 	it('Should allow a simple withdrawal', async () => {
-		const [_, addr1] = await ethers.getSigners();
+		await vesting.seal();
 
 		expect(await token.balanceOf(addr1.address)).to.equal(0); // Should start with no tokens.
 		expect(await vesting.withdrawalAmount(addr1.address)).to.equal(0); // Not ready yet.
@@ -88,7 +90,7 @@ describe('Vesting', () => {
 	});
 
 	it('Should allow a combined withdrawal', async () => {
-		const [_, addr1] = await ethers.getSigners();
+		await vesting.seal();
 
 		expect(await token.balanceOf(addr1.address)).to.equal(0); // Should start with no tokens.
 		expect(await vesting.withdrawalAmount(addr1.address)).to.equal(0); // Not ready yet.
@@ -128,7 +130,7 @@ describe('Vesting', () => {
 	});
 
 	it('Should correctly distinguish withdrawal amounts by address', async () => {
-		const [_, addr1, addr2] = await ethers.getSigners();
+		await vesting.seal();
 
 		// Not ready yet.
 		expect(await vesting.withdrawalAmount(addr1.address)).to.equal(0);
@@ -154,7 +156,7 @@ describe('Vesting', () => {
 	});
 
 	it('Should correctly increment holder count on a vesting withdrawal', async () => {
-		const [_, addr1] = await ethers.getSigners();
+		await vesting.seal();
 
 		// Should have 2 holders at the start.
 		expect(await token.holderCount()).to.equal(2);
@@ -168,5 +170,58 @@ describe('Vesting', () => {
 
 		// Shold now have 3 holders.
 		expect(await token.holderCount()).to.equal(3);
+	});
+
+	it('Should reject a request to seal by a non-owner', async () => {
+		await expect(vesting.connect(addr1).seal()).to.be.revertedWith(
+			'Ownable: caller is not the owner'
+		);
+	});
+
+	it('Should reject a withdrawal when not sealed', async () => {
+		await fastForward(add(start, { years: 1 }));
+
+		// The first amount should be ready now from a time perspective, except not because we're not sealed yet.
+		expect(await vesting.withdrawalAmount(addr1.address)).to.equal(0);
+
+		// Withdraw it.
+		await expect(vesting.connect(addr1).withdraw()).to.be.revertedWith('Vesting: not sealed');
+
+		// And if we seal, are we good to go? We should be.
+		await expect(vesting.seal()).to.emit(vesting, 'VestingSealed');
+
+		expect(await vesting.withdrawalAmount(addr1.address)).to.equal(ethers.utils.parseEther('100'));
+	});
+
+	it('Should allow changes to the schedule before sealed', async () => {
+		await expect(
+			vesting.addToSchedule(addr1.address, [
+				{
+					amount: ethers.utils.parseEther('100'),
+					releaseDate: addTimestamp(start, { years: 4 }),
+					released: false,
+				},
+			])
+		).to.emit(vesting, 'ScheduleChanged');
+
+		const { amount, releaseDate, released } = await vesting.schedule(addr1.address, 3);
+
+		expect(amount).to.equal(ethers.utils.parseEther('100'));
+		expect(releaseDate).to.equal(addTimestamp(start, { years: 4 }));
+		expect(released).to.equal(false);
+	});
+
+	it('Should reject changes to the schedule once sealed, even from an owner', async () => {
+		await vesting.seal();
+
+		await expect(
+			vesting.addToSchedule(addr1.address, [
+				{
+					amount: ethers.utils.parseEther('100'),
+					releaseDate: addTimestamp(start, { years: 4 }),
+					released: false,
+				},
+			])
+		).to.be.revertedWith('Vesting: sealed');
 	});
 });
