@@ -45,7 +45,8 @@ contract Vesting {
 
         // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
         // iterate the loop to avoid a second iteration.
-        for (uint i = 0; i < _schedule.length; i++) {
+        uint count = _schedule.length
+        for (uint i = 0; i < count; i++) {
             if (_schedule[i].to == msg.sender && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
                 _schedule[i].released = true;
                 total = total.add(_schedule[i].amount);
