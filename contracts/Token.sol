@@ -11,14 +11,6 @@ import "./IVestingToken.sol";
 contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgradeable, IVestingToken {
     using SafeMath for uint;
 
-    address public constant _existingHolders = 0x0364eAA7C884cb5495013804275120ab023619A5;
-    address public constant _outlierVentures = 0x0364eAA7C884cb5495013804275120ab023619A5;
-    address public constant _investors = 0x0364eAA7C884cb5495013804275120ab023619A5;
-    address public constant _foundation = 0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C;
-    address public constant _growth = 0x0364eAA7C884cb5495013804275120ab023619A5;
-    address public constant _advisors = 0x0364eAA7C884cb5495013804275120ab023619A5;
-    address public constant _curve = 0x0364eAA7C884cb5495013804275120ab023619A5;
-
     uint256 public holderCount;
     address public vestingContract;
 
@@ -26,17 +18,16 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgra
      * @dev Our constructor (with UUPS upgrades we need to use initialize(), but this is only
      *      able to be called once because of the initializer modifier.
      */
-    function initialize() public initializer {
+    function initialize(address[] memory recipients, uint256[] memory amounts) public initializer {
+        require(recipients.length == amounts.length, "Token: recipients and amounts must match");
+
         __Ownable_init();
         __ERC20_init("moda", "MODA");
 
-        _mintWithCount(_existingHolders, 2000000 * 10 ** 18);
-        _mintWithCount(_outlierVentures, 300000 * 10 ** 18);
-        _mintWithCount(_investors, 500000 * 10 ** 18);
-        _mintWithCount(_foundation, 3500000 * 10 ** 18);
-        _mintWithCount(_growth, 1000000 * 10 ** 18);
-        _mintWithCount(_advisors, 1200000 * 10 ** 18);
-        _mintWithCount(_curve, 1500000 * 10 ** 18);
+        uint256 length = recipients.length;
+        for (uint i = 0; i < length; i++) {
+            _mintWithCount(recipients[i], amounts[i]);
+        }
     }
 
     /**

@@ -20,7 +20,17 @@ describe('Vesting', () => {
 		start = fromTimestamp(currentBlock.timestamp);
 
 		const TokenFactory = await ethers.getContractFactory('Token');
-		token = (await upgrades.deployProxy(TokenFactory, { kind: 'uups' })) as Token;
+		token = (await upgrades.deployProxy(
+			TokenFactory,
+			[
+				[
+					'0x0364eAA7C884cb5495013804275120ab023619A5',
+					'0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C',
+				],
+				[ethers.utils.parseEther('6500000'), ethers.utils.parseEther('3500000')],
+			],
+			{ kind: 'uups' }
+		)) as Token;
 		await token.deployed();
 
 		const VestingFactory = await ethers.getContractFactory('Vesting');
