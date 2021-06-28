@@ -1,72 +1,64 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./IVestingToken.sol";
 
-struct Deposit {
+struct VestingSchedule {
+    address to;
     uint256 amount;
-    uint256 date;
-    uint256 release;
+    uint256 releaseDate;
+    bool released;
 }
 
-contract Vesting is Ownable {
-
+contract Vesting {
     using SafeMath for uint256;
 
-    IERC20 immutable private erc20; // Token
-    mapping (address => Deposit) private _deposits;
-    uint256[] vestingPeriods;
-
-    function getCurrentBonus() public view returns (uint256) {
-        if (block.timestamp < vestingPeriods[2] && block.timestamp > vestingPeriods[1]) {
-            return 10;
-        }
-
-        if (block.timestamp < vestingPeriods[1] && block.timestamp > vestingPeriods[0]) {
-            return 20;
-        }
-
-        if (block.timestamp < vestingPeriods[0]) {
-            return 30;
-        }
-
-        return 0;
-    }
+    IVestingToken immutable private _token; // Token
+    VestingSchedule[] private _schedule; // Vesting Schedule
     
-    constructor(address token, uint256 start) {
-        require(token != address(0), "Invalid address");
-        erc20 = IERC20(token);
+    constructor(address token, VestingSchedule[] memory schedule) {
+        require(token != address(0), "Vesting: invalid token address");
+        require(schedule.length > 0, "Vesting: invalid schedule");
 
-        vestingPeriods.push(start);
-        vestingPeriods.push(start + 30 days);
-        vestingPeriods.push(start + 60 days);
+        _token = IVestingToken(token);
+
+        for (uint i = 0; i < schedule.length; i++) {
+            _schedule.push(schedule[i]);
+        }
     }
 
-    function deposit(uint256 amount) public {
-        require(amount > 0, "Doesn't make sense");
-        erc20.transferFrom(address(msg.sender), address(this), amount);
-        
-        uint256 bonus = getCurrentBonus();
-        amount = amount.add(bonus);
+    function withdrawalAmount(address to) public view returns (uint256) {
+        uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
 
-        _deposits[msg.sender] = Deposit(amount, block.timestamp, block.timestamp + 30 days);
-        emit DepositReceived(amount, msg.sender);
+        for (uint i = 0; i < _schedule.length; i++) {
+            if (_schedule[i].to == to && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
+                total = total.add(_schedule[i].amount);
+            }
+        }
+
+        return total;
     }
 
-    function withdraw(uint256 amount) public {
-        require(_deposits[msg.sender].amount >= amount, "Insufficient funds");
-        require(inVestingPeriod(msg.sender), "Too early");
+    function withdraw() public {
+        uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
 
-        erc20.transferFrom( address(this), address(msg.sender), amount);
-        _deposits[msg.sender].amount = _deposits[msg.sender].amount.sub(amount);
+        // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
+        // iterate the loop to avoid a second iteration.
+        uint count = _schedule.length
+        for (uint i = 0; i < count; i++) {
+            if (_schedule[i].to == msg.sender && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
+                _schedule[i].released = true;
+                total = total.add(_schedule[i].amount);
+            }
+        }
+
+        require(total > 0, "Vesting: no amount to withdraw");
+
+        _token.vestingMint(msg.sender, total);
+
+        emit Vested(msg.sender, total);
     }
 
-    // Vesting
-    function inVestingPeriod(address who) public view returns (bool) {
-        return _deposits[who].release < block.timestamp;
-    }
-
-    event DepositReceived(uint256 amount, address indexed who);
+    event Vested(address indexed who, uint256 amount);
 }
