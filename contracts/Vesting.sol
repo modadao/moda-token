@@ -19,19 +19,20 @@ contract Vesting {
     
     constructor(address token, VestingSchedule[] memory schedule) {
         require(token != address(0), "Vesting: invalid token address");
-        require(schedule.length > 0, "Vesting: invalid schedule");
+        uint256 length = schedule.length;
+        require(length > 0, "Vesting: invalid schedule");
 
         _token = IVestingToken(token);
-
-        for (uint i = 0; i < schedule.length; i++) {
+        
+        for (uint i = 0; i < length; i++) {
             _schedule.push(schedule[i]);
         }
     }
 
     function withdrawalAmount(address to) public view returns (uint256) {
         uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
-
-        for (uint i = 0; i < _schedule.length; i++) {
+        uint256 length = schedule.length;
+        for (uint i = 0; i < length; i++) {
             if (_schedule[i].to == to && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
                 total = total.add(_schedule[i].amount);
             }
@@ -45,8 +46,8 @@ contract Vesting {
 
         // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
         // iterate the loop to avoid a second iteration.
-        uint count = _schedule.length
-        for (uint i = 0; i < count; i++) {
+        uint256 length = schedule.length;
+        for (uint i = 0; i < length; i++) {
             if (_schedule[i].to == msg.sender && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
                 _schedule[i].released = true;
                 total = total.add(_schedule[i].amount);
