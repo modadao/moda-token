@@ -14,8 +14,8 @@ struct VestingSchedule {
 contract Vesting is Ownable {
     using SafeMath for uint256;
 
-    IVestingToken immutable public token;
-    mapping(address => VestingSchedule[]) public schedule;
+    IVestingToken immutable public token; // Token
+    mapping(address => VestingSchedule[]) public schedule; // Vesting Schedule
     bool public vestingSealed;
 
     constructor(address tokenContract) {
@@ -51,8 +51,10 @@ contract Vesting is Ownable {
         uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
 
         VestingSchedule[] memory entries = schedule[to];
-        for (uint i = 0; i < entries.length; i++) {
+        uint256 length = entries.length;
+        for (uint i = 0; i < length; i++) {
             VestingSchedule memory entry = entries[i];
+
             if (entry.releaseDate <= block.timestamp && entry.released == false) {
                 total = total.add(entry.amount);
             }
@@ -69,8 +71,8 @@ contract Vesting is Ownable {
         // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
         // iterate the loop to avoid a second iteration.
         VestingSchedule[] memory entries = schedule[msg.sender];
-        uint count = entries.length; // Gas optimisation
-        for (uint i = 0; i < count; i++) {
+        uint256 length = entries.length; // Gas optimisation
+        for (uint i = 0; i < length; i++) {
             VestingSchedule memory entry = entries[i];
             if (entry.releaseDate <= block.timestamp && entry.released == false) {
                 schedule[msg.sender][i].released = true;
