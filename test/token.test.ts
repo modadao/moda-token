@@ -1,14 +1,45 @@
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { Token, UpgradeTestToken } from '../typechain';
 
 describe('Token', () => {
 	let token: Token;
+	let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
 
 	beforeEach(async () => {
+		[owner, addr1, addr2] = await ethers.getSigners();
+
 		const TokenFactory = await ethers.getContractFactory('Token');
-		token = (await upgrades.deployProxy(TokenFactory, { kind: 'uups' })) as Token;
+		token = (await upgrades.deployProxy(
+			TokenFactory,
+			[
+				[
+					'0x0364eAA7C884cb5495013804275120ab023619A5',
+					'0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C',
+				],
+				[ethers.utils.parseEther('6500000'), ethers.utils.parseEther('3500000')],
+			],
+			{ kind: 'uups' }
+		)) as Token;
 		await token.deployed();
+	});
+
+	it('Should revert when deploying with wrong intitialize args', async () => {
+		const TokenFactory = await ethers.getContractFactory('Token');
+		await expect(
+			upgrades.deployProxy(
+				TokenFactory,
+				[
+					[
+						'0x0364eAA7C884cb5495013804275120ab023619A5',
+						'0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C',
+					],
+					[ethers.utils.parseEther('6500000')],
+				],
+				{ kind: 'uups' }
+			)
+		).to.be.revertedWith('Token: recipients and amounts must match');
 	});
 
 	it('Should return total supply once deployed', async () => {
@@ -88,7 +119,7 @@ describe('Token', () => {
 		const implementation = TokenFactory.attach(firstLog.args.implementation) as Token;
 
 		expect(await implementation.holderCount()).to.equal(0);
-		expect(await implementation.balanceOf(await token._foundation())).to.equal(0);
+		expect(await implementation.balanceOf(owner.address)).to.equal(0);
 	});
 
 	it('Should allow a larger approval than current balance', async () => {

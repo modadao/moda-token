@@ -1,40 +1,62 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./IVestingToken.sol";
 
 struct VestingSchedule {
-    address to;
     uint256 amount;
     uint256 releaseDate;
     bool released;
 }
 
-contract Vesting {
+contract Vesting is Ownable {
     using SafeMath for uint256;
 
-    IVestingToken immutable private _token; // Token
-    VestingSchedule[] private _schedule; // Vesting Schedule
-    
-    constructor(address token, VestingSchedule[] memory schedule) {
-        require(token != address(0), "Vesting: invalid token address");
-        uint256 length = schedule.length;
-        require(length > 0, "Vesting: invalid schedule");
+    IVestingToken immutable public token; // Token
+    mapping(address => VestingSchedule[]) public schedule; // Vesting Schedule
+    bool public vestingSealed;
 
-        _token = IVestingToken(token);
-        
-        for (uint i = 0; i < length; i++) {
-            _schedule.push(schedule[i]);
-        }
+    constructor(address tokenContract) {
+        require(tokenContract != address(0), "Vesting: invalid token address");
+
+        token = IVestingToken(tokenContract);
     }
 
+    function addToSchedule(address to, VestingSchedule[] memory newEntries) external onlyOwner {
+        require(vestingSealed == false, "Vesting: sealed");
+        require(to != address(0), "Vesting: to address must not be 0");
+        require(newEntries.length > 0, "Vesting: no entries");
+
+        for (uint i = 0; i < newEntries.length; i++) {
+            schedule[to].push(newEntries[i]);
+        }
+        
+        emit ScheduleChanged(to, schedule[to]);
+    }
+
+    event ScheduleChanged(address indexed to, VestingSchedule[] newSchedule);
+
+    function seal() external onlyOwner {
+        vestingSealed = true;
+        emit VestingSealed();
+    }
+
+    event VestingSealed();
+
     function withdrawalAmount(address to) public view returns (uint256) {
+        if (!vestingSealed) return 0;
+
         uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
-        uint256 length = schedule.length;
+
+        VestingSchedule[] memory entries = schedule[to];
+        uint256 length = entries.length;
         for (uint i = 0; i < length; i++) {
-            if (_schedule[i].to == to && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
-                total = total.add(_schedule[i].amount);
+            VestingSchedule memory entry = entries[i];
+
+            if (entry.releaseDate <= block.timestamp && entry.released == false) {
+                total = total.add(entry.amount);
             }
         }
 
@@ -42,21 +64,25 @@ contract Vesting {
     }
 
     function withdraw() public {
+        require(vestingSealed, "Vesting: not sealed");
+
         uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
 
         // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
         // iterate the loop to avoid a second iteration.
-        uint256 length = schedule.length;
+        VestingSchedule[] memory entries = schedule[msg.sender];
+        uint256 length = entries.length; // Gas optimisation
         for (uint i = 0; i < length; i++) {
-            if (_schedule[i].to == msg.sender && _schedule[i].releaseDate <= block.timestamp && _schedule[i].released == false) {
-                _schedule[i].released = true;
-                total = total.add(_schedule[i].amount);
+            VestingSchedule memory entry = entries[i];
+            if (entry.releaseDate <= block.timestamp && entry.released == false) {
+                schedule[msg.sender][i].released = true;
+                total = total.add(entry.amount);
             }
         }
 
         require(total > 0, "Vesting: no amount to withdraw");
 
-        _token.vestingMint(msg.sender, total);
+        token.vestingMint(msg.sender, total);
 
         emit Vested(msg.sender, total);
     }
