@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity 0.8.6;
 
 // Note: This contract is only used for testing upgrades to the Token.sol contract
 //       and will never be deployed to any actual Ethereum network.
