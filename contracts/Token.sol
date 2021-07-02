@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -9,8 +8,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "./IVestingToken.sol";
 
 contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgradeable, IVestingToken {
-    using SafeMath for uint;
-
     uint256 public holderCount;
     address public vestingContract;
 
@@ -47,11 +44,11 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgra
         if (from == to) return;
 
         if (balanceOf(to) == 0 && amount > 0) {
-            holderCount = holderCount.add(1);
+            holderCount++;
         }
 
         if (balanceOf(from) == amount && amount > 0) {
-            holderCount = holderCount.sub(1);
+            holderCount--;
         }
     }
 

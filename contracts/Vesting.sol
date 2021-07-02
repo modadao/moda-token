@@ -2,7 +2,6 @@
 pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./IVestingToken.sol";
 
 struct VestingSchedule {
@@ -12,8 +11,6 @@ struct VestingSchedule {
 }
 
 contract Vesting is Ownable {
-    using SafeMath for uint256;
-
     IVestingToken immutable public token; // Token
     mapping(address => VestingSchedule[]) public schedule; // Vesting Schedule
     bool public vestingSealed;
@@ -56,7 +53,7 @@ contract Vesting is Ownable {
             VestingSchedule memory entry = entries[i];
 
             if (entry.releaseDate <= block.timestamp && entry.released == false) {
-                total = total.add(entry.amount);
+                total += entry.amount;
             }
         }
 
@@ -76,7 +73,7 @@ contract Vesting is Ownable {
             VestingSchedule memory entry = entries[i];
             if (entry.releaseDate <= block.timestamp && entry.released == false) {
                 schedule[msg.sender][i].released = true;
-                total = total.add(entry.amount);
+                total += entry.amount;
             }
         }
 
