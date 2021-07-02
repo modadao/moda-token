@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity 0.8.6;
 
 // Note: This contract is only used for testing upgrades to the Token.sol contract
 //       and will never be deployed to any actual Ethereum network.
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 contract UpgradeTestToken is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgradeable {
-    using SafeMath for uint;
-
     uint256 public holderCount;
     address public vestingContract;
 

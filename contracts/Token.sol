@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -9,8 +8,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "./IVestingToken.sol";
 
 contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgradeable, IVestingToken {
-    using SafeMath for uint;
-
     uint256 public holderCount;
     address public vestingContract;
 
@@ -43,12 +40,15 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgra
      *      BEFORE transfers alter balances.
      */
     function _updateCountOnTransfer(address from, address to, uint256 amount) private {
+        // Transfers from and to the same address don't change the holder count ever.
+        if (from == to) return;
+
         if (balanceOf(to) == 0 && amount > 0) {
-            holderCount = holderCount.add(1);
+            holderCount++;
         }
 
         if (balanceOf(from) == amount && amount > 0) {
-            holderCount = holderCount.sub(1);
+            holderCount--;
         }
     }
 
@@ -74,7 +74,7 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgra
      * @dev A private function that mints while maintaining the holder count variable.
      */
     function _mintWithCount(address to, uint256 amount) private {
-        _updateCountOnTransfer(_msgSender(), to, amount);
+        _updateCountOnTransfer(address(0), to, amount);
         _mint(to, amount);
     }
 
