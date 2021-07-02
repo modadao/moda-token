@@ -43,6 +43,9 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgra
      *      BEFORE transfers alter balances.
      */
     function _updateCountOnTransfer(address from, address to, uint256 amount) private {
+        // Transfers from and to the same address don't change the holder count ever.
+        if (from == to) return;
+
         if (balanceOf(to) == 0 && amount > 0) {
             holderCount = holderCount.add(1);
         }
@@ -74,7 +77,7 @@ contract Token is Initializable, OwnableUpgradeable, ERC20Upgradeable, UUPSUpgra
      * @dev A private function that mints while maintaining the holder count variable.
      */
     function _mintWithCount(address to, uint256 amount) private {
-        _updateCountOnTransfer(_msgSender(), to, amount);
+        _updateCountOnTransfer(address(0), to, amount);
         _mint(to, amount);
     }
 

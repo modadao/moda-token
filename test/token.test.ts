@@ -231,4 +231,17 @@ describe('Token', () => {
 
 		expect(await token.totalSupply()).to.equal(current.add(ethers.utils.parseEther('100')));
 	});
+
+	it('Should allow transfers to self and should not decrease holder count', async () => {
+		const [owner] = await ethers.getSigners();
+		const before = await token.holderCount();
+		const entireBalance = await token.balanceOf(owner.address);
+
+		await token.transfer(owner.address, entireBalance);
+		expect(await token.holderCount()).to.equal(before);
+
+		await token.increaseAllowance(owner.address, entireBalance);
+		await token.transferFrom(owner.address, owner.address, entireBalance);
+		expect(await token.holderCount()).to.equal(before);
+	});
 });
