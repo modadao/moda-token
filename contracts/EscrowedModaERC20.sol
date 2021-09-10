@@ -19,7 +19,7 @@ contract EscrowedModaERC20 is ERC20("Escrowed Moda", "sMODA"), AccessControl {
    *      and changes smart contract itself is to be redeployed
    * @dev Generated using https://www.random.org/bytes/
    */
-  uint256 public constant TOKEN_UID = 0xac3051b8d4f50966afb632468a4f61483ae6a953b74e387a01ef94316d6b7d62;
+  uint256 public constant TOKEN_UID = 0x0a9a93ba9d22fa5ed507ff32440b8750c8951e4864438c8afc02be22ad238ebf;
 
   /**
    * @notice Must be called by ROLE_TOKEN_CREATOR addresses.

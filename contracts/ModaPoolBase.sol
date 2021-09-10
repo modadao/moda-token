@@ -179,12 +179,12 @@ abstract contract ModaPoolBase is IPool, ModaAware, ReentrancyGuard {
         // verify sMODA instance supplied
         require(
             EscrowedModaERC20(_smoda).TOKEN_UID() ==
-                0xac3051b8d4f50966afb632468a4f61483ae6a953b74e387a01ef94316d6b7d62,
+                0x0a9a93ba9d22fa5ed507ff32440b8750c8951e4864438c8afc02be22ad238ebf,
             "unexpected sMODA TOKEN_UID"
         );
         // verify ModaPoolFactory instance supplied
         require(
-            _factory.FACTORY_UID() == 0xc5cfd88c6e4d7e5c8a03c255f03af23c0918d8e82cac196f57466af3fd4a5ec7,
+            _factory.FACTORY_UID() == 0xcdc2ba911f79875a69d7a383645dc95521168b0a377120ac96cfd8d688e623d9,
             "unexpected FACTORY_UID"
         );
 
