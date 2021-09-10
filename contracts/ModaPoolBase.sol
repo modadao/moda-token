@@ -646,7 +646,7 @@ abstract contract ModaPoolBase is IPool, ModaAware, ReentrancyGuard {
 		// if sMODA is requested
 		if (_useSMODA) {
 			// - mint sMODA
-			mintSIlv(_staker, pendingYield);
+			mintSModa(_staker, pendingYield);
 		} else if (poolToken == moda) {
 			// calculate pending yield weight,
 			// 2e6 is the bonus weight when staking for 1 year
@@ -799,7 +799,7 @@ abstract contract ModaPoolBase is IPool, ModaAware, ReentrancyGuard {
 	 *
 	 * @dev Reentrancy safe due to the EscrowedModaERC20 design
 	 */
-	function mintSIlv(address _to, uint256 _value) private {
+	function mintSModa(address _to, uint256 _value) private {
 		// just delegate call to the target
 		EscrowedModaERC20(smoda).mint(_to, _value);
 	}
