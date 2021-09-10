@@ -286,7 +286,7 @@ contract ModaCorePool is ModaPoolBase {
 		user.subVaultRewards = weightToReward(user.totalWeight, vaultRewardsPerWeight);
 
 		// transfer fails if pool MODA balance is not enough - which is a desired behavior
-		transferIlv(_staker, pendingVaultClaim);
+		transferModa(_staker, pendingVaultClaim);
 
 		emit VaultRewardsClaimed(msg.sender, _staker, pendingVaultClaim);
 	}

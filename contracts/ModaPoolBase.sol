@@ -144,10 +144,10 @@ abstract contract ModaPoolBase is IPool, ModaAware, ReentrancyGuard {
 	 *
 	 * @param _by an address which performed an operation
 	 * @param _to an address which claimed the yield reward
-	 * @param sIlv flag indicating if reward was paid (minted) in sMODA
+	 * @param sModa flag indicating if reward was paid (minted) in sMODA
 	 * @param amount amount of yield paid
 	 */
-	event YieldClaimed(address indexed _by, address indexed _to, bool sIlv, uint256 amount);
+	event YieldClaimed(address indexed _by, address indexed _to, bool sModa, uint256 amount);
 
 	/**
 	 * @dev Fired in setWeight()
