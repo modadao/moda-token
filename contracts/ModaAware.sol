@@ -42,7 +42,7 @@ abstract contract ModaAware is ILinkedToMODA {
 	 */
 	function transferIlv(address _to, uint256 _value) internal {
 		// just delegate call to the target
-		transferIlvFrom(address(this), _to, _value);
+		transferModaFrom(address(this), _to, _value);
 	}
 
 	/**
@@ -51,7 +51,7 @@ abstract contract ModaAware is ILinkedToMODA {
 	 *
 	 * @dev Reentrancy safe due to the ModaERC20 design
 	 */
-	function transferIlvFrom(
+	function transferModaFrom(
 		address _from,
 		address _to,
 		uint256 _value
