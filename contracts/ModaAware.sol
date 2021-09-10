@@ -68,6 +68,6 @@ abstract contract ModaAware is ILinkedToMODA {
 	 */
 	function mintModa(address _to, uint256 _value) internal {
 		// just delegate call to the target
-		Token(moda)._mint(_to, _value);
+		Token(moda).mint(_to, _value);
 	}
 }

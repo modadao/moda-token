@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity 0.8.6;
 
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import './IVestingToken.sol';
 
@@ -19,6 +20,14 @@ contract Token is
 
 	uint256 public holderCount;
 	address public vestingContract;
+
+	/**
+	 * @notice Token creator is responsible for creating (minting)
+	 *      tokens to an arbitrary address
+	 * @dev Role ROLE_TOKEN_CREATOR allows minting tokens
+	 *      (calling `mint` function)
+	 */
+	bytes32 public constant ROLE_TOKEN_CREATOR = '\x00\x01\x00\x00';
 
 	/**
 	 * @dev Smart contract unique identifier, a random number
@@ -95,6 +104,54 @@ contract Token is
 	function _mintWithCount(address to, uint256 amount) private {
 		_updateCountOnTransfer(_msgSender(), to, amount);
 		_mint(to, amount);
+	}
+
+	// ===== Start: Minting/burning extension =====
+
+	/**
+	 * @dev Mints (creates) some tokens to address specified
+	 * @dev The value specified is treated as is without taking
+	 *      into account what `decimals` value is
+	 * @dev Behaves effectively as `mintTo` function, allowing
+	 *      to specify an address to mint tokens to
+	 * @dev Requires sender to have `ROLE_TOKEN_CREATOR` permission
+	 *
+	 * @dev Throws on overflow, if totalSupply + _value doesn't fit into uint256
+	 *
+	 * @param _to an address to mint tokens to
+	 * @param _value an amount of tokens to mint (create)
+	 */
+	function mint(address _to, uint256 _value) public onlyOwner {
+		///TODO: There is a conflict of behaviour here that needs to be resolved.
+		///TODO: The issue arises because the ModaAware class expects
+		///TODO: to be allowed to mint tokens for a pool if the ModaPool
+		///TODO: is deemed to have ROLE_TOKEN_CREATOR.
+		//
+		// check if caller has sufficient permissions to mint tokens
+		// require(
+		// 	hasRole(ROLE_TOKEN_CREATOR, _msgSender()),
+		// 	'insufficient privileges (ROLE_TOKEN_CREATOR required)'
+		// );
+
+		// non-zero recipient address check
+		require(_to != address(0), 'ERC20: mint to the zero address'); // Zeppelin msg
+
+		// non-zero _value and arithmetic overflow check on the total supply
+		// this check automatically secures arithmetic overflow on the individual balance
+		require(totalSupply() + _value > totalSupply(), 'zero value mint or arithmetic overflow');
+
+		// uint192 overflow check (required by voting delegation)
+		require(type(uint192).max - _value < totalSupply(), 'total supply overflow (uint192)');
+
+		// perform mint:
+		// fire ERC20 compliant transfer event
+		_mint(_to, _value);
+
+		///TODO: No voting implementation here.
+		///TODO: Refer to Governance.sol perhaps?
+		//
+		// create voting power associated with the tokens minted
+		//__moveVotingPower(address(0), votingDelegates[_to], _value);
 	}
 
 	/**
