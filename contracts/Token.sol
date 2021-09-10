@@ -21,6 +21,15 @@ contract Token is
 	address public vestingContract;
 
 	/**
+	 * @dev Smart contract unique identifier, a random number
+	 * @dev Should be regenerated each time smart contact source code is changed
+	 *      and changes smart contract itself is to be redeployed
+	 * @dev Generated using https://www.random.org/bytes/
+	 */
+	uint256 public constant TOKEN_UID =
+		0xc8de2a18ae1c61538a5f880f5c8eb7ff85aa3996c4363a27b1c6112a190e65b4;
+
+	/**
 	 * @dev Our constructor (with UUPS upgrades we need to use initialize(), but this is only
 	 *      able to be called once because of the initializer modifier.
 	 */

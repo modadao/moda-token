@@ -24,7 +24,11 @@ abstract contract ModaAware is ILinkedToMODA {
 	constructor(address _moda) {
 		// verify MODA address is set and is correct
 		require(_moda != address(0), 'MODA address not set');
-		///NO_IMPL: require(Token(_moda).TOKEN_UID() == 0x83ecb176af7c4f35a45ff0018282e3a05a1018065da866182df12285866f5a2c, "unexpected TOKEN_UID");
+		require(
+			Token(_moda).TOKEN_UID() ==
+				0xc8de2a18ae1c61538a5f880f5c8eb7ff85aa3996c4363a27b1c6112a190e65b4,
+			'unexpected TOKEN_UID'
+		);
 
 		// write MODA address
 		moda = _moda;
