@@ -5,7 +5,15 @@ import '@nomiclabs/hardhat-waffle';
 const INFURA_PROJECT_ID = '';
 
 export default {
-	solidity: '0.8.6',
+	solidity: {
+		version: '0.8.6',
+		settings: {
+			optimizer: {
+				enabled: true,
+				runs: 200,
+			},
+		},
+	},
 	networks: {
 		hardhat: {
 			chainId: 1337,
