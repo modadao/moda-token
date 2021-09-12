@@ -3,6 +3,7 @@
 	"scripts": {
 		"clean": "hardhat clean",
 		"compile": "hardhat compile",
+	    "recompile": "hardhat clean && hardhat compile",
 		"deploy": "hardhat run scripts/deploy.js",
 		"node": "hardhat node",
 		"test": "hardhat test",
