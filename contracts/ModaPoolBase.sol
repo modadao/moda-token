@@ -156,7 +156,7 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _initBlock initial block used to calculate the rewards
-	 *      note: _initBlock can be set to the future effectively meaning rewards calcs will do nothing
+	 *      note: _initBlock can be set to the future effectively meaning _sync() calls will do nothing
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
 	 * @param _modaPerBlock initial MODA/block value for rewards
