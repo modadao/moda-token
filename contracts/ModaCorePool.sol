@@ -15,12 +15,9 @@ import './ModaPoolBase.sol';
  * @author David Schwartz, reviewed by Kevin Brown
  */
 contract ModaCorePool is ModaPoolBase {
-	/// @dev Flag indicating pool type, false means "core pool"
-	bool public constant override isFlashPool = false;
-
 	/// @dev Pool tokens value available in the pool;
 	///      pool token examples are MODA (MODA core pool) or MODA/ETH pair (LP core pool)
-	/// @dev For LP core pool this value doesnt' count for MODA tokens received as Vault rewards
+	/// @dev For LP core pool this value doesn't count for MODA tokens received as Vault rewards
 	///      while for MODA core pool it does count for such tokens as well
 	uint256 public poolTokenReserve;
 
@@ -31,31 +28,37 @@ contract ModaCorePool is ModaPoolBase {
 	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _initBlock initial block used to calculate the rewards
+	 * @param _weight number representing a weight of the pool, actual weight fraction
+	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
+	 * @param _modaPerBlock initial MODA/block value for rewards
+	 * @param _blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+	 * @param _endBlock block number when farming stops and rewards cannot be updated anymore
 	 */
 	constructor(
 		address _moda,
 		address _smoda,
 		address _poolToken,
-		uint256 _initBlock
-	) ModaPoolBase(_moda, _smoda, _poolToken, _initBlock) {}
-
-	/**
-	 * @dev Used internally to calculate user's rewards.
-	 *
-	 * @dev params are unspecified for the moment. ///TODO
-	 *
-	 *
-	 */
-	function _calculateRewards(address _staker)
-		internal
-		view
-		virtual
-		override
-		returns (uint256 rewards)
+		uint256 _initBlock,
+		uint32 _weight,
+		uint192 _modaPerBlock,
+		uint32 _blocksPerUpdate,
+		uint32 _endBlock
+	)
+		ModaPoolBase(
+			_moda,
+			_smoda,
+			_poolToken,
+			_weight,
+			_modaPerBlock,
+			_blocksPerUpdate,
+			_initBlock,
+			_endBlock
+		)
 	{
-		_staker;
-		///TODO: This is intended to be overridden in ModaCorePool or other derived contracts.
-		return 0;
+		require(
+			poolTokenReserve == 0,
+			'poolTokenReserve was not initialised to zero on construction'
+		);
 	}
 
 	/**
@@ -80,7 +83,7 @@ contract ModaCorePool is ModaPoolBase {
 	 *      when pool is not an MODA pool (poolToken is not an MODA token)
 	 */
 	function processRewards(bool _useSMODA) external override {
-		_processRewards(msg.sender, _useSMODA);
+		_processRewards(msg.sender, _useSMODA, true);
 	}
 
 	/**
@@ -91,19 +94,27 @@ contract ModaCorePool is ModaPoolBase {
 	 * @param _staker an address which stakes (the yield reward)
 	 * @param _amount amount to be staked (yield reward amount)
 	 */
-	function stakeAsPool(address _staker, uint256 _amount) external {
+	function stakeAsPool(address _staker, uint256 _amount) external onlyOwner {
+		_sync();
 		User storage user = users[_staker];
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, true);
+			_processRewards(_staker, true, false);
 		}
+		uint256 depositWeight = _amount * YEAR_STAKE_WEIGHT_MULTIPLIER;
 		Deposit memory newDeposit = Deposit({
 			tokenAmount: _amount,
-			lockedFrom: uint64(block.timestamp),
-			lockedUntil: uint64(block.timestamp + 365 days),
+			lockedFrom: block.timestamp,
+			lockedUntil: block.timestamp + 365 days,
+			weight: depositWeight,
 			isYield: true
 		});
 		user.tokenAmount += _amount;
+		user.totalWeight += depositWeight;
 		user.deposits.push(newDeposit);
+
+		usersLockingWeight += depositWeight;
+
+		user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
 
 		// update `poolTokenReserve` only if this is a LP Core Pool (stakeAsPool can be executed only for LP pool)
 		poolTokenReserve += _amount;
@@ -112,25 +123,26 @@ contract ModaCorePool is ModaPoolBase {
 	/**
 	 * @inheritdoc ModaPoolBase
 	 *
-	 * @dev Additionally to the parent smart contract, updates vault rewards of the holder,
+	 * @dev Additionally to the parent smart contract,
 	 *      and updates (increases) pool token reserve (pool tokens value available in the pool)
 	 */
 	function _stake(
 		address _staker,
 		uint256 _amount,
-		uint256 _lockedUntil,
-		bool _useSMODA
+		uint256 _lockUntil,
+		bool _useSMODA,
+		bool _isYield
 	) internal override {
-		super._stake(_staker, _amount, _lockedUntil, _useSMODA);
-
+		super._stake(_staker, _amount, _lockUntil, _useSMODA, _isYield);
 		poolTokenReserve += _amount;
 	}
 
 	/**
 	 * @inheritdoc ModaPoolBase
 	 *
-	 * @dev Additionally to the parent smart contract, updates vault rewards of the holder,
-	 *      and updates (decreases) pool token reserve (pool tokens value available in the pool)
+	 * @dev Additionally to the parent smart contract,
+	 *      and updates (decreases) pool token reserve
+	 *      (pool tokens value available in the pool)
 	 */
 	function _unstake(
 		address _staker,
@@ -151,20 +163,20 @@ contract ModaCorePool is ModaPoolBase {
 	/**
 	 * @inheritdoc ModaPoolBase
 	 *
-	 * @dev Additionally to the parent smart contract, processes vault rewards of the holder,
-	 *      and for MODA pool updates (increases) pool token reserve (pool tokens value available in the pool)
+	 * @dev Additionally to the parent smart contract,
+	 *      and for MODA pool updates (increases) pool token reserve
+	 *      (pool tokens value available in the pool)
 	 */
-	function _processRewards(address _staker, bool _useSMODA)
-		internal
-		override
-		returns (uint256 rewards)
-	{
-		rewards = super._processRewards(_staker, _useSMODA);
+	function _processRewards(
+		address _staker,
+		bool _useSMODA,
+		bool _withUpdate
+	) internal override returns (uint256 rewards) {
+		rewards = super._processRewards(_staker, _useSMODA, _withUpdate);
 
 		// update `poolTokenReserve` only if this is a MODA Core Pool
 		if (poolToken == moda && !_useSMODA) {
 			poolTokenReserve += rewards;
 		}
-		return rewards;
 	}
 }
