@@ -8,7 +8,7 @@ import './ILinkedToMODA.sol';
  *
  * @notice An abstraction representing a pool, see ModaPoolBase for details
  *
- * @author Pedro Bergamini, reviewed by Basil Gorin
+ * @author David Schwartz, reviewed by Kevin Brown
  */
 interface IPool is ILinkedToMODA {
 	/**
@@ -18,12 +18,10 @@ interface IPool is ILinkedToMODA {
 	struct Deposit {
 		// @dev token amount staked
 		uint256 tokenAmount;
-		// @dev stake weight
-		uint256 weight;
 		// @dev locking period - from
-		uint64 lockedFrom;
+		uint256 lockedFrom;
 		// @dev locking period - until
-		uint64 lockedUntil;
+		uint256 lockedUntil;
 		// @dev indicates if the stake was created as a yield reward
 		bool isYield;
 	}
@@ -36,13 +34,7 @@ interface IPool is ILinkedToMODA {
 
 	function isFlashPool() external view returns (bool);
 
-	function weight() external view returns (uint32);
-
-	function lastYieldDistribution() external view returns (uint64);
-
-	function yieldRewardsPerWeight() external view returns (uint256);
-
-	function usersLockingWeight() external view returns (uint256);
+	function lastYieldDistribution() external view returns (uint256);
 
 	function pendingYieldRewards(address _user) external view returns (uint256);
 
@@ -54,8 +46,8 @@ interface IPool is ILinkedToMODA {
 
 	function stake(
 		uint256 _amount,
-		uint64 _lockedUntil,
-		bool useSMODA
+		uint256 _lockedUntil,
+		bool _useSMODA
 	) external;
 
 	function unstake(
@@ -64,9 +56,5 @@ interface IPool is ILinkedToMODA {
 		bool useSMODA
 	) external;
 
-	function sync() external;
-
 	function processRewards(bool useSMODA) external;
-
-	function setWeight(uint32 _weight) external;
 }

@@ -12,19 +12,11 @@ import './ModaPoolBase.sol';
  *
  * @dev See ModaPoolBase for more details
  *
- * @author Pedro Bergamini, reviewed by Basil Gorin
+ * @author David Schwartz, reviewed by Kevin Brown
  */
 contract ModaCorePool is ModaPoolBase {
 	/// @dev Flag indicating pool type, false means "core pool"
 	bool public constant override isFlashPool = false;
-
-	/// @dev Link to deployed ModaVault instance
-	address public vault;
-
-	/// @dev Used to calculate vault rewards
-	/// @dev This value is different from "reward per token" used in locked pool
-	/// @dev Note: stakes are different in duration and "weight" reflects that
-	uint256 public vaultRewardsPerWeight;
 
 	/// @dev Pool tokens value available in the pool;
 	///      pool token examples are MODA (MODA core pool) or MODA/ETH pair (LP core pool)
@@ -33,109 +25,37 @@ contract ModaCorePool is ModaPoolBase {
 	uint256 public poolTokenReserve;
 
 	/**
-	 * @dev Fired in receiveVaultRewards()
-	 *
-	 * @param _by an address that sent the rewards, always a vault
-	 * @param amount amount of tokens received
-	 */
-	event VaultRewardsReceived(address indexed _by, uint256 amount);
-
-	/**
-	 * @dev Fired in _processVaultRewards() and dependent functions, like processRewards()
-	 *
-	 * @param _by an address which executed the function
-	 * @param _to an address which received a reward
-	 * @param amount amount of reward received
-	 */
-	event VaultRewardsClaimed(address indexed _by, address indexed _to, uint256 amount);
-
-	/**
-	 * @dev Fired in setVault()
-	 *
-	 * @param _by an address which executed the function, always a factory owner
-	 */
-	event VaultUpdated(address indexed _by, address _fromVal, address _toVal);
-
-	/**
 	 * @dev Creates/deploys an instance of the core pool
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
 	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
-	 * @param _factory Pool factory ModaPoolFactory instance/address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _initBlock initial block used to calculate the rewards
-	 * @param _weight number representing a weight of the pool, actual weight fraction
-	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
 	 */
 	constructor(
 		address _moda,
 		address _smoda,
-		ModaPoolFactory _factory,
 		address _poolToken,
-		uint64 _initBlock,
-		uint32 _weight
-	) ModaPoolBase(_moda, _smoda, _factory, _poolToken, _initBlock, _weight) {}
+		uint256 _initBlock
+	) ModaPoolBase(_moda, _smoda, _poolToken, _initBlock) {}
 
 	/**
-	 * @notice Calculates current vault rewards value available for address specified
+	 * @dev Used internally to calculate user's rewards.
 	 *
-	 * @dev Performs calculations based on current smart contract state only,
-	 *      not taking into account any additional time/blocks which might have passed
+	 * @dev params are unspecified for the moment. ///TODO
 	 *
-	 * @param _staker an address to calculate vault rewards value for
-	 * @return pending calculated vault reward value for the given address
+	 *
 	 */
-	function pendingVaultRewards(address _staker) public view returns (uint256 pending) {
-		User memory user = users[_staker];
-
-		return weightToReward(user.totalWeight, vaultRewardsPerWeight) - user.subVaultRewards;
-	}
-
-	/**
-	 * @dev Executed only by the factory owner to Set the vault
-	 *
-	 * @param _vault an address of deployed ModaVault instance
-	 */
-	function setVault(address _vault) external {
-		// verify function is executed by the factory owner
-		require(factory.owner() == msg.sender, 'access denied');
-
-		// verify input is set
-		require(_vault != address(0), 'zero input');
-
-		// emit an event
-		emit VaultUpdated(msg.sender, vault, _vault);
-
-		// update vault address
-		vault = _vault;
-	}
-
-	/**
-	 * @dev Executed by the vault to transfer vault rewards MODA from the vault
-	 *      into the pool
-	 *
-	 * @dev This function is executed only for MODA core pools
-	 *
-	 * @param _rewardsAmount amount of MODA rewards to transfer into the pool
-	 */
-	function receiveVaultRewards(uint256 _rewardsAmount) external {
-		require(msg.sender == vault, 'access denied');
-		// return silently if there is no reward to receive
-		if (_rewardsAmount == 0) {
-			return;
-		}
-		require(usersLockingWeight > 0, 'zero locking weight');
-
-		transferModaFrom(msg.sender, address(this), _rewardsAmount);
-
-		vaultRewardsPerWeight += rewardToWeight(_rewardsAmount, usersLockingWeight);
-
-		// update `poolTokenReserve` only if this is a MODA Core Pool
-		if (poolToken == moda) {
-			poolTokenReserve += _rewardsAmount;
-		}
-
-		emit VaultRewardsReceived(msg.sender, _rewardsAmount);
+	function _calculateRewards(address _staker)
+		internal
+		view
+		virtual
+		override
+		returns (uint256 rewards)
+	{
+		_staker;
+		///TODO: This is intended to be overridden in ModaCorePool or other derived contracts.
+		return 0;
 	}
 
 	/**
@@ -148,7 +68,7 @@ contract ModaCorePool is ModaPoolBase {
 	 *      executed by deposit holder and when at least one block passes from the
 	 *      previous reward processing
 	 * @dev Executed internally when "staking as a pool" (`stakeAsPool`)
-	 * @dev When timing conditions are not met (executed too frequently, or after factory
+	 * @dev When timing conditions are not met (executed too frequently, or after
 	 *      end block), function doesn't throw and exits silently
 	 *
 	 * @dev _useSMODA flag has a context of yield rewards only
@@ -160,7 +80,7 @@ contract ModaCorePool is ModaPoolBase {
 	 *      when pool is not an MODA pool (poolToken is not an MODA token)
 	 */
 	function processRewards(bool _useSMODA) external override {
-		_processRewards(msg.sender, _useSMODA, true);
+		_processRewards(msg.sender, _useSMODA);
 	}
 
 	/**
@@ -172,28 +92,18 @@ contract ModaCorePool is ModaPoolBase {
 	 * @param _amount amount to be staked (yield reward amount)
 	 */
 	function stakeAsPool(address _staker, uint256 _amount) external {
-		require(factory.poolExists(msg.sender), 'access denied');
-		_sync();
 		User storage user = users[_staker];
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, true, false);
+			_processRewards(_staker, true);
 		}
-		uint256 depositWeight = _amount * YEAR_STAKE_WEIGHT_MULTIPLIER;
 		Deposit memory newDeposit = Deposit({
 			tokenAmount: _amount,
-			lockedFrom: uint64(now256()),
-			lockedUntil: uint64(now256() + 365 days),
-			weight: depositWeight,
+			lockedFrom: uint64(block.timestamp),
+			lockedUntil: uint64(block.timestamp + 365 days),
 			isYield: true
 		});
 		user.tokenAmount += _amount;
-		user.totalWeight += depositWeight;
 		user.deposits.push(newDeposit);
-
-		usersLockingWeight += depositWeight;
-
-		user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
-		user.subVaultRewards = weightToReward(user.totalWeight, vaultRewardsPerWeight);
 
 		// update `poolTokenReserve` only if this is a LP Core Pool (stakeAsPool can be executed only for LP pool)
 		poolTokenReserve += _amount;
@@ -208,13 +118,10 @@ contract ModaCorePool is ModaPoolBase {
 	function _stake(
 		address _staker,
 		uint256 _amount,
-		uint64 _lockedUntil,
-		bool _useSMODA,
-		bool _isYield
+		uint256 _lockedUntil,
+		bool _useSMODA
 	) internal override {
-		super._stake(_staker, _amount, _lockedUntil, _useSMODA, _isYield);
-		User storage user = users[_staker];
-		user.subVaultRewards = weightToReward(user.totalWeight, vaultRewardsPerWeight);
+		super._stake(_staker, _amount, _lockedUntil, _useSMODA);
 
 		poolTokenReserve += _amount;
 	}
@@ -234,12 +141,11 @@ contract ModaCorePool is ModaPoolBase {
 		User storage user = users[_staker];
 		Deposit memory stakeDeposit = user.deposits[_depositId];
 		require(
-			stakeDeposit.lockedFrom == 0 || now256() > stakeDeposit.lockedUntil,
+			stakeDeposit.lockedFrom == 0 || block.timestamp > stakeDeposit.lockedUntil,
 			'deposit not yet unlocked'
 		);
 		poolTokenReserve -= _amount;
 		super._unstake(_staker, _depositId, _amount, _useSMODA);
-		user.subVaultRewards = weightToReward(user.totalWeight, vaultRewardsPerWeight);
 	}
 
 	/**
@@ -248,46 +154,17 @@ contract ModaCorePool is ModaPoolBase {
 	 * @dev Additionally to the parent smart contract, processes vault rewards of the holder,
 	 *      and for MODA pool updates (increases) pool token reserve (pool tokens value available in the pool)
 	 */
-	function _processRewards(
-		address _staker,
-		bool _useSMODA,
-		bool _withUpdate
-	) internal override returns (uint256 pendingYield) {
-		_processVaultRewards(_staker);
-		pendingYield = super._processRewards(_staker, _useSMODA, _withUpdate);
+	function _processRewards(address _staker, bool _useSMODA)
+		internal
+		override
+		returns (uint256 rewards)
+	{
+		rewards = super._processRewards(_staker, _useSMODA);
 
 		// update `poolTokenReserve` only if this is a MODA Core Pool
 		if (poolToken == moda && !_useSMODA) {
-			poolTokenReserve += pendingYield;
+			poolTokenReserve += rewards;
 		}
-	}
-
-	/**
-	 * @dev Used internally to process vault rewards for the staker
-	 *
-	 * @param _staker address of the user (staker) to process rewards for
-	 */
-	function _processVaultRewards(address _staker) private {
-		User storage user = users[_staker];
-		uint256 pendingVaultClaim = pendingVaultRewards(_staker);
-		if (pendingVaultClaim == 0) return;
-		// read MODA token balance of the pool via standard ERC20 interface
-		uint256 modaBalance = IERC20(moda).balanceOf(address(this));
-		require(modaBalance >= pendingVaultClaim, 'contract MODA balance too low');
-
-		// update `poolTokenReserve` only if this is a MODA Core Pool
-		if (poolToken == moda) {
-			// protects against rounding errors
-			poolTokenReserve -= pendingVaultClaim > poolTokenReserve
-				? poolTokenReserve
-				: pendingVaultClaim;
-		}
-
-		user.subVaultRewards = weightToReward(user.totalWeight, vaultRewardsPerWeight);
-
-		// transfer fails if pool MODA balance is not enough - which is a desired behavior
-		transferModa(_staker, pendingVaultClaim);
-
-		emit VaultRewardsClaimed(msg.sender, _staker, pendingVaultClaim);
+		return rewards;
 	}
 }
