@@ -47,7 +47,7 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 	/// @dev Link to the pool token instance, for example MODA or MODA/ETH pair
 	address public immutable override poolToken;
 
-	/// @dev Pool weight, 100 for ILV pool or 900 for ILV/ETH
+	/// @dev Pool weight, 100 for MODA pool or 900 for MODA/ETH
 	uint32 public override weight;
 
 	/// @dev Block number of the last yield distribution event
@@ -211,11 +211,11 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 			uint256 multiplier = block.number > endBlock
 				? endBlock - lastYieldDistribution
 				: block.number - lastYieldDistribution;
-			uint256 ilvRewards = (multiplier * weight * modaPerBlock) / totalWeight;
+			uint256 modaRewards = (multiplier * weight * modaPerBlock) / totalWeight;
 
 			// recalculated value for `yieldRewardsPerWeight`
 			newYieldRewardsPerWeight =
-				rewardToWeight(ilvRewards, usersLockingWeight) +
+				rewardToWeight(modaRewards, usersLockingWeight) +
 				yieldRewardsPerWeight;
 		} else {
 			// if smart contract state is up to date, we don't recalculate
@@ -491,13 +491,13 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 	 * @param _staker an address which unstakes tokens (which previously staked them)
 	 * @param _depositId deposit ID to unstake from, zero-indexed
 	 * @param _amount amount of tokens to unstake
-	 * @param _useSILV a flag indicating if reward to be paid as sILV
+	 * @param _useSMODA a flag indicating if reward to be paid as sMODA
 	 */
 	function _unstake(
 		address _staker,
 		uint256 _depositId,
 		uint256 _amount,
-		bool _useSILV
+		bool _useSMODA
 	) internal virtual {
 		// verify an amount is set
 		require(_amount > 0, 'zero amount');
@@ -516,7 +516,7 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 		// update smart contract state
 		_sync();
 		// and process current pending rewards if any
-		_processRewards(_staker, _useSILV, false);
+		_processRewards(_staker, _useSMODA, false);
 
 		// recalculate deposit weight
 		uint256 previousWeight = stakeDeposit.weight;
@@ -561,7 +561,7 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 	 *      updates factory state via `updateMODAPerBlock`
 	 */
 	function _sync() internal virtual {
-		// update ILV per block value in factory if required
+		// update MODA per block value in factory if required
 		if (shouldUpdateRatio()) {
 			updateMODAPerBlock();
 		}
@@ -586,10 +586,10 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 		uint256 blocksPassed = currentBlock - lastYieldDistribution;
 
 		// calculate the reward
-		uint256 ilvReward = (blocksPassed * modaPerBlock * weight) / totalWeight;
+		uint256 modaReward = (blocksPassed * modaPerBlock * weight) / totalWeight;
 
 		// update rewards per weight and `lastYieldDistribution`
-		yieldRewardsPerWeight += rewardToWeight(ilvReward, usersLockingWeight);
+		yieldRewardsPerWeight += rewardToWeight(modaReward, usersLockingWeight);
 		lastYieldDistribution = currentBlock;
 
 		// emit an event
@@ -726,10 +726,10 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 
 	/**
 	 * @dev Converts stake weight (not to be mixed with the pool weight) to
-	 *      ILV reward value, applying the 10^12 division on weight
+	 *      MODA reward value, applying the 10^12 division on weight
 	 *
 	 * @param _weight stake weight
-	 * @param rewardPerWeight ILV reward per weight
+	 * @param rewardPerWeight MODA reward per weight
 	 * @return reward value normalized to 10^12
 	 */
 	function weightToReward(uint256 _weight, uint256 rewardPerWeight)
@@ -742,10 +742,10 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 	}
 
 	/**
-	 * @dev Converts reward ILV value to stake weight (not to be mixed with the pool weight),
+	 * @dev Converts reward MODA value to stake weight (not to be mixed with the pool weight),
 	 *      applying the 10^12 multiplication on the reward
 	 *      - OR -
-	 * @dev Converts reward ILV value to reward/weight if stake weight is supplied as second
+	 * @dev Converts reward MODA value to reward/weight if stake weight is supplied as second
 	 *      function parameter instead of reward/weight
 	 *
 	 * @param reward yield reward

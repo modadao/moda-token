@@ -78,15 +78,15 @@ contract PoolFactoryBase is ModaAware {
 	}
 
 	/**
-	 * @dev Verifies if `blocksPerUpdate` has passed since last ILV/block
-	 *      ratio update and if ILV/block reward can be decreased by 3%
+	 * @dev Verifies if `blocksPerUpdate` has passed since last MODA/block
+	 *      ratio update and if MODA/block reward can be decreased by 3%
 	 *
 	 * @return true if enough time has passed and `updateMODAPerBlock` can be executed
 	 */
 	function shouldUpdateRatio() internal view returns (bool) {
 		// if yield farming period has ended
 		if (block.number > endBlock) {
-			// ILV/block reward cannot be updated anymore
+			// MODA/block reward cannot be updated anymore
 			return false;
 		}
 
@@ -100,19 +100,19 @@ contract PoolFactoryBase is ModaAware {
 	 * @dev Fired in updateMODAPerBlock()
 	 *
 	 * @param _by an address which executed an action
-	 * @param newIlvPerBlock new ILV/block value
+	 * @param newIlvPerBlock new MODA/block value
 	 */
 	event ModaRatioUpdated(address indexed _by, uint256 newIlvPerBlock);
 
 	/**
-	 * @notice Decreases ILV/block reward by 3%, can be executed
+	 * @notice Decreases MODA/block reward by 3%, can be executed
 	 *      no more than once per `blocksPerUpdate` blocks
 	 */
 	function updateMODAPerBlock() internal {
 		// checks if ratio can be updated i.e. if blocks/update (91252 blocks) have passed
 		require(shouldUpdateRatio(), 'too frequent');
 
-		// decreases ILV/block reward by 3%
+		// decreases MODA/block reward by 3%
 		modaPerBlock = (modaPerBlock * 97) / 100;
 
 		// set current block as the last ratio update block
@@ -123,16 +123,16 @@ contract PoolFactoryBase is ModaAware {
 	}
 
 	/**
-	 * @dev Mints ILV tokens; executed by ILV Pool only
+	 * @dev Mints MODA tokens; executed by MODA Pool only
 	 *
 	 * @dev Requires factory to have ROLE_TOKEN_CREATOR permission
-	 *      on the ILV ERC20 token instance
+	 *      on the MODA ERC20 token instance
 	 *
 	 * @param _to an address to mint tokens to
-	 * @param _amount amount of ILV tokens to mint
+	 * @param _amount amount of MODA tokens to mint
 	 */
 	function mintYieldTo(address _to, uint256 _amount) internal {
-		// mint ILV tokens as required
+		// mint MODA tokens as required
 		mintModa(_to, _amount);
 	}
 }
