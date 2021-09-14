@@ -7,7 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
 import './ICorePool.sol';
 import './EscrowedModaERC20.sol';
-import './PoolFactoryBase.sol';
+import './ModaPoolFactory.sol';
 
 /**
  * @title Moda Pool Base
@@ -23,7 +23,7 @@ import './PoolFactoryBase.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownable {
+abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard, Ownable {
 	/// @dev Data structure representing token holder using a pool
 	struct User {
 		// @dev Total staked amount
@@ -172,7 +172,7 @@ abstract contract ModaPoolBase is IPool, PoolFactoryBase, ReentrancyGuard, Ownab
 		uint32 _blocksPerUpdate,
 		uint256 _initBlock,
 		uint32 _endBlock
-	) PoolFactoryBase(_moda, _modaPerBlock, _blocksPerUpdate, _initBlock, _endBlock) {
+	) ModaPoolFactory(_moda, _modaPerBlock, _blocksPerUpdate, _initBlock, _endBlock) {
 		// verify the inputs are set
 		require(_smoda != address(0), 'sMODA address not set');
 		require(_poolToken != address(0), 'pool token address not set');

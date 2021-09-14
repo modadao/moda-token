@@ -15,7 +15,7 @@ import './EscrowedModaERC20.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-contract PoolFactoryBase is ModaAware {
+contract ModaPoolFactory is ModaAware {
 	/**
 	 * @dev MODA/block determines yield farming reward base
 	 *      used by the yield pools controlled by the factory
