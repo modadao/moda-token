@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity >=0.8.4;
 
 import './ILinkedToMODA.sol';
 
@@ -8,7 +8,7 @@ import './ILinkedToMODA.sol';
  *
  * @notice An abstraction representing a pool, see ModaPoolBase for details
  *
- * @author David Schwartz, reviewed by Kevin Brown
+ * @author Pedro Bergamini, reviewed by Basil Gorin
  */
 interface IPool is ILinkedToMODA {
 	/**
@@ -18,6 +18,8 @@ interface IPool is ILinkedToMODA {
 	struct Deposit {
 		// @dev token amount staked
 		uint256 tokenAmount;
+		// @dev stake weight
+		uint256 weight;
 		// @dev locking period - from
 		uint256 lockedFrom;
 		// @dev locking period - until
@@ -32,9 +34,15 @@ interface IPool is ILinkedToMODA {
 
 	function poolToken() external view returns (address);
 
-	function isFlashPool() external view returns (bool);
+	//function isFlashPool() external view returns (bool);
+
+	function weight() external view returns (uint32);
 
 	function lastYieldDistribution() external view returns (uint256);
+
+	function yieldRewardsPerWeight() external view returns (uint256);
+
+	function usersLockingWeight() external view returns (uint256);
 
 	function pendingYieldRewards(address _user) external view returns (uint256);
 
@@ -47,7 +55,7 @@ interface IPool is ILinkedToMODA {
 	function stake(
 		uint256 _amount,
 		uint256 _lockedUntil,
-		bool _useSMODA
+		bool useSMODA
 	) external;
 
 	function unstake(
@@ -56,5 +64,9 @@ interface IPool is ILinkedToMODA {
 		bool useSMODA
 	) external;
 
+	function sync() external;
+
 	function processRewards(bool useSMODA) external;
+
+	function setWeight(uint32 _weight) external;
 }
