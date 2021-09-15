@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.6;
 
+import '@openzeppelin/contracts/access/Ownable.sol';
 import './ModaAware.sol';
 import './EscrowedModaERC20.sol';
 
@@ -15,7 +16,7 @@ import './EscrowedModaERC20.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-contract ModaPoolFactory is ModaAware {
+abstract contract ModaPoolFactory is ModaAware, Ownable {
 	/**
 	 * @dev MODA/block determines yield farming reward base
 	 *      used by the yield pools controlled by the factory
@@ -47,6 +48,23 @@ contract ModaPoolFactory is ModaAware {
 	 *      has passed when decreasing yield reward by 3%
 	 */
 	uint256 public lastRatioUpdate;
+
+	/**
+	 * @dev Fired in _changePoolWeight()
+	 *
+	 * @param _by an address which executed an action
+	 * @param poolAddress deployed pool instance address
+	 * @param weight new pool weight
+	 */
+	event WeightUpdated(address indexed _by, address indexed poolAddress, uint32 weight);
+
+	/**
+	 * @dev Fired in updateILVPerBlock()
+	 *
+	 * @param _by an address which executed an action
+	 * @param newIlvPerBlock new ILV/block value
+	 */
+	event ModaRatioUpdated(address indexed _by, uint256 newIlvPerBlock);
 
 	/**
 	 * @dev Creates/deploys a factory instance
@@ -97,14 +115,6 @@ contract ModaPoolFactory is ModaAware {
 	/// Imported from ModaPoolFactory after that was removed from the design.
 
 	/**
-	 * @dev Fired in updateMODAPerBlock()
-	 *
-	 * @param _by an address which executed an action
-	 * @param newIlvPerBlock new MODA/block value
-	 */
-	event ModaRatioUpdated(address indexed _by, uint256 newIlvPerBlock);
-
-	/**
 	 * @notice Decreases MODA/block reward by 3%, can be executed
 	 *      no more than once per `blocksPerUpdate` blocks
 	 */
@@ -134,5 +144,27 @@ contract ModaPoolFactory is ModaAware {
 	function mintYieldTo(address _to, uint256 _amount) internal {
 		// mint MODA tokens as required
 		mintModa(_to, _amount);
+	}
+
+	/**
+	 * @dev Provided a virtual accessor to the IPool.weight()
+	 *      implemented in ModaPoolBase.
+	 * @dev This is used by _changePoolWeight in place of the
+	 *      original implementation's pool address parameter.
+	 */
+	function _poolWeight() internal view virtual returns (uint32);
+
+	/**
+	 * @dev Changes the weight of the pool;
+	 *      executed by the pool itself or by the factory owner
+	 *
+	 * @param newWeight new weight value to set to
+	 */
+	function _changePoolWeight(uint32 newWeight) internal onlyOwner {
+		// recalculate total weight
+		totalWeight = totalWeight + newWeight - _poolWeight();
+
+		// emit an event
+		emit WeightUpdated(msg.sender, address(this), newWeight);
 	}
 }

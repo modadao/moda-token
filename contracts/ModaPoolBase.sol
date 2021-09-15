@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
@@ -23,7 +22,7 @@ import './ModaPoolFactory.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard, Ownable {
+abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard {
 	/// @dev Data structure representing token holder using a pool
 	struct User {
 		// @dev Total staked amount
@@ -188,7 +187,7 @@ abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard, Ownab
 		// save the inputs into internal state variables
 		smoda = _smoda;
 		poolToken = _poolToken;
-		weight = _weight;
+		_setWeight(_weight);
 
 		// init the dependent internal state variables
 		lastYieldDistribution = _initBlock;
@@ -201,7 +200,7 @@ abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard, Ownab
 	 * @return calculated yield reward value for the given address
 	 */
 	function pendingYieldRewards(address _staker) external view override returns (uint256) {
-		// `newYieldRewardsPerWeight` will store stored or recalculated value for `yieldRewardsPerWeight`
+		// `newYieldRewardsPerWeight` will store stored a recalculated value for `yieldRewardsPerWeight`
 		uint256 newYieldRewardsPerWeight;
 
 		// if smart contract state was not updated recently, `yieldRewardsPerWeight` value
@@ -378,11 +377,25 @@ abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard, Ownab
 	 * @param _weight new weight to set for the pool
 	 */
 	function setWeight(uint32 _weight) external override onlyOwner {
-		// emit an event logging old and new weight values
-		emit PoolWeightUpdated(msg.sender, weight, _weight);
+		_setWeight(_weight);
+	}
 
+	/**
+	 * @dev Executed by the factory to modify pool weight; the factory is expected
+	 *      to keep track of the total pools weight when updating
+	 *
+	 * @dev Set weight to zero to disable the pool
+	 *
+	 * @param _weight new weight to set for the pool
+	 */
+	function _setWeight(uint32 _weight) internal onlyOwner {
+		///TODO: this could be more efficient.
+		// order of operations is important here.
+		_changePoolWeight(_weight);
 		// set the new weight value
 		weight = _weight;
+		// emit an event logging old and new weight values
+		emit PoolWeightUpdated(msg.sender, weight, _weight);
 	}
 
 	/**
@@ -790,5 +803,9 @@ abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard, Ownab
 	) internal nonReentrant {
 		// just delegate call to the target
 		SafeERC20.safeTransferFrom(IERC20(poolToken), _from, _to, _value);
+	}
+
+	function _poolWeight() internal view override returns (uint32) {
+		return weight;
 	}
 }
