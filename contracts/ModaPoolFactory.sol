@@ -135,7 +135,7 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	/**
 	 * @dev Mints MODA tokens; executed by MODA Pool only
 	 *
-	 * @dev Requires factory to have ROLE_TOKEN_CREATOR permission
+	 * @dev Requires caller to have ROLE_TOKEN_CREATOR permission
 	 *      on the MODA ERC20 token instance
 	 *
 	 * @param _to an address to mint tokens to
@@ -143,6 +143,7 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	 */
 	function mintYieldTo(address _to, uint256 _amount) internal {
 		// mint MODA tokens as required
+		//console.log('ModaPoolFactory.mintYieldTo', address(this), _msgSender(), _to);
 		mintModa(_to, _amount);
 	}
 
