@@ -38,6 +38,9 @@ describe('Core Pool', () => {
 	}
 
 	beforeEach(async () => {
+		let currentBlock = await ethers.provider.getBlock(ethers.provider.getBlockNumber());
+		start = fromTimestamp(currentBlock.timestamp);
+
 		[owner, user0, user1] = await ethers.getSigners();
 		addr = [user0.address, user1.address];
 
@@ -81,5 +84,69 @@ describe('Core Pool', () => {
 		).to.be.revertedWith(
 			`AccessControl: account ${addr[0].toLowerCase()} is missing role 0x000b000000000000000000000000000000000000000000000000000000000000`
 		);
+	});
+
+	it('Should allow a user to unstake a locked deposit after 1 year', async () => {
+		//logSetup();
+		// Set up the balance first
+		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
+
+		// Calculate a suitable locking end date
+		let endDate: Date = new Date();
+		endDate.setTime(start.getTime() + YEAR - 10 * MILLIS);
+		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
+		console.log('lockedUntil', lockUntil);
+		const amount: BigNumber = BigNumber.from(104);
+		await token.connect(user0).approve(corePool.address, amount);
+		expect(await token.allowance(addr[0], corePool.address)).to.equal(amount);
+		await corePool.connect(user0).stake(amount, lockUntil, false);
+
+		// Staking moves the user's MODA from the Token contract to the CorePool.
+		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0].sub(amount));
+		//console.log(contractTx);
+		expect(await corePool.getDepositsLength(addr[0])).to.equal(1);
+
+		// Now attempt to withdraw it.
+		await expect(
+			corePool.connect(user0).unstake(toEth('0'), toEth('100'), true)
+		).to.be.revertedWith('deposit not yet unlocked');
+		// Wait for more than a year though and...
+		await fastForward(add(start, { years: 1, days: 1 }));
+		// Before unstake executes the user should have zero sMODA.
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
+		await corePool.connect(user0).unstake(BigNumber.from(0), amount, true);
+
+		// Examine the tokens this address now owns.
+		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(449999);
+		// Is there anything remaining?
+		expect(await corePool.getDepositsLength(addr[0])).to.equal(1);
+		// It may seem that way but...
+		let [
+			// @dev token amount staked
+			tokenAmount,
+			// @dev stake weight
+			weight,
+			// @dev locking period - from
+			lockedFrom,
+			// @dev locking period - until
+			lockedUntil,
+			// @dev indicates if the stake was created as a yield reward
+			isYield,
+		] = await corePool.getDeposit(addr[0], BigNumber.from(0));
+		expect(tokenAmount).to.equal(0);
+		expect(weight).to.equal(0);
+		expect(lockedFrom).to.equal(0);
+		expect(lockedUntil).to.equal(0);
+		expect(isYield).to.equal(false);
+	});
+
+	it('Should revert on invalid lock interval', async () => {
+		let endDate: Date = new Date();
+		endDate.setTime(start.getTime() + YEAR * 2);
+		let lockedUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
+		await expect(
+			corePool.connect(user0).stake(toEth('100'), lockedUntil, false)
+		).to.be.revertedWith('invalid lock interval');
 	});
 });
