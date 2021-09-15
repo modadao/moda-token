@@ -27,21 +27,21 @@ contract ModaCorePool is ModaPoolBase {
 	 * @param _moda MODA ERC20 Token ModaERC20 address
 	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
-	 * @param _initBlock initial block used to calculate the rewards
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
 	 * @param _modaPerBlock initial MODA/block value for rewards
 	 * @param _blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+	 * @param _initBlock initial block used to calculate the rewards
 	 * @param _endBlock block number when farming stops and rewards cannot be updated anymore
 	 */
 	constructor(
 		address _moda,
 		address _smoda,
 		address _poolToken,
-		uint256 _initBlock,
 		uint32 _weight,
 		uint192 _modaPerBlock,
 		uint32 _blocksPerUpdate,
+		uint256 _initBlock,
 		uint32 _endBlock
 	)
 		ModaPoolBase(
