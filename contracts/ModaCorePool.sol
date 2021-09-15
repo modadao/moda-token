@@ -39,10 +39,10 @@ contract ModaCorePool is ModaPoolBase {
 		address _smoda,
 		address _poolToken,
 		uint32 _weight,
-		uint192 _modaPerBlock,
-		uint32 _blocksPerUpdate,
+		uint256 _modaPerBlock,
+		uint256 _blocksPerUpdate,
 		uint256 _initBlock,
-		uint32 _endBlock
+		uint256 _endBlock
 	)
 		ModaPoolBase(
 			_moda,

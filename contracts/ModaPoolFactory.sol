@@ -21,7 +21,7 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	 * @dev MODA/block determines yield farming reward base
 	 *      used by the yield pools controlled by the factory
 	 */
-	uint192 public modaPerBlock;
+	uint256 public modaPerBlock;
 
 	/**
 	 * @dev The yield is distributed proportionally to pool weights;
@@ -33,7 +33,7 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	 * @dev MODA/block decreases by 3% every blocks/update (set to 91252 blocks during deployment);
 	 *      an update is triggered by executing `updateMODAPerBlock` public function
 	 */
-	uint32 public immutable blocksPerUpdate;
+	uint256 public immutable blocksPerUpdate;
 
 	/**
 	 * @dev End block is the last block when MODA/block can be decreased;
@@ -77,8 +77,8 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	 */
 	constructor(
 		address _moda,
-		uint192 _modaPerBlock,
-		uint32 _blocksPerUpdate,
+		uint256 _modaPerBlock,
+		uint256 _blocksPerUpdate,
 		uint256 _initBlock,
 		uint256 _endBlock
 	) ModaAware(_moda) {

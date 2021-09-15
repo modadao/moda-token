@@ -167,15 +167,15 @@ abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard {
 		address _smoda,
 		address _poolToken,
 		uint32 _weight,
-		uint192 _modaPerBlock,
-		uint32 _blocksPerUpdate,
+		uint256 _modaPerBlock,
+		uint256 _blocksPerUpdate,
 		uint256 _initBlock,
-		uint32 _endBlock
+		uint256 _endBlock
 	) ModaPoolFactory(_moda, _modaPerBlock, _blocksPerUpdate, _initBlock, _endBlock) {
 		// verify the inputs are set
 		require(_smoda != address(0), 'sMODA address not set');
 		require(_poolToken != address(0), 'pool token address not set');
-		require(_initBlock > block.timestamp, 'init block not set');
+		require(_initBlock >= block.number, 'init block not set');
 		require(_weight > 0, 'pool weight not set');
 
 		// verify sMODA instance supplied
