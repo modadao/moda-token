@@ -18,6 +18,14 @@ describe('Core Pool', () => {
 	let users: string[];
 	let userBalances = [toEth('6500000'), toEth('3500000')];
 
+	function logSetup() {
+		console.log('Owner', owner.address);
+		console.log('Users', users);
+		console.log('Token', token.address);
+		console.log('Escrow Token', escrowToken.address);
+		console.log('Core Pool', corePool.address);
+	}
+
 	beforeEach(async () => {
 		[owner, addr0, addr1] = await ethers.getSigners();
 		users = [addr0.address, addr1.address];
@@ -48,7 +56,11 @@ describe('Core Pool', () => {
 		await corePool.deployed();
 	});
 
+	it('Should log the set up', async () => {
+		logSetup();
+	});
 	it('Should allow owner to create a pool stake', async () => {
+		logSetup();
 		expect(await token.balanceOf(addr0.address)).to.equal(userBalances[0]);
 		let contractTx = await corePool.stakeAsPool(users[0], toEth('100'));
 		//console.log(contractTx);
@@ -72,4 +84,21 @@ describe('Core Pool', () => {
 			corePool.connect(addr0).unstake(toEth('0'), toEth('100'), true)
 		).to.be.revertedWith('deposit not yet unlocked');
 	});
+
+	it('Should allow a user to unstake a locked deposit after 1 year', async () => {
+		// Set up the balance first
+		expect(await token.balanceOf(addr0.address)).to.equal(userBalances[0]);
+		let contractTx = await corePool.stakeAsPool(users[0], toEth('100'));
+		//console.log(contractTx);
+		expect(await corePool.getDepositsLength(users[0])).to.equal(1);
+		// Now attempt to withdraw it.
+		await expect(
+			corePool.connect(addr0).unstake(toEth('0'), toEth('100'), true)
+		).to.be.revertedWith('deposit not yet unlocked');
+		// Wait for more than a year though and...
+		await fastForward(add(start, { years: 3 }));
+		await corePool.connect(addr0).unstake(toEth('0'), toEth('100'), true);
+	});
+
+	it('Should ', async () => {});
 });

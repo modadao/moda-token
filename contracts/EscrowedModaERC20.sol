@@ -24,9 +24,9 @@ contract EscrowedModaERC20 is ERC20('Escrowed Moda', 'sMODA'), AccessControl, Ow
 		0x0a9a93ba9d22fa5ed507ff32440b8750c8951e4864438c8afc02be22ad238ebf;
 
 	constructor() {
-		_setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_setRoleAdmin(ROLE_TOKEN_CREATOR, DEFAULT_ADMIN_ROLE);
-		grantRole(ROLE_TOKEN_CREATOR, msg.sender);
+		grantRole(ROLE_TOKEN_CREATOR, _msgSender());
 	}
 
 	/**

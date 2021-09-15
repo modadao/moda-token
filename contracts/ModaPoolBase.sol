@@ -22,7 +22,7 @@ import './ModaPoolFactory.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-abstract contract ModaPoolBase is IPool, ModaPoolFactory, ReentrancyGuard {
+abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyGuard {
 	/// @dev Data structure representing token holder using a pool
 	struct User {
 		// @dev Total staked amount

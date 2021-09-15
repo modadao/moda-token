@@ -5,7 +5,7 @@ import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
 import './IVestingToken.sol';
 
@@ -14,7 +14,8 @@ contract Token is
 	OwnableUpgradeable,
 	ERC20Upgradeable,
 	UUPSUpgradeable,
-	IVestingToken
+	IVestingToken,
+	AccessControlUpgradeable
 {
 	using SafeMath for uint256;
 
@@ -52,6 +53,11 @@ contract Token is
 		for (uint256 i = 0; i < length; i++) {
 			_mintWithCount(recipients[i], amounts[i]);
 		}
+
+		__AccessControl_init();
+		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+		_setRoleAdmin(ROLE_TOKEN_CREATOR, 0x0);
+		grantRole(ROLE_TOKEN_CREATOR, _msgSender());
 	}
 
 	/**
@@ -121,18 +127,7 @@ contract Token is
 	 * @param _to an address to mint tokens to
 	 * @param _value an amount of tokens to mint (create)
 	 */
-	function mint(address _to, uint256 _value) public onlyOwner {
-		///TODO: There is a conflict of behaviour here that needs to be resolved.
-		///      The issue arises because the ModaAware class expects
-		///      to be allowed to mint tokens for a pool if the ModaPool
-		///      is deemed to have ROLE_TOKEN_CREATOR.
-		//
-		// check if caller has sufficient permissions to mint tokens
-		// require(
-		// 	hasRole(ROLE_TOKEN_CREATOR, _msgSender()),
-		// 	'insufficient privileges (ROLE_TOKEN_CREATOR required)'
-		// );
-
+	function mint(address _to, uint256 _value) public onlyRole(ROLE_TOKEN_CREATOR) {
 		// non-zero recipient address check
 		require(_to != address(0), 'ERC20: mint to the zero address'); // Zeppelin msg
 
@@ -140,12 +135,12 @@ contract Token is
 		// this check automatically secures arithmetic overflow on the individual balance
 		require(totalSupply() + _value > totalSupply(), 'zero value mint or arithmetic overflow');
 
-		// uint192 overflow check (required by voting delegation)
-		require(type(uint192).max - _value < totalSupply(), 'total supply overflow (uint192)');
+		// uint256 overflow check (required by voting delegation)
+		require(totalSupply() + _value <= type(uint192).max, 'total supply overflow (uint192)');
 
 		// perform mint:
 		// fire ERC20 compliant transfer event
-		_mint(_to, _value);
+		_mintWithCount(_to, _value);
 
 		///TODO: No voting implementation here.
 		///      Refer to Governance.sol perhaps?
