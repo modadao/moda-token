@@ -2,6 +2,7 @@
 pragma solidity 0.8.6;
 
 import './ILinkedToMODA.sol';
+import './ModaConstants.sol';
 import './Token.sol';
 
 /**
@@ -24,11 +25,7 @@ abstract contract ModaAware is ILinkedToMODA {
 	constructor(address _moda) {
 		// verify MODA address is set and is correct
 		require(_moda != address(0), 'MODA address not set');
-		require(
-			Token(_moda).TOKEN_UID() ==
-				0xc8de2a18ae1c61538a5f880f5c8eb7ff85aa3996c4363a27b1c6112a190e65b4,
-			'unexpected TOKEN_UID'
-		);
+		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'unexpected TOKEN_UID');
 
 		// write MODA address
 		moda = _moda;

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
+//import 'hardhat/console.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
 import './ICorePool.sol';
+import './ModaConstants.sol';
 import './EscrowedModaERC20.sol';
 import './ModaPoolFactory.sol';
 
@@ -180,8 +182,7 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 
 		// verify sMODA instance supplied
 		require(
-			EscrowedModaERC20(_smoda).TOKEN_UID() ==
-				0x0a9a93ba9d22fa5ed507ff32440b8750c8951e4864438c8afc02be22ad238ebf,
+			EscrowedModaERC20(_smoda).ESCROWTOKEN_UID() == ModaConstants.ESCROWTOKEN_UID,
 			'unexpected sMODA TOKEN_UID'
 		);
 		// save the inputs into internal state variables
@@ -306,6 +307,7 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 		bool _useSMODA
 	) external override {
 		// delegate call to an internal function
+		//console.log('ModaPoolBase unstake', _msgSender());
 		_unstake(msg.sender, _depositId, _amount, _useSMODA);
 	}
 
@@ -432,6 +434,8 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 		bool _isYield
 	) internal virtual {
 		// validate the inputs
+		// console.log('lockUntil', _lockUntil);
+		// console.log('timestamp', block.timestamp);
 		require(_amount > 0, 'zero amount');
 		require(
 			_lockUntil == 0 ||
@@ -663,6 +667,8 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 			// update global variable
 			usersLockingWeight += depositWeight;
 		} else {
+			// Force a hard error in this case.
+			// We're not supporting other kinds of token pools yet.
 			assert(poolToken == moda);
 			///TODO: Requires some thought here.
 			///TODO: This is the contract address of the first MODA pool.
@@ -778,6 +784,8 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 	 */
 	function mintSModa(address _to, uint256 _value) private {
 		// just delegate call to the target
+		//console.log(_msgSender());
+
 		EscrowedModaERC20(smoda).mint(_to, _value);
 	}
 

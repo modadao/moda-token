@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+//import 'hardhat/console.sol';
+import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+import './ModaConstants.sol';
 import './IVestingToken.sol';
 
 contract Token is
@@ -17,27 +18,12 @@ contract Token is
 	IVestingToken,
 	AccessControlUpgradeable
 {
-	using SafeMath for uint256;
-
 	uint256 public holderCount;
 	address public vestingContract;
 
-	/**
-	 * @notice Token creator is responsible for creating (minting)
-	 *      tokens to an arbitrary address
-	 * @dev Role ROLE_TOKEN_CREATOR allows minting tokens
-	 *      (calling `mint` function)
-	 */
-	bytes32 public constant ROLE_TOKEN_CREATOR = '\x00\x01\x00\x00';
-
-	/**
-	 * @dev Smart contract unique identifier, a random number
-	 * @dev Should be regenerated each time smart contact source code is changed
-	 *      and changes smart contract itself is to be redeployed
-	 * @dev Generated using https://www.random.org/bytes/
-	 */
-	uint256 public constant TOKEN_UID =
-		0xc8de2a18ae1c61538a5f880f5c8eb7ff85aa3996c4363a27b1c6112a190e65b4;
+	function TOKEN_UID() public pure returns (uint256) {
+		return ModaConstants.TOKEN_UID;
+	}
 
 	/**
 	 * @dev Our constructor (with UUPS upgrades we need to use initialize(), but this is only
@@ -54,10 +40,12 @@ contract Token is
 			_mintWithCount(recipients[i], amounts[i]);
 		}
 
+		//console.log('Token.initialize() ', _msgSender());
+		//console.log('Token address', address(this));
 		__AccessControl_init();
 		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-		_setRoleAdmin(ROLE_TOKEN_CREATOR, 0x0);
-		grantRole(ROLE_TOKEN_CREATOR, _msgSender());
+		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, 0x0);
+		grantRole(ModaConstants.ROLE_TOKEN_CREATOR, _msgSender());
 	}
 
 	/**
@@ -69,6 +57,14 @@ contract Token is
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 
 	/**
+	 * @dev Granting privileges required for allowing ModaCorePool and whatever else later,
+	 *     the ability to mint Tokens as required.
+	 */
+	function grantPrivilege(bytes32 _role, address _account) public onlyOwner {
+		grantRole(_role, _account);
+	}
+
+	/**
 	 * @dev Internal function to manage the holderCount variable that should be called
 	 *      BEFORE transfers alter balances.
 	 */
@@ -78,11 +74,11 @@ contract Token is
 		uint256 amount
 	) private {
 		if (balanceOf(to) == 0 && amount > 0) {
-			holderCount = holderCount.add(1);
+			++holderCount;
 		}
 
 		if (balanceOf(from) == amount && amount > 0) {
-			holderCount = holderCount.sub(1);
+			--holderCount;
 		}
 	}
 
@@ -127,9 +123,11 @@ contract Token is
 	 * @param _to an address to mint tokens to
 	 * @param _value an amount of tokens to mint (create)
 	 */
-	function mint(address _to, uint256 _value) public onlyRole(ROLE_TOKEN_CREATOR) {
+	function mint(address _to, uint256 _value) public onlyRole(ModaConstants.ROLE_TOKEN_CREATOR) {
+		//console.log('Token.mint():', _msgSender());
 		// non-zero recipient address check
 		require(_to != address(0), 'ERC20: mint to the zero address'); // Zeppelin msg
+		if (_value == 0) return;
 
 		// non-zero _value and arithmetic overflow check on the total supply
 		// this check automatically secures arithmetic overflow on the individual balance
@@ -166,6 +164,9 @@ contract Token is
 		uint256 amount
 	) public virtual override returns (bool) {
 		_updateCountOnTransfer(sender, recipient, amount);
+		// console.log('Token.transferFrom amount', amount);
+		// console.log('Token.transferFrom sender', sender);
+		// console.log('Token.transferFrom msgSender', msg.sender);
 		return super.transferFrom(sender, recipient, amount);
 	}
 
