@@ -123,9 +123,9 @@ contract Token is
 	 */
 	function mint(address _to, uint256 _value) public onlyOwner {
 		///TODO: There is a conflict of behaviour here that needs to be resolved.
-		///TODO: The issue arises because the ModaAware class expects
-		///TODO: to be allowed to mint tokens for a pool if the ModaPool
-		///TODO: is deemed to have ROLE_TOKEN_CREATOR.
+		///      The issue arises because the ModaAware class expects
+		///      to be allowed to mint tokens for a pool if the ModaPool
+		///      is deemed to have ROLE_TOKEN_CREATOR.
 		//
 		// check if caller has sufficient permissions to mint tokens
 		// require(
@@ -148,7 +148,7 @@ contract Token is
 		_mint(_to, _value);
 
 		///TODO: No voting implementation here.
-		///TODO: Refer to Governance.sol perhaps?
+		///      Refer to Governance.sol perhaps?
 		//
 		// create voting power associated with the tokens minted
 		//__moveVotingPower(address(0), votingDelegates[_to], _value);
