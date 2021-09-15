@@ -8,30 +8,41 @@ import { add, addTimestamp, fastForward, fromTimestamp } from './utils';
 function toEth(amount: string): BigNumber {
 	return ethers.utils.parseEther(amount);
 }
+const ROLE_TOKEN_CREATOR = [
+	0, 0xa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+const ROLE_POOL_STAKING = [
+	0, 0xb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+type Deposit = Array<unknown>;
+
+const MILLIS: number = 1000;
+const YEAR: number = 365 * 24 * 60 * 60 * MILLIS;
 
 describe('Core Pool', () => {
 	let token: Token;
 	let escrowToken: EscrowedModaERC20;
 	let corePool: ModaCorePool;
 	let start = new Date();
-	let owner: SignerWithAddress, addr0: SignerWithAddress, addr1: SignerWithAddress;
-	let users: string[];
+	let owner: SignerWithAddress, user0: SignerWithAddress, user1: SignerWithAddress;
+	let addr: string[];
 	let userBalances = [toEth('6500000'), toEth('3500000')];
 
 	function logSetup() {
 		console.log('Owner', owner.address);
-		console.log('Users', users);
+		console.log('Users', addr);
 		console.log('Token', token.address);
 		console.log('Escrow Token', escrowToken.address);
 		console.log('Core Pool', corePool.address);
 	}
 
 	beforeEach(async () => {
-		[owner, addr0, addr1] = await ethers.getSigners();
-		users = [addr0.address, addr1.address];
+		[owner, user0, user1] = await ethers.getSigners();
+		addr = [user0.address, user1.address];
 
 		const tokenFactory = await ethers.getContractFactory('Token');
-		token = (await upgrades.deployProxy(tokenFactory, [users, userBalances], {
+		token = (await upgrades.deployProxy(tokenFactory, [addr, userBalances], {
 			kind: 'uups',
 		})) as Token;
 		await token.deployed();
@@ -41,7 +52,7 @@ describe('Core Pool', () => {
 		await escrowToken.deployed();
 
 		const nextBlock = (await ethers.provider.getBlockNumber()) + 1;
-		console.log(`Block number: ${nextBlock}`);
+		//console.log(`Block number: ${nextBlock}`);
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
@@ -54,51 +65,21 @@ describe('Core Pool', () => {
 			nextBlock + 3672000 // endBlock block number when farming stops and rewards cannot be updated anymore
 		)) as ModaCorePool;
 		await corePool.deployed();
+
+		await token.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
+		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
 	});
 
-	it('Should log the set up', async () => {
+	it.skip('Should log the set up', async () => {
 		logSetup();
 	});
-	it('Should allow owner to create a pool stake', async () => {
-		logSetup();
-		expect(await token.balanceOf(addr0.address)).to.equal(userBalances[0]);
-		let contractTx = await corePool.stakeAsPool(users[0], toEth('100'));
-		//console.log(contractTx);
-		expect(await corePool.getDepositsLength(users[0])).to.equal(1);
-	});
 
-	it('Should refuse non-owner to create a pool stake', async () => {
+	it('Should refuse any but a CorePool to create a pool stake', async () => {
+		//logSetup();
 		await expect(
-			corePool.connect(addr1).stakeAsPool(addr1.address, toEth('100'))
-		).to.be.revertedWith('Ownable: caller is not the owner');
+			corePool.connect(user0).stakeAsPool(user1.address, toEth('100'))
+		).to.be.revertedWith(
+			`AccessControl: account ${addr[0].toLowerCase()} is missing role 0x000b000000000000000000000000000000000000000000000000000000000000`
+		);
 	});
-
-	it('Should prevent user from unstaking locked deposits', async () => {
-		// Set up the balance first
-		expect(await token.balanceOf(addr0.address)).to.equal(userBalances[0]);
-		let contractTx = await corePool.stakeAsPool(users[0], toEth('100'));
-		//console.log(contractTx);
-		expect(await corePool.getDepositsLength(users[0])).to.equal(1);
-		// Now attempt to withdraw it.
-		await expect(
-			corePool.connect(addr0).unstake(toEth('0'), toEth('100'), true)
-		).to.be.revertedWith('deposit not yet unlocked');
-	});
-
-	it('Should allow a user to unstake a locked deposit after 1 year', async () => {
-		// Set up the balance first
-		expect(await token.balanceOf(addr0.address)).to.equal(userBalances[0]);
-		let contractTx = await corePool.stakeAsPool(users[0], toEth('100'));
-		//console.log(contractTx);
-		expect(await corePool.getDepositsLength(users[0])).to.equal(1);
-		// Now attempt to withdraw it.
-		await expect(
-			corePool.connect(addr0).unstake(toEth('0'), toEth('100'), true)
-		).to.be.revertedWith('deposit not yet unlocked');
-		// Wait for more than a year though and...
-		await fastForward(add(start, { years: 3 }));
-		await corePool.connect(addr0).unstake(toEth('0'), toEth('100'), true);
-	});
-
-	it('Should ', async () => {});
 });
