@@ -75,6 +75,7 @@ describe('Core Pool', () => {
 
 	it.skip('Should log the set up', async () => {
 		logSetup();
+		//console.log(await ethers.provider.listAccounts());
 	});
 
 	it('Should refuse any but a CorePool to create a pool stake', async () => {
