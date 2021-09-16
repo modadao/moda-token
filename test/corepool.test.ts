@@ -20,7 +20,9 @@ const address0 = '0x0000000000000000000000000000000000000000';
 type Deposit = Array<unknown>;
 
 const MILLIS: number = 1000;
-const YEAR: number = 365 * 24 * 60 * 60 * MILLIS;
+const HOUR: number = 60 * 60 * MILLIS;
+const DAY: number = 24 * HOUR;
+const YEAR: number = 365 * DAY;
 
 describe('Core Pool', () => {
 	let token: Token;
@@ -147,7 +149,7 @@ describe('Core Pool', () => {
 
 		// Calculate a suitable locking end date
 		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + YEAR - 1000 * 60 * MILLIS);
+		endDate.setTime(start.getTime() + 28 * DAY);
 		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
 		console.log('lockedUntil', lockUntil);
 		const amount: BigNumber = BigNumber.from(104);
@@ -164,15 +166,23 @@ describe('Core Pool', () => {
 		await expect(
 			corePool.connect(user0).unstake(toEth('0'), toEth('100'), true)
 		).to.be.revertedWith('deposit not yet unlocked');
-		// Wait for more than a year though and...
-		await fastForward(add(start, { years: 1, days: 1 }));
+		// Wait for more than a 27 days and expect failure.
+		await fastForward(add(start, { days: 27 }));
+		// Before unstake executes the user should have zero sMODA.
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
+		await expect(
+			corePool.connect(user0).unstake(BigNumber.from(0), amount, true)
+		).to.be.revertedWith('deposit not yet unlocked');
+
+		// Wait a little longer though
+		await fastForward(add(start, { months: 1, days: 3 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
 		await corePool.connect(user0).unstake(BigNumber.from(0), amount, true);
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
-		expect(await escrowToken.balanceOf(addr[0])).to.equal(449999);
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(749999);
 		// Is there anything remaining?
 		expect(await corePool.getDepositsLength(addr[0])).to.equal(1);
 		// It may seem that way but...
