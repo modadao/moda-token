@@ -23,6 +23,7 @@ const MILLIS: number = 1000;
 const HOUR: number = 60 * 60 * MILLIS;
 const DAY: number = 24 * HOUR;
 const YEAR: number = 365 * DAY;
+const BNZero: BigNumber = BigNumber.from(0);
 
 describe('Core Pool', () => {
 	let token: Token;
@@ -94,7 +95,7 @@ describe('Core Pool', () => {
 
 	it('Should revert on invalid lock interval', async () => {
 		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + YEAR + 10 * MILLIS);
+		endDate.setTime(start.getTime() + YEAR + DAY);
 		let lockedUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
 		await expect(
 			corePool.connect(user0).stake(toEth('100'), lockedUntil, false)
