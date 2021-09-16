@@ -69,8 +69,8 @@ describe('Core Pool Rewards', () => {
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			150000 * 216000, // modaPerBlock initial MODA/block value for rewards
-			1, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+			(150000 * 216000) / 2, // modaPerBlock initial MODA/block value for rewards
+			2, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
 			nextBlock, // initBlock initial block used to calculate the rewards
 			nextBlock + 3672000 // endBlock block number when farming stops and rewards cannot be updated anymore
 		)) as ModaCorePool;
@@ -86,9 +86,9 @@ describe('Core Pool Rewards', () => {
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
 
 		// Calculate a suitable locking end date
-		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + 28 * DAY);
-		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
+		// let endDate: Date = new Date();
+		// endDate.setTime(start.getTime() + 28 * DAY);
+		// let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
 
 		//console.log('lockedUntil', lockUntil);
 		const amount: BigNumber = BigNumber.from(105);
@@ -108,9 +108,9 @@ describe('Core Pool Rewards', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(addr[0], BigNumber.from(0));
 		expect(tokenAmount).to.equal(amount);
-		expect(weight).to.equal(113054760);
+		expect(weight).to.equal(105000000);
 		//expect(lockedFrom).to.equal(0);
-		expect(lockedUntil).to.equal(lockUntil);
+		expect(lockedUntil).to.equal(0);
 		expect(isYield).to.equal(false);
 
 		interface ROI_Record {
@@ -180,27 +180,12 @@ describe('Core Pool Rewards', () => {
 		ReturnsOnInvestment.push(RoI);
 		RoI = Object.assign({}, RoI_);
 
-		//console.log(ReturnsOnInvestment);
+		console.log(ReturnsOnInvestment);
 		/**
-		 	Deposit	Staked		Weight				MODA						SMODA
-			0x01	60970319999	0x01b1385db2c3bb80	0x05606db4c03408967fff97	0
-			0x02	59141088513	0x01a4390368e50480	0x05606db4c03408967fff97	0
-			0x03	57366890292	0x01979dc3fb726a00	0x05606db4c03408967fff97	0
-			0x04	55645835912	0x018b632f95876400	0x05606db4c03408967fff97	0
-			0x05	53976163421	0x017f8611be182280	0x05606db4c03408967fff97	0
-			0x06	52356758779	0x01740463b139e980	0x05606db4c03408967fff97	0
-			0x07	50786170294	0x0168db816fc0b300	0x05606db4c03408967fff97	0
-			0x08	49262744037	0x015e0868cdf90680	0x05606db4c03408967fff97	0
-			0x09	47784847224	0x0153882178dd9c00	0x05606db4c03408967fff97	0
-			0x0a	46351102658	0x0149582a21c16900	0x05606db4c03408967fff97	0
-			0x0b	44960399143	0x013f767d57c1af80	0x05606db4c03408967fff97	0
-			0x0c	43611571293	0x0135e0fc6e082280	0x05606db4c03408967fff97	0
-			0x0d	42303078064	0x012c94d9c9d21800	0x05606db4c03408967fff97	0
-			0x0e	41033922878	0x0123904559c49700	0x05606db4c03408967fff97	0
-			0x0f	39802948053	0x011ad124076cbe80	0x05606db4c03408967fff97	0
-			0x10	38609328944	0x011255f5d1725800	0x05606db4c03408967fff97	0
-			0x11	37449920610	0x010a19023da6b900	0x05606db4c03408967fff97	0
-			0x12			  0					 0	0x05606db4c0340896800000	18163086250
+		 * Weight slowly drops with each block count trigger. i.e. every block.
+		 * Multiple deposits stored as `processRewards` is called.
+		 * MODA is restored to the account.
+		 * SMODA is credited to the account when `unstake` is called.
 		 */
 	});
 });

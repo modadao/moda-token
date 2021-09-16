@@ -1,0 +1,128 @@
+[
+  {
+    Deposit: BigNumber { _hex: '0x01', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x07190ea03f', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xd89c2ed9529b80', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x02', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x06e28ab298', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xd21c81b73fac00', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x03', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x06adaaa3b1', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xcbcee200771c80', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x04', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x067a600959', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xc5b197cd449080', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x05', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x06489d7243', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xbfc308e17dad80', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x06', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x06185a5e92', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xba0231db0e9100', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x07', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05e98bbaee', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xb46dc0ba242f00', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x08', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05bc24e906', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xaf0434694f9b00', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x09', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05901973cf', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xa9c410beb2a380', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x0a', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05655ed973', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0xa4ac1513060580', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x0b', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x053bec9fa6', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x9fbb3eae156b00', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x0c', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x0513b9e23f', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x9af07e38fb9b80', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x0d', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x04ecbadf69', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x964a6ce6efd880', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x0e', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x04c6e7fcaf', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x91c822aeca9380', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x0f', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x04a23864fa', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x8d6892058f6500', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x10', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x047ea5cda7', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x892afaea82ef80', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x11', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x045c18383f', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x850c81207e9b80', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c03408967fff97', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x00', _isBigNumber: true }
+  },
+  {
+    Deposit: BigNumber { _hex: '0x12', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x00', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x00', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c0340896800000', _isBigNumber: true },
+    SMODA: BigNumber { _hex: '0x022e0be669', _isBigNumber: true }
+  }
+]
