@@ -34,7 +34,7 @@ describe('Shadow Pool', () => {
 	let start = new Date();
 	let owner: SignerWithAddress, user0: SignerWithAddress, user1: SignerWithAddress;
 	let addr: string[];
-	let userBalances = [toEth('6500000'), toEth('3500000')];
+	let userBalances = [toEth('1000'), toEth('1000')];
 
 	function logSetup() {
 		console.log('Owner', owner.address);
