@@ -209,7 +209,7 @@ describe('Core Pool', () => {
 		expect(isYield).to.equal(false);
 	});
 
-	it.only('Should allow a user to stake 1 month, unstake some, wait and unstake the rest', async () => {
+	it('Should allow a user to stake 1 month, unstake some, wait and unstake the rest', async () => {
 		//logSetup();
 		// Set up the balance first
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
