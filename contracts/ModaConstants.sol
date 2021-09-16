@@ -22,6 +22,15 @@ library ModaConstants {
 		0x0a9a93ba9d22fa5ed507ff32440b8750c8951e4864438c8afc02be22ad238ebf;
 
 	/**
+	 * @dev Smart contract unique identifier, a random number
+	 * @dev Should be regenerated each time smart contact source code is changed
+	 *      and changes smart contract itself is to be redeployed
+	 * @dev Generated using https://www.random.org/bytes/
+	 */
+	uint256 public constant POOL_UID =
+		0x8ca5f5bb5e4f02345a019a993ce37018dd549b22e88027f4f5c1f614ef6fb3c0;
+
+	/**
 	 * @notice Token creator is responsible for creating (minting)
 	 *      tokens to an arbitrary address
 	 * @dev Role ROLE_TOKEN_CREATOR allows minting tokens

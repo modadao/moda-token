@@ -27,6 +27,7 @@ contract ModaCorePool is ModaPoolBase, AccessControl {
 	 * @dev Creates/deploys an instance of the core pool
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
+	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
 	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _weight number representing a weight of the pool, actual weight fraction
@@ -38,6 +39,7 @@ contract ModaCorePool is ModaPoolBase, AccessControl {
 	 */
 	constructor(
 		address _moda,
+		address _modaPool,
 		address _smoda,
 		address _poolToken,
 		uint32 _weight,
@@ -48,6 +50,7 @@ contract ModaCorePool is ModaPoolBase, AccessControl {
 	)
 		ModaPoolBase(
 			_moda,
+			_modaPool,
 			_smoda,
 			_poolToken,
 			_weight,

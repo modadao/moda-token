@@ -25,6 +25,20 @@ import './ModaPoolFactory.sol';
  * @author David Schwartz, reviewed by Kevin Brown
  */
 abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyGuard {
+	// @dev POOL_UID defined to add another check to ensure compliance with the contract.
+	function POOL_UID() public pure returns (uint256) {
+		return ModaConstants.POOL_UID;
+	}
+
+	// @dev modaPool MODA ERC20 Liquidity Pool contract address.
+	// @dev This value is address(0) for the default MODA Core Pool.
+	// @dev This value MUST be provided for any pool created which is not a MODA pool.
+	// @dev This is used in the case where poolToken != moda.
+	//      The use case relates to shadowing Liquidity Pool stakes
+	//      by allowing people to store the LP tokens here to gain
+	//      further MODA/sMODA rewards. I'm not sure it's both. (dex 2021.09.16)
+	address modaPool;
+
 	/// @dev Data structure representing token holder using a pool
 	struct User {
 		// @dev Total staked amount
@@ -154,6 +168,7 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 	 * @dev Overridden in sub-contracts to construct the pool
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
+	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
 	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _initBlock initial block used to calculate the rewards
@@ -166,6 +181,7 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 	 */
 	constructor(
 		address _moda,
+		address _modaPool,
 		address _smoda,
 		address _poolToken,
 		uint32 _weight,
@@ -179,13 +195,24 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 		require(_poolToken != address(0), 'pool token address not set');
 		require(_initBlock >= block.number, 'init block not set');
 		require(_weight > 0, 'pool weight not set');
+		require(
+			((_poolToken == _moda ? 1 : 0) ^ (_modaPool != address(0) ? 1 : 0)) == 1,
+			'The pool is either a MODA pool or manages external tokens, never both'
+		);
+
+		// verify MODA instance supplied
+		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'MODA TOKEN_UID invalid');
 
 		// verify sMODA instance supplied
 		require(
 			EscrowedModaERC20(_smoda).ESCROWTOKEN_UID() == ModaConstants.ESCROWTOKEN_UID,
-			'unexpected sMODA TOKEN_UID'
+			'sMODA ESCROWTOKEN_UID invalid'
 		);
+		if (_modaPool != address(0)) {
+			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID);
+		}
 		// save the inputs into internal state variables
+		modaPool = _modaPool;
 		smoda = _smoda;
 		poolToken = _poolToken;
 		_setWeight(_weight);
@@ -668,16 +695,12 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 			usersLockingWeight += depositWeight;
 		} else {
 			// Force a hard error in this case.
-			// We're not supporting other kinds of token pools yet.
-			assert(poolToken == moda);
-			///TODO: Requires some thought here.
-			///TODO: This is the contract address of the first MODA pool.
-			///TODO: It may need to be a construction parameter for the second pool.
-			///TODO: As long as we never create a pool with poolToken != MODA
-			///TODO: this code never gets triggered.
-			// // for other pools - stake as pool
-			// address modaPool = factory.getPoolAddress(moda);
-			// ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
+			// The pool was somehow not constructed correctly.
+			assert(modaPool != address(0));
+			// for other pools - stake as pool.
+			// NB: the target modaPool must be configured to give
+			// this contract instance the ROLE_TOKEN_CREATOR role/privilege.
+			ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
 		}
 
 		// update users's record for `subYieldRewards` if requested
