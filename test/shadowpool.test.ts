@@ -3,27 +3,20 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect, use } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, ModaCorePool, Token } from '../typechain';
-import { add, addTimestamp, fastForward, fromTimestamp } from './utils';
-
-function toEth(amount: string): BigNumber {
-	return ethers.utils.parseEther(amount);
-}
-const ROLE_TOKEN_CREATOR = [
-	0, 0xa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-const ROLE_POOL_STAKING = [
-	0, 0xb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-
-const address0 = '0x0000000000000000000000000000000000000000';
-
-type Deposit = Array<unknown>;
-
-const MILLIS: number = 1000;
-const HOUR: number = 60 * 60 * MILLIS;
-const DAY: number = 24 * HOUR;
-const YEAR: number = 365 * DAY;
-const BNZero: BigNumber = BigNumber.from(0);
+import {
+	add,
+	addTimestamp,
+	fastForward,
+	fromTimestamp,
+	toEth,
+	YEAR,
+	DAY,
+	HOUR,
+	MILLIS,
+	BIGZERO,
+	ADDRESS0,
+	ROLE_TOKEN_CREATOR,
+} from './utils';
 
 describe('Shadow Pool', () => {
 	let token: Token;
@@ -68,7 +61,7 @@ describe('Shadow Pool', () => {
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
-			address0, // This is a modaPool, so set to zero.
+			ADDRESS0, // This is a modaPool, so set to zero.
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken Token that the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
@@ -154,7 +147,7 @@ describe('Shadow Pool', () => {
 		await fastForward(add(start, { years: 1, days: 1 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake(BNZero, amount, true);
+		await shadowPool.connect(user0).unstake(BIGZERO, amount, true);
 
 		// Examine the escrowTokens this address now owns.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(userBalances[0].add(449999));
@@ -167,7 +160,7 @@ describe('Shadow Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], BNZero);
+		] = await shadowPool.getDeposit(addr[0], BIGZERO);
 		expect(escrowTokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);
@@ -205,7 +198,7 @@ describe('Shadow Pool', () => {
 		await fastForward(add(start, { days: 27 }));
 		// Before unstake executes the user should have the reduced amount of sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await expect(shadowPool.connect(user0).unstake(BNZero, amount, true)).to.be.revertedWith(
+		await expect(shadowPool.connect(user0).unstake(BIGZERO, amount, true)).to.be.revertedWith(
 			'deposit not yet unlocked'
 		);
 
@@ -213,7 +206,7 @@ describe('Shadow Pool', () => {
 		await fastForward(add(start, { months: 1, days: 3 }));
 		// Before unstake executes the user should have the reduced amount of sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake(BNZero, amount, true);
+		await shadowPool.connect(user0).unstake(BIGZERO, amount, true);
 
 		// Examine the escrowTokens this address now owns.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(userBalances[0].add(749999));
@@ -226,7 +219,7 @@ describe('Shadow Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], BNZero);
+		] = await shadowPool.getDeposit(addr[0], BIGZERO);
 		expect(escrowTokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);
@@ -263,15 +256,15 @@ describe('Shadow Pool', () => {
 		await fastForward(add(start, { days: 27 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await expect(shadowPool.connect(user0).unstake(BNZero, amount.div(2), true)).to.be.revertedWith(
-			'deposit not yet unlocked'
-		);
+		await expect(
+			shadowPool.connect(user0).unstake(BIGZERO, amount.div(2), true)
+		).to.be.revertedWith('deposit not yet unlocked');
 
 		// Wait a little longer though
 		await fastForward(add(start, { months: 1, days: 3 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake(BNZero, amount.div(2), true);
+		await shadowPool.connect(user0).unstake(BIGZERO, amount.div(2), true);
 
 		// Examine the escrowTokens this address now owns.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(
@@ -286,7 +279,7 @@ describe('Shadow Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], BNZero);
+		] = await shadowPool.getDeposit(addr[0], BIGZERO);
 		expect(escrowTokenAmount).to.equal(amount.div(2));
 		expect(weight).to.equal(55988972);
 		//expect(lockedFrom).to.equal(lockUntil);
@@ -300,7 +293,7 @@ describe('Shadow Pool', () => {
 			userBalances[0].add(749999).sub(amount.div(2))
 		);
 		// Unstake whatever remains.
-		await shadowPool.connect(user0).unstake(BNZero, escrowTokenAmount, true);
+		await shadowPool.connect(user0).unstake(BIGZERO, escrowTokenAmount, true);
 
 		// Examine the escrowTokens this address now owns.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(userBalances[0].add(1049999));
@@ -311,7 +304,7 @@ describe('Shadow Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], BNZero);
+		] = await shadowPool.getDeposit(addr[0], BIGZERO);
 		expect(escrowTokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);

@@ -4,27 +4,20 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, ModaCorePool, Token } from '../typechain';
-import { add, addTimestamp, fastForward, fromTimestamp } from './utils';
-
-function toEth(amount: string): BigNumber {
-	return ethers.utils.parseEther(amount);
-}
-const ROLE_TOKEN_CREATOR = [
-	0, 0xa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-const ROLE_POOL_STAKING = [
-	0, 0xb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-
-const BNZero: BigNumber = BigNumber.from(0);
-const address0 = '0x0000000000000000000000000000000000000000';
-
-type Deposit = Array<unknown>;
-
-const MILLIS: number = 1000;
-const HOUR: number = 60 * 60 * MILLIS;
-const DAY: number = 24 * HOUR;
-const YEAR: number = 365 * DAY;
+import {
+	add,
+	addTimestamp,
+	fastForward,
+	fromTimestamp,
+	toEth,
+	YEAR,
+	DAY,
+	HOUR,
+	MILLIS,
+	BIGZERO,
+	ADDRESS0,
+	ROLE_TOKEN_CREATOR,
+} from './utils';
 
 describe('Core Pool Rewards', () => {
 	let token: Token;
@@ -65,7 +58,7 @@ describe('Core Pool Rewards', () => {
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
-			address0, // This is a modaPool, so set to zero.
+			ADDRESS0, // This is a modaPool, so set to zero.
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
@@ -94,7 +87,7 @@ describe('Core Pool Rewards', () => {
 		const amount: BigNumber = BigNumber.from(105);
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(addr[0], corePool.address)).to.equal(amount);
-		await corePool.connect(user0).stake(amount, BNZero, true);
+		await corePool.connect(user0).stake(amount, BIGZERO, true);
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0].sub(amount));
@@ -106,7 +99,7 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BNZero);
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		expect(tokenAmount).to.equal(amount);
 		expect(weight).to.equal(105000000);
 		//expect(lockedFrom).to.equal(0);
@@ -123,11 +116,11 @@ describe('Core Pool Rewards', () => {
 		let ReturnsOnInvestment = Array<ROI_Record>();
 
 		let RoI_: ROI_Record = {
-			Deposit: BNZero,
-			Amount: BNZero,
-			Weight: BNZero,
-			MODA: BNZero,
-			SMODA: BNZero,
+			Deposit: BIGZERO,
+			Amount: BIGZERO,
+			Weight: BIGZERO,
+			MODA: BIGZERO,
+			SMODA: BIGZERO,
 		};
 		let RoI: ROI_Record = Object.assign({}, RoI_);
 
@@ -162,7 +155,7 @@ describe('Core Pool Rewards', () => {
 			RoI = Object.assign({}, RoI_);
 		}
 		// Unstake completely after yield farming ends.
-		await corePool.connect(user0).unstake(BNZero, amount, true);
+		await corePool.connect(user0).unstake(BIGZERO, amount, true);
 
 		// Examine the tokens this address now owns.
 		RoI.Deposit = BigNumber.from(maxMonths + 1);
@@ -174,7 +167,7 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BNZero);
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		RoI.Amount = tokenAmount;
 		RoI.Weight = weight;
 		ReturnsOnInvestment.push(RoI);

@@ -3,27 +3,20 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, ModaCorePool, Token } from '../typechain';
-import { add, addTimestamp, fastForward, fromTimestamp } from './utils';
-
-function toEth(amount: string): BigNumber {
-	return ethers.utils.parseEther(amount);
-}
-const ROLE_TOKEN_CREATOR = [
-	0, 0xa, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-const ROLE_POOL_STAKING = [
-	0, 0xb, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-
-const address0 = '0x0000000000000000000000000000000000000000';
-
-type Deposit = Array<unknown>;
-
-const MILLIS: number = 1000;
-const HOUR: number = 60 * 60 * MILLIS;
-const DAY: number = 24 * HOUR;
-const YEAR: number = 365 * DAY;
-const BNZero: BigNumber = BigNumber.from(0);
+import {
+	add,
+	addTimestamp,
+	fastForward,
+	fromTimestamp,
+	toEth,
+	YEAR,
+	DAY,
+	HOUR,
+	MILLIS,
+	BIGZERO,
+	ADDRESS0,
+	ROLE_TOKEN_CREATOR,
+} from './utils';
 
 describe('Core Pool', () => {
 	let token: Token;
@@ -64,7 +57,7 @@ describe('Core Pool', () => {
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
-			address0, // This is a modaPool, so set to zero.
+			ADDRESS0, // This is a modaPool, so set to zero.
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
@@ -130,7 +123,7 @@ describe('Core Pool', () => {
 		await fastForward(add(start, { years: 1, days: 1 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
-		await corePool.connect(user0).unstake(BNZero, amount, true);
+		await corePool.connect(user0).unstake(BIGZERO, amount, true);
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
@@ -144,7 +137,7 @@ describe('Core Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BNZero);
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		expect(tokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);
@@ -180,7 +173,7 @@ describe('Core Pool', () => {
 		await fastForward(add(start, { days: 27 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
-		await expect(corePool.connect(user0).unstake(BNZero, amount, true)).to.be.revertedWith(
+		await expect(corePool.connect(user0).unstake(BIGZERO, amount, true)).to.be.revertedWith(
 			'deposit not yet unlocked'
 		);
 
@@ -188,7 +181,7 @@ describe('Core Pool', () => {
 		await fastForward(add(start, { months: 1, days: 3 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
-		await corePool.connect(user0).unstake(BNZero, amount, true);
+		await corePool.connect(user0).unstake(BIGZERO, amount, true);
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
@@ -202,7 +195,7 @@ describe('Core Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BNZero);
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		expect(tokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);
@@ -238,7 +231,7 @@ describe('Core Pool', () => {
 		await fastForward(add(start, { days: 27 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
-		await expect(corePool.connect(user0).unstake(BNZero, amount.div(2), true)).to.be.revertedWith(
+		await expect(corePool.connect(user0).unstake(BIGZERO, amount.div(2), true)).to.be.revertedWith(
 			'deposit not yet unlocked'
 		);
 
@@ -246,7 +239,7 @@ describe('Core Pool', () => {
 		await fastForward(add(start, { months: 1, days: 3 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(0);
-		await corePool.connect(user0).unstake(BNZero, amount.div(2), true);
+		await corePool.connect(user0).unstake(BIGZERO, amount.div(2), true);
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0].sub(amount.div(2)));
@@ -260,7 +253,7 @@ describe('Core Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BNZero);
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		expect(tokenAmount).to.equal(amount.div(2));
 		expect(weight).to.equal(55989024);
 		//expect(lockedFrom).to.equal(lockUntil);
@@ -272,7 +265,7 @@ describe('Core Pool', () => {
 		// Before unstake executes the user should have the previous sMODA balance.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(749999);
 		// Unstake whatever remains.
-		await corePool.connect(user0).unstake(BNZero, tokenAmount, true);
+		await corePool.connect(user0).unstake(BIGZERO, tokenAmount, true);
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
@@ -284,7 +277,7 @@ describe('Core Pool', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BNZero);
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		expect(tokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);
