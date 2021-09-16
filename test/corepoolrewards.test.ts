@@ -94,7 +94,7 @@ describe('Core Pool Rewards', () => {
 		const amount: BigNumber = BigNumber.from(105);
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(addr[0], corePool.address)).to.equal(amount);
-		await corePool.connect(user0).stake(amount, BigNumber.from(0), true);
+		await corePool.connect(user0).stake(amount, BNZero, true);
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0].sub(amount));
@@ -106,7 +106,7 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BigNumber.from(0));
+		] = await corePool.getDeposit(addr[0], BNZero);
 		expect(tokenAmount).to.equal(amount);
 		expect(weight).to.equal(105000000);
 		//expect(lockedFrom).to.equal(0);
@@ -162,7 +162,7 @@ describe('Core Pool Rewards', () => {
 			RoI = Object.assign({}, RoI_);
 		}
 		// Unstake completely after yield farming ends.
-		await corePool.connect(user0).unstake(BigNumber.from(0), amount, true);
+		await corePool.connect(user0).unstake(BNZero, amount, true);
 
 		// Examine the tokens this address now owns.
 		RoI.Deposit = BigNumber.from(maxMonths + 1);
@@ -174,7 +174,7 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BigNumber.from(0));
+		] = await corePool.getDeposit(addr[0], BNZero);
 		RoI.Amount = tokenAmount;
 		RoI.Weight = weight;
 		ReturnsOnInvestment.push(RoI);
