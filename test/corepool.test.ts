@@ -323,7 +323,7 @@ describe('Core Pool', () => {
 		let endDate: Date = add(start, { days: 28 });
 
 		let lockUntil: BigNumber = toTimestampBN(endDate);
-		console.log('lockUntil', lockUntil);
+		//console.log('lockUntil', lockUntil);
 
 		const amount: BigNumber = toEth('104');
 		await token.connect(user0).approve(corePool.address, amount);
