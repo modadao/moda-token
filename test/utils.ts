@@ -15,7 +15,9 @@ export const add = (
 ) => new Date(years + date.getFullYear(), months + date.getMonth(), days + date.getDate());
 
 export const toTimestamp = (date: Date) => date.getTime() / 1000;
-export const fromTimestamp = (timestamp: number) => new Date(timestamp * 1000);
+export const toTimestampBN = (date: Date) => BigNumber.from(toTimestamp(date));
+export const fromTimestamp = (timeSeconds: number) => new Date(timeSeconds * 1000);
+export const fromTimestampBN = (timeSeconds: BigNumber) => fromTimestamp(timeSeconds.toNumber());
 
 export const addTimestamp = (
 	date: Date,
@@ -38,6 +40,18 @@ export const BIGZERO: BigNumber = BigNumber.from(0);
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 
 export const MILLIS: number = 1000;
-export const HOUR: number = 60 * 60 * MILLIS;
+export const SECOND: number = MILLIS;
+export const MINUTE: number = 60 * SECOND;
+export const HOUR: number = 60 * MINUTE;
 export const DAY: number = 24 * HOUR;
 export const YEAR: number = 365 * DAY;
+
+export async function mineBlocks(blocks: number) {
+	while (blocks > 0) {
+		--blocks;
+		await network.provider.request({
+			method: 'evm_mine',
+			params: [],
+		});
+	}
+}
