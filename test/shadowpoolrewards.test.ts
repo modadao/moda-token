@@ -197,7 +197,7 @@ describe('Shadow Pool Rewards', () => {
 		ReturnsOnInvestment.push(RoI);
 		RoI = Object.assign({}, RoI_);
 
-		console.log(ReturnsOnInvestment);
+		//console.log(ReturnsOnInvestment);
 		/**
 		 * Weight slowly drops with each block count trigger. i.e. every block.
 		 * Only one deposits stored as `processRewards` is called.
