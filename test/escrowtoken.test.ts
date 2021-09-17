@@ -29,12 +29,8 @@ describe('Escrow Token', () => {
 	});
 
 	it('Should allow minting by owner', async () => {
-		expect(await escrowToken.balanceOf(addr1.address)).to.equal(
-			toEth('0') // 6,500,000 balance
-		);
-		expect(await escrowToken.balanceOf(addr2.address)).to.equal(
-			toEth('0') // '3,500,000 balance
-		);
+		expect(await escrowToken.balanceOf(addr1.address)).to.equal(toEth('0'));
+		expect(await escrowToken.balanceOf(addr2.address)).to.equal(toEth('0'));
 		await escrowToken.mint(addr1.address, toEth('508'));
 		expect(await escrowToken.balanceOf(addr1.address)).to.equal(toEth('508'));
 
