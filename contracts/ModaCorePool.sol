@@ -3,7 +3,7 @@
 pragma solidity 0.8.6;
 
 import '@openzeppelin/contracts/access/AccessControl.sol';
-import './ModaConstants.sol';
+//import './ModaConstants.sol';
 import './ModaPoolBase.sol';
 
 /**
@@ -16,7 +16,7 @@ import './ModaPoolBase.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-contract ModaCorePool is ModaPoolBase, AccessControl {
+contract ModaCorePool is ModaPoolBase {
 	/// @dev Pool tokens value available in the pool;
 	///      pool token examples are MODA (MODA core pool) or MODA/ETH pair (LP core pool)
 	/// @dev For LP core pool this value doesn't count for MODA tokens received as Vault rewards
@@ -64,10 +64,6 @@ contract ModaCorePool is ModaPoolBase, AccessControl {
 			poolTokenReserve == 0,
 			'poolTokenReserve was not initialised to zero on construction'
 		);
-
-		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, DEFAULT_ADMIN_ROLE);
-		grantRole(ModaConstants.ROLE_TOKEN_CREATOR, _msgSender());
 	}
 
 	/**

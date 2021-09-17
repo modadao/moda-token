@@ -2,6 +2,7 @@
 pragma solidity 0.8.6;
 
 //import 'hardhat/console.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
@@ -24,7 +25,13 @@ import './ModaPoolFactory.sol';
  *
  * @author David Schwartz, reviewed by Kevin Brown
  */
-abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyGuard {
+abstract contract ModaPoolBase is
+	IPool,
+	ModaAware,
+	ModaPoolFactory,
+	ReentrancyGuard,
+	AccessControl
+{
 	// @dev POOL_UID defined to add another check to ensure compliance with the contract.
 	function POOL_UID() public pure returns (uint256) {
 		return ModaConstants.POOL_UID;
@@ -219,6 +226,18 @@ abstract contract ModaPoolBase is IPool, ModaAware, ModaPoolFactory, ReentrancyG
 
 		// init the dependent internal state variables
 		lastYieldDistribution = _initBlock;
+
+		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, DEFAULT_ADMIN_ROLE);
+		grantRole(ModaConstants.ROLE_TOKEN_CREATOR, _msgSender());
+	}
+
+	/**
+	 * @dev Granting privileges required for allowing ModaCorePool and whatever else later,
+	 *     the ability to mint Tokens as required.
+	 */
+	function grantPrivilege(bytes32 _role, address _account) public onlyOwner {
+		grantRole(_role, _account);
 	}
 
 	/**
