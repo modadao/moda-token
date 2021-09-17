@@ -1,0 +1,32 @@
+  Shadow Pool Rewards
+[
+  {
+    Deposit: BigNumber { _hex: '0x00', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05a34a38fc00a00000', _isBigNumber: true },    
+    Weight: BigNumber { _hex: '0x5606db4c03408968000000', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c0340896800000', _isBigNumber: true },  
+    SMODA: BigNumber { _hex: '0x05ccec5d16f6cc0000', _isBigNumber: true }      
+  },
+  {
+    Deposit: BigNumber { _hex: '0x00', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05a34a38fc00a00000', _isBigNumber: true },    
+    Weight: BigNumber { _hex: '0x5606db4c03408968000000', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c0340896800000', _isBigNumber: true },  
+    SMODA: BigNumber { _hex: '0x0be8720e4fe6108fee8000', _isBigNumber: true }  
+  },
+  {
+    Deposit: BigNumber { _hex: '0x00', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x05a34a38fc00a00000', _isBigNumber: true },    
+    Weight: BigNumber { _hex: '0x5606db4c03408968000000', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c0340896800000', _isBigNumber: true },  
+    SMODA: BigNumber { _hex: '0x17756a15f4c56a33bf9000', _isBigNumber: true }  
+  },
+  {
+    Deposit: BigNumber { _hex: '0x04', _isBigNumber: true },
+    Amount: BigNumber { _hex: '0x00', _isBigNumber: true },
+    Weight: BigNumber { _hex: '0x00', _isBigNumber: true },
+    MODA: BigNumber { _hex: '0x05606db4c0340896800000', _isBigNumber: true },  
+    SMODA: BigNumber { _hex: '0x17926ae74c8461ec64d000', _isBigNumber: true }  
+  }
+]
+    √ Should allow a user to stake (unlocked) amount continue calling processRewards(to MODA) (910ms)
