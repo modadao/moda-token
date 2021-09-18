@@ -4,10 +4,10 @@ import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, ModaCorePool, Token } from '../typechain';
 import {
+	add,
 	fastForward,
 	fromTimestamp,
 	toEth,
-	DAY,
 	BIGZERO,
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
@@ -151,8 +151,7 @@ describe('Shadow Pool Rewards', () => {
 		for (let ff = 0; ff < maxMonths; ++ff) {
 			// Day after rewards should be available, approximately.
 			//console.log('block', await ethers.provider.getBlockNumber());
-			let nextMonth: Date = new Date();
-			nextMonth.setTime(start.getTime() + ff * 30 * DAY + DAY);
+			let nextMonth: Date = add(start, { months: ff, days: 1 });
 			await fastForward(nextMonth);
 			await mineBlocks(100);
 
