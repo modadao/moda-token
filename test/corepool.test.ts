@@ -128,7 +128,7 @@ describe('Core Pool', () => {
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(addr[0], BIGZERO);
-		expect(tokenAmount.eq(toEth('104')));
+		expect(tokenAmount.eq(amount));
 		expect(weight.eq(toEth('207997920')));
 		expect(lockedUntil).to.equal(lockUntil);
 		expect(isYield).to.equal(false);
