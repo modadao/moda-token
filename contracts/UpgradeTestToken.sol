@@ -55,9 +55,12 @@ contract UpgradeTestToken is
 		_setRoleAdmin(ROLE_TOKEN_CREATOR, 0x0);
 	}
 
-	function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal view override onlyOwner {}
 
-	function vestingMint(address to, uint256 amount) external override {}
+	function vestingMint(
+		address, /*to*/
+		uint256 /*amount*/
+	) external override {}
 
 	function newFunction() public pure returns (bool) {
 		return true;
