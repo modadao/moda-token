@@ -32,32 +32,6 @@ abstract contract ModaAware is ILinkedToMODA {
 	}
 
 	/**
-	 * @dev Executes ModaERC20.safeTransferFrom(address(this), _to, _value, "")
-	 *      on the bound ModaERC20 instance
-	 *
-	 * @dev Reentrancy safe due to the ModaERC20 design
-	 */
-	function transferModa(address _to, uint256 _value) internal {
-		// just delegate call to the target
-		transferModaFrom(address(this), _to, _value);
-	}
-
-	/**
-	 * @dev Executes ModaERC20.transferFrom(_from, _to, _value)
-	 *      on the bound ModaERC20 instance
-	 *
-	 * @dev Reentrancy safe due to the ModaERC20 design
-	 */
-	function transferModaFrom(
-		address _from,
-		address _to,
-		uint256 _value
-	) internal {
-		// just delegate call to the target
-		Token(moda).transferFrom(_from, _to, _value);
-	}
-
-	/**
 	 * @dev Executes ModaERC20.mint(_to, _values)
 	 *      on the bound ModaERC20 instance
 	 *
