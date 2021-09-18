@@ -54,7 +54,7 @@ contract Token is
 	 *
 	 *      This implementation only allows the contract owner to perform upgrades.
 	 */
-	function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal view override onlyOwner {}
 
 	/**
 	 * @dev Granting privileges required for allowing ModaCorePool and whatever else later,
