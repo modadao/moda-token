@@ -15,6 +15,7 @@ import {
 	BIGZERO,
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
+	ROLE_POOL_STAKING,
 } from './utils';
 
 describe('Shadow Pool', () => {
@@ -30,7 +31,7 @@ describe('Shadow Pool', () => {
 	const userEscrowBalance = [toEth('211'), toEth('11')];
 
 	const claimSMODARewards = true;
-	const rolloverInvestment = false;
+	const useMODA = false;
 
 	function logSetup() {
 		console.log('Owner', owner.address);
@@ -91,10 +92,10 @@ describe('Shadow Pool', () => {
 		)) as ModaCorePool;
 		await shadowPool.deployed();
 
+		await token.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
 		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
-		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
-		//await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, shadowPool.address);
 		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, shadowPool.address);
+		await corePool.grantPrivilege(ROLE_POOL_STAKING, shadowPool.address);
 	});
 
 	it.skip('Should log the set up', async () => {
@@ -136,10 +137,10 @@ describe('Shadow Pool', () => {
 
 		await escrowToken.connect(user0).approve(shadowPool.address, amount);
 		expect(await escrowToken.allowance(addr[0], shadowPool.address)).to.equal(amount);
-		// The rolloverInvestment flag is ignored here because this is a shadow pool.
-		await shadowPool.connect(user0).stake(amount, lockUntil, rolloverInvestment);
+		// The useMODA flag is ignored here because this is a shadow pool.
+		await shadowPool.connect(user0).stake(amount, lockUntil, claimSMODARewards);
 		await expect(
-			shadowPool.connect(user1).stake(amount, lockUntil, rolloverInvestment)
+			shadowPool.connect(user1).stake(amount, lockUntil, claimSMODARewards)
 		).to.be.revertedWith('transfer amount exceeds balance');
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
@@ -183,6 +184,118 @@ describe('Shadow Pool', () => {
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await shadowPool.getDeposit(addr[0], BIGZERO);
+		expect(tokenAmount).to.equal(0);
+		expect(weight).to.equal(0);
+		expect(lockedFrom).to.equal(0);
+		expect(lockedUntil).to.equal(0);
+		expect(isYield).to.equal(false);
+	});
+
+	it('Should allow a user to unstake a locked deposit after 1 year. Using MODA.', async () => {
+		//logSetup();
+		// Check up the balances first
+		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(userEscrowBalance[0]);
+
+		// Calculate a suitable locking end date
+		let endDate: Date = new Date();
+		endDate.setTime(start.getTime() + YEAR - 10 * MILLIS);
+		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
+		//console.log('lockedUntil', lockUntil);
+		const amount: BigNumber = toEth('104');
+		const newBalance: BigNumber = userEscrowBalance[0].sub(amount);
+
+		await escrowToken.connect(user0).approve(shadowPool.address, amount);
+		expect(await escrowToken.allowance(addr[0], shadowPool.address)).to.equal(amount);
+		// This is a shadow pool it behaves differently when processing rewards.
+		await shadowPool.connect(user0).stake(amount, lockUntil, useMODA);
+		await expect(shadowPool.connect(user1).stake(amount, lockUntil, useMODA)).to.be.revertedWith(
+			'transfer amount exceeds balance'
+		);
+
+		// Staking moves the user's MODA from the Token contract to the CorePool.
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
+		//console.log(contractTx);
+		expect(await shadowPool.getDepositsLength(addr[0])).to.equal(1);
+		let [
+			tokenAmount, // @dev escrowToken amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await shadowPool.getDeposit(addr[0], BIGZERO);
+		expect(tokenAmount).to.equal(amount);
+		expect(weight).to.equal(toEth('207999896'));
+		expect(lockedUntil).to.equal(lockUntil);
+		expect(isYield).to.equal(false);
+
+		// Now attempt to withdraw it.
+		await expect(
+			shadowPool.connect(user0).unstake(toEth('0'), toEth('100'), useMODA)
+		).to.be.revertedWith('deposit not yet unlocked');
+		// Wait for more than a year though and...
+		await fastForward(add(start, { years: 1, days: 1 }));
+		await mineBlocks(1000);
+		// Before unstake executes the user should have zero sMODA.
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
+		await shadowPool.connect(user0).unstake(BIGZERO, amount, useMODA);
+
+		// Examine the escrowTokens this address now owns.
+		// Nothing increased, so this is pointless.
+		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
+		expect(await escrowToken.balanceOf(addr[0])).to.equal(toEth('211'));
+		// Is there anything remaining?
+		expect(await shadowPool.getDepositsLength(addr[0])).to.equal(1);
+		// This is where the shadow pool differs. Its MODA rewards are sent to the CorePool.
+		// The user must collect them from there when the time comes to vest.
+		expect(await corePool.getDepositsLength(addr[0])).to.equal(1);
+		// It may seem that way but...
+		[
+			tokenAmount, // @dev escrowToken amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await shadowPool.getDeposit(addr[0], BIGZERO);
+		expect(tokenAmount).to.equal(0);
+		expect(weight).to.equal(0);
+		expect(lockedFrom).to.equal(0);
+		expect(lockedUntil).to.equal(0);
+		expect(isYield).to.equal(false);
+
+		[
+			tokenAmount, // @dev escrowToken amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await corePool.getDeposit(addr[0], BIGZERO);
+		expect(tokenAmount.gte(toEth('149099999')));
+		expect(weight.gte(toEth('298199999999765')));
+		//expect(lockedFrom).to.equal(0);
+		//expect(lockedUntil).to.equal(0);
+		expect(isYield).to.equal(true);
+
+		let nextMonth: Date = fromTimestamp(lockedUntil.toNumber() + 3600);
+		await fastForward(nextMonth);
+		await mineBlocks(100);
+
+		// Before unstake executes the user should have their SMODAy original balance.
+		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
+		await corePool.connect(user0).unstake(BIGZERO, tokenAmount, useMODA);
+		// After unstake the user should have more MODA.
+		expect(await token.balanceOf(addr[0])).gte(toEth('149101000'));
+
+		// Is there anything remaining?
+		expect(await corePool.getDepositsLength(addr[0])).to.equal(1);
+		// Let's look
+		[
+			tokenAmount, // @dev token amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await corePool.getDeposit(addr[0], BIGZERO);
 		expect(tokenAmount).to.equal(0);
 		expect(weight).to.equal(0);
 		expect(lockedFrom).to.equal(0);
@@ -332,7 +445,8 @@ describe('Shadow Pool', () => {
 		await fastForward(add(start, { months: 2 }));
 		await mineBlocks(1000);
 		// Before unstake executes the user should have the previous sMODA balance.
-		expect(await escrowToken.balanceOf(addr[0])).gt(toEth('149250158'));
+		expect(await escrowToken.balanceOf(addr[0])).gt(toEth('148950000'));
+		expect(await token.balanceOf(addr[0])).equal(userBalances[0]);
 		// Unstake whatever remains.
 		await shadowPool.connect(user0).unstake(BIGZERO, tokenAmount, claimSMODARewards);
 		expect(await shadowPool.getDepositsLength(addr[0])).to.equal(1);
