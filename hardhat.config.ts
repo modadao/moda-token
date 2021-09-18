@@ -1,6 +1,7 @@
 import '@typechain/hardhat';
 import '@openzeppelin/hardhat-upgrades';
 import '@nomiclabs/hardhat-waffle';
+import 'solidity-coverage';
 
 const INFURA_PROJECT_ID = '';
 
