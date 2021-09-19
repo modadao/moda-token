@@ -3,6 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, Token, UpgradeTestToken } from '../typechain';
+import { BIGZERO } from './utils';
 
 function toEth(amount: string): BigNumber {
 	return ethers.utils.parseEther(amount);
@@ -106,5 +107,23 @@ describe('Escrow Token', () => {
 		await expect(escrowToken.connect(addr1).transferOwnership(addr1.address)).to.be.revertedWith(
 			'Ownable: caller is not the owner'
 		);
+	});
+
+	it('Should reject burning more than the address owns', async () => {
+		const [_, addr1] = await ethers.getSigners();
+		await expect(escrowToken.mint(addr1.address, toEth('2')));
+		await expect(escrowToken.connect(addr1).burn(toEth('3'))).to.be.revertedWith(
+			'ERC20: burn amount exceeds balance'
+		);
+	});
+
+	it('Should allow burning it all', async () => {
+		const [_, addr1] = await ethers.getSigners();
+		const amount = toEth('2');
+		await expect(escrowToken.mint(addr1.address, amount));
+		const balance = await escrowToken.balanceOf(addr1.address);
+		expect(balance).is.equal(amount);
+		await escrowToken.connect(addr1).burn(amount);
+		expect(await escrowToken.balanceOf(addr1.address)).is.equal(BIGZERO);
 	});
 });
