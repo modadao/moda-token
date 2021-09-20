@@ -393,8 +393,12 @@ describe('Core Pool', () => {
 		expect(lockedUntil).to.equal(lockUntil);
 		expect(isYield).to.equal(false);
 
+		await corePool
+			.connect(user0)
+			.updateStakeLock(BIGZERO, lockedUntil.add((2 * DAY) / MILLIS), rolloverInvestment);
+
 		lastLocked = lockedUntil;
-		let nextRewardTime: Date = fromTimestampBN(lockedUntil.add((2 * MINUTE) / MILLIS));
+		let nextRewardTime: Date = fromTimestampBN(lockedUntil.add((2 * DAY + 2 * MINUTE) / MILLIS));
 
 		expect(lastLocked).to.equal(lockUntil);
 
@@ -407,7 +411,7 @@ describe('Core Pool', () => {
 		nextRewardTime = fromTimestampBN(lockedUntil.add((65 * MINUTE) / MILLIS));
 
 		await corePool.connect(user0).processRewards(rolloverInvestment);
-		expect(await corePool.getDepositsLength(addr[0])).to.equal(3);
+		expect(await corePool.getDepositsLength(addr[0])).to.equal(4);
 		// DEPOSIT 0 (first)
 		[
 			tokenAmount, // @dev token amount staked
