@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import './IVestingToken.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IVestingToken.sol";
 
 struct VestingSchedule {
 	uint256 amount;
@@ -66,17 +65,17 @@ contract Vesting is Ownable {
 
 		uint256 total; // Note: Not explicitly initialising to zero to save gas, default value of uint256 is 0.
 
-		// We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
-		// iterate the loop to avoid a second iteration.
-		VestingSchedule[] memory entries = schedule[msg.sender];
-		uint256 length = entries.length; // Gas optimisation
-		for (uint256 i = 0; i < length; i++) {
-			VestingSchedule memory entry = entries[i];
-			if (entry.releaseDate <= block.timestamp && entry.released == false) {
-				schedule[msg.sender][i].released = true;
-				total += entry.amount;
-			}
-		}
+        // We're not using the withdrawalAmount function here because we need to mark them as withdrawn as we
+        // iterate the loop to avoid a second iteration.
+        VestingSchedule[] memory entries = schedule[msg.sender];
+        uint256 length = entries.length; // Gas optimisation
+        for (uint i = 0; i < length; i++) {
+            VestingSchedule memory entry = entries[i];
+            if (entry.releaseDate <= block.timestamp && entry.released == false) {
+                schedule[msg.sender][i].released = true;
+                total += entry.amount;
+            }
+        }
 
 		require(total > 0, 'Vesting: no amount to withdraw');
 

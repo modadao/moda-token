@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.6;
 
 /**
  * @dev Interface for a token that will allow unlimited mints from a vesting contract
