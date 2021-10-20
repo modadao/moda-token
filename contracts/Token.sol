@@ -40,8 +40,6 @@ contract Token is
 			_mintWithCount(recipients[i], amounts[i]);
 		}
 
-		//console.log('Token.initialize() ', _msgSender());
-		//console.log('Token address', address(this));
 		__AccessControl_init();
 		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, 0x0);
@@ -108,8 +106,6 @@ contract Token is
 		_mint(to, amount);
 	}
 
-	// ===== Start: Minting/burning extension =====
-
 	/**
 	 * @dev Mints (creates) some tokens to address specified
 	 * @dev The value specified is treated as is without taking
@@ -136,15 +132,8 @@ contract Token is
 		// uint256 overflow check (required by voting delegation)
 		require(totalSupply() + _value <= type(uint192).max, 'total supply overflow (uint192)');
 
-		// perform mint:
-		// fire ERC20 compliant transfer event
+		// perform mint with ERC20 transfer event
 		_mintWithCount(_to, _value);
-
-		///TODO: No voting implementation here.
-		///      Refer to Governance.sol perhaps?
-		//
-		// create voting power associated with the tokens minted
-		//__moveVotingPower(address(0), votingDelegates[_to], _value);
 	}
 
 	/**
@@ -164,9 +153,6 @@ contract Token is
 		uint256 amount
 	) public virtual override returns (bool) {
 		_updateCountOnTransfer(sender, recipient, amount);
-		// console.log('Token.transferFrom amount', amount);
-		// console.log('Token.transferFrom sender', sender);
-		// console.log('Token.transferFrom msgSender', msg.sender);
 		return super.transferFrom(sender, recipient, amount);
 	}
 

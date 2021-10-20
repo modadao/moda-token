@@ -1,24 +1,10 @@
 import { BigNumber } from '@ethersproject/bignumber';
-import { BlockForkEvent } from '@ethersproject/contracts/node_modules/@ethersproject/abstract-provider';
+import { parseEther } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, ModaCorePool, Token } from '../typechain';
-import {
-	add,
-	addTimestamp,
-	fastForward,
-	fromTimestamp,
-	toEth,
-	YEAR,
-	DAY,
-	HOUR,
-	MILLIS,
-	BIGZERO,
-	ADDRESS0,
-	ROLE_TOKEN_CREATOR,
-	mineBlocks,
-} from './utils';
+import { add, fastForward, fromTimestamp, ADDRESS0, ROLE_TOKEN_CREATOR, mineBlocks } from './utils';
 
 describe('Core Pool Rewards', () => {
 	let token: Token;
@@ -27,18 +13,10 @@ describe('Core Pool Rewards', () => {
 	let start = new Date();
 	let owner: SignerWithAddress, user0: SignerWithAddress, user1: SignerWithAddress;
 	let addr: string[];
-	const userBalances = [toEth('2000'), toEth('200')];
-	const userEscrowBalance = [toEth('211'), toEth('11')];
+	const userBalances = [parseEther('2000'), parseEther('200')];
+	const userEscrowBalance = [parseEther('211'), parseEther('11')];
 	const useSMODA = true;
 	const useMODA = false;
-
-	function logSetup() {
-		console.log('Owner', owner.address);
-		console.log('Users', addr);
-		console.log('Token', token.address);
-		console.log('Escrow Token', escrowToken.address);
-		console.log('Core Pool', corePool.address);
-	}
 
 	beforeEach(async () => {
 		let currentBlock = await ethers.provider.getBlock(ethers.provider.getBlockNumber());
@@ -66,7 +44,7 @@ describe('Core Pool Rewards', () => {
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			toEth('150000'), // modaPerBlock initial MODA/block value for rewards
+			parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
 			10, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
 			nextBlock, // initBlock initial block used to calculate the rewards
 			nextBlock + 3672000 // endBlock block number when farming stops and rewards cannot be updated anymore
@@ -82,8 +60,8 @@ describe('Core Pool Rewards', () => {
 		// Set up the balance first
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
 
-		const unlocked: BigNumber = BIGZERO;
-		const amount: BigNumber = toEth('104');
+		const unlocked = BigNumber.from(0);
+		const amount = parseEther('104');
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(addr[0], corePool.address)).to.equal(amount);
 		await corePool.connect(user0).stake(amount, unlocked, useSMODA);
@@ -97,9 +75,9 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BIGZERO);
+		] = await corePool.getDeposit(addr[0], 0);
 		expect(tokenAmount).to.equal(amount);
-		expect(weight).to.equal(toEth('104000000'));
+		expect(weight).to.equal(parseEther('104000000'));
 		expect(lockedUntil).to.equal(0);
 		expect(isYield).to.equal(false);
 
@@ -113,11 +91,11 @@ describe('Core Pool Rewards', () => {
 		let ReturnsOnInvestment = Array<ROI_Record>();
 
 		let RoI_: ROI_Record = {
-			Deposit: BIGZERO,
-			Amount: BIGZERO,
-			Weight: BIGZERO,
-			MODA: BIGZERO,
-			SMODA: BIGZERO,
+			Deposit: BigNumber.from(0),
+			Amount: BigNumber.from(0),
+			Weight: BigNumber.from(0),
+			MODA: BigNumber.from(0),
+			SMODA: BigNumber.from(0),
 		};
 		let RoI: ROI_Record = Object.assign({}, RoI_);
 
@@ -150,7 +128,7 @@ describe('Core Pool Rewards', () => {
 			RoI = Object.assign({}, RoI_);
 		}
 		// Unstake completely after yield farming ends.
-		await corePool.connect(user0).unstake(BIGZERO, amount, true);
+		await corePool.connect(user0).unstake(0, amount, true);
 
 		// Examine the tokens this address now owns.
 		RoI.Deposit = BigNumber.from(maxMonths + 1);
@@ -162,7 +140,7 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BIGZERO);
+		] = await corePool.getDeposit(addr[0], 0);
 		RoI.Amount = tokenAmount;
 		RoI.Weight = weight;
 		ReturnsOnInvestment.push(RoI);
@@ -182,8 +160,8 @@ describe('Core Pool Rewards', () => {
 		// Set up the balance first
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
 
-		const amount: BigNumber = toEth('104');
-		const unlocked: BigNumber = BIGZERO;
+		const amount = parseEther('104');
+		const unlocked = BigNumber.from(0);
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(addr[0], corePool.address)).to.equal(amount);
 		await corePool.connect(user0).stake(amount, unlocked, useMODA);
@@ -197,9 +175,9 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BIGZERO);
+		] = await corePool.getDeposit(addr[0], 0);
 		expect(tokenAmount).to.equal(amount);
-		expect(weight).to.equal(toEth('104000000'));
+		expect(weight).to.equal(parseEther('104000000'));
 		//expect(lockedFrom).to.equal(0);
 		expect(lockedUntil).to.equal(0);
 		expect(isYield).to.equal(false);
@@ -214,11 +192,11 @@ describe('Core Pool Rewards', () => {
 		let ReturnsOnInvestment = Array<ROI_Record>();
 
 		let RoI_: ROI_Record = {
-			Deposit: BIGZERO,
-			Amount: BIGZERO,
-			Weight: BIGZERO,
-			MODA: BIGZERO,
-			SMODA: BIGZERO,
+			Deposit: BigNumber.from(0),
+			Amount: BigNumber.from(0),
+			Weight: BigNumber.from(0),
+			MODA: BigNumber.from(0),
+			SMODA: BigNumber.from(0),
 		};
 		let RoI: ROI_Record = Object.assign({}, RoI_);
 
@@ -252,7 +230,7 @@ describe('Core Pool Rewards', () => {
 			RoI = Object.assign({}, RoI_);
 		}
 		// Unstake completely after yield farming ends.
-		await corePool.connect(user0).unstake(BIGZERO, amount, true);
+		await corePool.connect(user0).unstake(BigNumber.from(0), amount, true);
 
 		// Examine the tokens this address now owns.
 		RoI.Deposit = BigNumber.from(maxMonths + 1);
@@ -264,7 +242,7 @@ describe('Core Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(addr[0], BIGZERO);
+		] = await corePool.getDeposit(addr[0], BigNumber.from(0));
 		RoI.Amount = tokenAmount;
 		RoI.Weight = weight;
 		ReturnsOnInvestment.push(RoI);
@@ -279,3 +257,4 @@ describe('Core Pool Rewards', () => {
 		 */
 	});
 });
+

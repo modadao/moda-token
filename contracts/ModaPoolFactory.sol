@@ -13,8 +13,6 @@ import './EscrowedModaERC20.sol';
  *      core pools allow staking for arbitrary periods of time up to 1 year
  *
  * @dev Pulled from the original Factory code to provide the weight calculations.
- *
- * @author David Schwartz, reviewed by Kevin Brown
  */
 abstract contract ModaPoolFactory is ModaAware, Ownable {
 	/**
@@ -111,8 +109,6 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 		// check if blocks/update (91252 blocks) have passed since last update
 		return block.number >= lastRatioUpdate + blocksPerUpdate;
 	}
-
-	/// Imported from ModaPoolFactory after that was removed from the design.
 
 	/**
 	 * @notice Decreases MODA/block reward by 3%, can be executed

@@ -12,6 +12,7 @@ import './Token.sol';
  *      be linked to verified ModaERC20 instance and performing some basic tasks on it
  *
  * @author Basil Gorin
+ * @author Kevin Brown (Moda DAO)
  */
 abstract contract ModaAware is ILinkedToMODA {
 	/// @dev Link to MODA ERC20 Token ModaERC20 instance
