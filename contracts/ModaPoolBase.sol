@@ -22,8 +22,6 @@ import './ModaPoolFactory.sol';
  *          - MODA token address
  *          - sMODA token address, used to mint sMODA rewards
  *          - pool token address, it can be MODA token address, MODA/ETH pair address, and others
- *
- * @author David Schwartz, reviewed by Kevin Brown
  */
 abstract contract ModaPoolBase is
 	IPool,

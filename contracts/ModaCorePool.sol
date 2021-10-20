@@ -13,8 +13,6 @@ import './ModaPoolBase.sol';
  *      core pools allow staking for arbitrary periods of time up to 1 year
  *
  * @dev See ModaPoolBase for more details
- *
- * @author David Schwartz, reviewed by Kevin Brown
  */
 contract ModaCorePool is ModaPoolBase {
 	/// @dev Pool tokens value available in the pool;
