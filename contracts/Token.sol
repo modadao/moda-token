@@ -103,7 +103,7 @@ contract Token is
 	 * @dev A private function that mints while maintaining the holder count variable.
 	 */
 	function _mintWithCount(address to, uint256 amount) private {
-		_updateCountOnTransfer(_msgSender(), to, amount);
+		_updateCountOnTransfer(address(0), to, amount);
 		_mint(to, amount);
 	}
 

@@ -1,16 +1,10 @@
-import { BigNumber } from '@ethersproject/bignumber';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { ethers, upgrades } from 'hardhat';
-import { EscrowedModaERC20, Token, UpgradeTestToken } from '../typechain';
-import { BIGZERO } from './utils';
-
-function toEth(amount: string): BigNumber {
-	return ethers.utils.parseEther(amount);
-}
+import { ethers } from 'hardhat';
+import { EscrowedModaERC20, Token } from '../typechain';
 
 describe('Escrow Token', () => {
-	const initialSupply = toEth('1000000');
+	const initialSupply = ethers.utils.parseEther('1000000');
 	let token: Token;
 	let escrowToken: EscrowedModaERC20;
 	let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
@@ -30,22 +24,24 @@ describe('Escrow Token', () => {
 	});
 
 	it('Should allow minting by owner', async () => {
-		expect(await escrowToken.balanceOf(addr1.address)).to.equal(toEth('0'));
-		expect(await escrowToken.balanceOf(addr2.address)).to.equal(toEth('0'));
-		await escrowToken.mint(addr1.address, toEth('508'));
-		expect(await escrowToken.balanceOf(addr1.address)).to.equal(toEth('508'));
+		expect(await escrowToken.balanceOf(addr1.address)).to.equal(ethers.utils.parseEther('0'));
+		expect(await escrowToken.balanceOf(addr2.address)).to.equal(ethers.utils.parseEther('0'));
+		await escrowToken.mint(addr1.address, ethers.utils.parseEther('508'));
+		expect(await escrowToken.balanceOf(addr1.address)).to.equal(ethers.utils.parseEther('508'));
 
-		await escrowToken.mint(addr2.address, toEth('509'));
-		expect(await escrowToken.balanceOf(addr2.address)).to.equal(toEth('509'));
+		await escrowToken.mint(addr2.address, ethers.utils.parseEther('509'));
+		expect(await escrowToken.balanceOf(addr2.address)).to.equal(ethers.utils.parseEther('509'));
 
-		expect(await escrowToken.totalSupply()).to.equal(initialSupply.add(toEth('1017')));
+		expect(await escrowToken.totalSupply()).to.equal(
+			initialSupply.add(ethers.utils.parseEther('1017'))
+		);
 	});
 
 	it('Should allow a transfer of 127 tokens from owner', async () => {
 		const [owner, addr1] = await ethers.getSigners();
-		await escrowToken.connect(owner).transfer(addr1.address, toEth('127'));
+		await escrowToken.connect(owner).transfer(addr1.address, ethers.utils.parseEther('127'));
 
-		expect(await escrowToken.balanceOf(addr1.address)).to.equal(toEth('127'));
+		expect(await escrowToken.balanceOf(addr1.address)).to.equal(ethers.utils.parseEther('127'));
 	});
 
 	it('Should emit a well formed Transfer event on transfer() and transferFrom()', async () => {
@@ -64,7 +60,7 @@ describe('Escrow Token', () => {
 	it('Should allow a larger approval than current balance', async () => {
 		const [owner, addr1] = await ethers.getSigners();
 		const balance = await escrowToken.balanceOf(owner.address);
-		const allowance = balance.add(toEth('1'));
+		const allowance = balance.add(ethers.utils.parseEther('1'));
 
 		await escrowToken.connect(owner).approve(addr1.address, allowance);
 		expect(await escrowToken.allowance(owner.address, addr1.address)).to.equal(allowance);
@@ -111,19 +107,19 @@ describe('Escrow Token', () => {
 
 	it('Should reject burning more than the address owns', async () => {
 		const [_, addr1] = await ethers.getSigners();
-		await expect(escrowToken.mint(addr1.address, toEth('2')));
-		await expect(escrowToken.connect(addr1).burn(toEth('3'))).to.be.revertedWith(
+		await expect(escrowToken.mint(addr1.address, ethers.utils.parseEther('2')));
+		await expect(escrowToken.connect(addr1).burn(ethers.utils.parseEther('3'))).to.be.revertedWith(
 			'ERC20: burn amount exceeds balance'
 		);
 	});
 
 	it('Should allow burning it all', async () => {
 		const [_, addr1] = await ethers.getSigners();
-		const amount = toEth('2');
+		const amount = ethers.utils.parseEther('2');
 		await expect(escrowToken.mint(addr1.address, amount));
 		const balance = await escrowToken.balanceOf(addr1.address);
 		expect(balance).is.equal(amount);
 		await escrowToken.connect(addr1).burn(amount);
-		expect(await escrowToken.balanceOf(addr1.address)).is.equal(BIGZERO);
+		expect(await escrowToken.balanceOf(addr1.address)).is.equal('0');
 	});
 });
