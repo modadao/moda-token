@@ -51,8 +51,8 @@ describe('Core Pool Rewards', () => {
 		)) as ModaCorePool;
 		await corePool.deployed();
 
-		await token.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
-		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
+		await token.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
+		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
 	});
 
 	it('Should allow a user to stake (unlocked) amount continue calling processRewards(to sMODA)', async () => {
@@ -257,4 +257,3 @@ describe('Core Pool Rewards', () => {
 		 */
 	});
 });
-

@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { Vesting, Token } from '../typechain';
-import { add, addTimestamp, fastForward, fromTimestamp } from './utils';
+import { add, addTimestamp, fastForward, fromTimestamp, ROLE_TOKEN_CREATOR } from './utils';
 
 describe('Vesting', () => {
 	let token: Token;
@@ -37,7 +37,7 @@ describe('Vesting', () => {
 		vesting = (await VestingFactory.deploy(token.address)) as Vesting;
 		await vesting.deployed();
 
-		await token.setVestingContract(vesting.address);
+		await token.grantRole(ROLE_TOKEN_CREATOR, vesting.address);
 
 		await vesting.addToSchedule(addr1.address, [
 			{

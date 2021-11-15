@@ -2,20 +2,18 @@
 pragma solidity 0.8.6;
 
 import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
+import './IMintableToken.sol';
 import './ModaConstants.sol';
-import './IVestingToken.sol';
 
 contract Token is
 	Initializable,
-	OwnableUpgradeable,
 	ERC20Upgradeable,
 	UUPSUpgradeable,
-	IVestingToken,
-	AccessControlUpgradeable
+	AccessControlUpgradeable,
+	IMintableToken
 {
 	uint256 public holderCount;
 	address public vestingContract;
@@ -31,7 +29,6 @@ contract Token is
 	function initialize(address[] memory recipients, uint256[] memory amounts) public initializer {
 		require(recipients.length == amounts.length, 'Token: recipients and amounts must match');
 
-		__Ownable_init();
 		__ERC20_init('moda', 'MODA');
 
 		uint256 length = recipients.length;
@@ -41,8 +38,8 @@ contract Token is
 
 		__AccessControl_init();
 		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, 0x0);
-		grantRole(ModaConstants.ROLE_TOKEN_CREATOR, _msgSender());
+		_setupRole(ModaConstants.ROLE_UPGRADER, _msgSender());
+		_setupRole(ModaConstants.ROLE_TOKEN_CREATOR, _msgSender());
 	}
 
 	/**
@@ -51,15 +48,7 @@ contract Token is
 	 *
 	 *      This implementation only allows the contract owner to perform upgrades.
 	 */
-	function _authorizeUpgrade(address) internal view override onlyOwner {}
-
-	/**
-	 * @dev Granting privileges required for allowing ModaCorePool and whatever else later,
-	 *     the ability to mint Tokens as required.
-	 */
-	function grantPrivilege(bytes32 _role, address _account) public onlyOwner {
-		grantRole(_role, _account);
-	}
+	function _authorizeUpgrade(address) internal view override onlyRole(ModaConstants.ROLE_UPGRADER) {}
 
 	/**
 	 * @dev Internal function to manage the holderCount variable that should be called
@@ -79,24 +68,6 @@ contract Token is
 				--holderCount;
 			}
 		}
-	}
-
-	/**
-	 * @dev Allows the vesting contract to mint tokens without limit.
-	 */
-	function vestingMint(address to, uint256 amount) external override onlyVesting {
-		_updateCountOnTransfer(address(0), to, amount);
-		_mint(to, amount);
-	}
-
-	/**
-	 * @dev Allows the owner of the contract to set the vesting contract address
-	 */
-	function setVestingContract(address newVestingContract) external onlyOwner {
-		address oldVestingContract = vestingContract;
-		vestingContract = newVestingContract;
-
-		emit VestingContractChanged(oldVestingContract, newVestingContract);
 	}
 
 	/**
@@ -120,8 +91,7 @@ contract Token is
 	 * @param _to an address to mint tokens to
 	 * @param _value an amount of tokens to mint (create)
 	 */
-	function mint(address _to, uint256 _value) public onlyRole(ModaConstants.ROLE_TOKEN_CREATOR) {
-		//console.log('Token.mint():', _msgSender());
+	function mint(address _to, uint256 _value) public override onlyRole(ModaConstants.ROLE_TOKEN_CREATOR) {
 		// non-zero recipient address check
 		require(_to != address(0), 'ERC20: mint to the zero address'); // Zeppelin msg
 		if (_value == 0) return;
@@ -155,18 +125,5 @@ contract Token is
 	) public virtual override returns (bool) {
 		_updateCountOnTransfer(sender, recipient, amount);
 		return super.transferFrom(sender, recipient, amount);
-	}
-
-	/**
-	 * @dev Emitted whenever the owner changes the vesting contract address.
-	 */
-	event VestingContractChanged(address oldVestingContract, address newVestingContract);
-
-	/**
-	 * @dev Throws if called by any account other than the vesting contract.
-	 */
-	modifier onlyVesting() {
-		require(vestingContract == _msgSender(), 'Token: caller is not the vesting contract');
-		_;
 	}
 }

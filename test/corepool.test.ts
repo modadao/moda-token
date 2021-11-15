@@ -16,6 +16,7 @@ import {
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
 	MINUTE,
+	ROLE_POOL_STAKING,
 } from './utils';
 
 const userBalances = [parseEther('2000'), parseEther('200')];
@@ -23,7 +24,7 @@ const userEscrowBalance = [parseEther('200'), parseEther('10')];
 const claimSMODARewards = true;
 const rolloverInvestment = false;
 
-describe('Core Pool', () => {
+describe.only('Core Pool', () => {
 	let token: Token;
 	let escrowToken: EscrowedModaERC20;
 	let corePool: ModaCorePool;
@@ -64,15 +65,15 @@ describe('Core Pool', () => {
 		)) as ModaCorePool;
 		await corePool.deployed();
 
-		await token.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
-		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
+		await token.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
+		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
 	});
 
 	it('Should refuse any but a CorePool to create a pool stake', async () => {
 		await expect(
 			corePool.connect(user0).stakeAsPool(user1.address, parseEther('100'))
 		).to.be.revertedWith(
-			`AccessControl: account ${user0.address.toLowerCase()} is missing role 0x000b000000000000000000000000000000000000000000000000000000000000`
+			`AccessControl: account ${user0.address.toLowerCase()} is missing role ${ROLE_POOL_STAKING}`
 		);
 	});
 
@@ -110,8 +111,8 @@ describe('Core Pool', () => {
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 0);
-		expect(tokenAmount.eq(amount));
-		expect(weight.eq(parseEther('207997920')));
+		expect(tokenAmount).to.equal(amount);
+		expect(weight).to.equal(parseEther('207997920'));
 		expect(lockedUntil).to.equal(lockUntil);
 		expect(isYield).to.equal(false);
 

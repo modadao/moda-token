@@ -2,7 +2,7 @@
 pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./IVestingToken.sol";
+import "./IMintableToken.sol";
 
 struct VestingSchedule {
 	uint256 amount;
@@ -11,14 +11,14 @@ struct VestingSchedule {
 }
 
 contract Vesting is Ownable {
-	IVestingToken public immutable token; // Token
+	IMintableToken public immutable token; // Token
 	mapping(address => VestingSchedule[]) public schedule; // Vesting Schedule
 	bool public vestingSealed;
 
 	constructor(address tokenContract) {
 		require(tokenContract != address(0), 'Vesting: invalid token address');
 
-		token = IVestingToken(tokenContract);
+		token = IMintableToken(tokenContract);
 	}
 
 	function addToSchedule(address to, VestingSchedule[] memory newEntries) external onlyOwner {
@@ -79,7 +79,7 @@ contract Vesting is Ownable {
 
 		require(total > 0, 'Vesting: no amount to withdraw');
 
-		token.vestingMint(msg.sender, total);
+		token.mint(msg.sender, total);
 
 		emit Vested(msg.sender, total);
 	}

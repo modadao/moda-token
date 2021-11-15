@@ -90,10 +90,10 @@ describe('Shadow Pool', () => {
 		)) as ModaCorePool;
 		await shadowPool.deployed();
 
-		await token.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
-		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, corePool.address);
-		await escrowToken.grantPrivilege(ROLE_TOKEN_CREATOR, shadowPool.address);
-		await corePool.grantPrivilege(ROLE_POOL_STAKING, shadowPool.address);
+		await token.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
+		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
+		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, shadowPool.address);
+		await corePool.grantRole(ROLE_POOL_STAKING, shadowPool.address);
 	});
 
 	it.skip('Should log the set up', async () => {

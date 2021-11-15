@@ -31,17 +31,23 @@ library ModaConstants {
 		0x8ca5f5bb5e4f02345a019a993ce37018dd549b22e88027f4f5c1f614ef6fb3c0;
 
 	/**
+	 * @notice Upgrader is responsible for managing future versions
+	 *         of the contract.
+	 */
+	bytes32 public constant ROLE_UPGRADER = '\x00\x0A\x00\x00';
+
+	/**
 	 * @notice Token creator is responsible for creating (minting)
 	 *      tokens to an arbitrary address
 	 * @dev Role ROLE_TOKEN_CREATOR allows minting tokens
 	 *      (calling `mint` function)
 	 */
-	bytes32 public constant ROLE_TOKEN_CREATOR = '\x00\x0A\x00\x00';
+	bytes32 public constant ROLE_TOKEN_CREATOR = '\x00\x0B\x00\x00';
 
 	/**
 	 * @notice Token stakeAsPool is responsible for stakes in Moda Pools
 	 *         for an arbitrary address.
 	 * @dev Role ROLE_POOL_STAKING allows creating stakes for non-Moda tokens.
 	 */
-	bytes32 public constant ROLE_POOL_STAKING = '\x00\x0B\x00\x00';
+	bytes32 public constant ROLE_POOL_STAKING = '\x00\x0C\x00\x00';
 }

@@ -2,6 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { Token, UpgradeTestToken } from '../typechain';
+import { ROLE_TOKEN_CREATOR } from './utils';
 
 describe('Token', () => {
 	let token: Token;
@@ -181,53 +182,37 @@ describe('Token', () => {
 		);
 	});
 
-	it('Should allow changing the owner', async () => {
-		const [owner, addr1] = await ethers.getSigners();
-
-		expect(await token.owner()).to.equal(owner.address);
-		await expect(token.transferOwnership(addr1.address))
-			.to.emit(token, 'OwnershipTransferred')
-			.withArgs(owner.address, addr1.address);
-		expect(await token.owner()).to.equal(addr1.address);
-	});
-
-	it('Should reject requests to change ownership from a non-owning address', async () => {
-		const [_, addr1] = await ethers.getSigners();
-		await expect(token.connect(addr1).transferOwnership(addr1.address)).to.be.revertedWith(
-			'Ownable: caller is not the owner'
-		);
-	});
-
-	it('Should reject requests to mint from a non-vesting contract address', async () => {
-		const [owner] = await ethers.getSigners();
-		await expect(token.vestingMint(owner.address, 1)).to.be.revertedWith(
+	it('Should reject requests to mint from an address without the Token Creator role', async () => {
+		const [owner, address1] = await ethers.getSigners();
+		await expect(token.mint(owner.address, 1)).to.be.revertedWith(
 			'Token: caller is not the vesting contract'
 		);
 	});
 
-	it('Should reject requests to change the vesting contract from a non-owner', async () => {
+	it('Should reject requests to change the token creator role from a non-owner', async () => {
 		const [owner, addr1] = await ethers.getSigners();
 
-		await expect(token.connect(addr1).setVestingContract(owner.address)).to.be.revertedWith(
-			'Ownable: caller is not the owner'
+		await expect(
+			token.connect(addr1).grantRole(ROLE_TOKEN_CREATOR, owner.address)
+		).to.be.revertedWith(
+			`AccessControl: account ${addr1.address.toLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
 		);
 	});
 
 	it('Should allow requests to change the vesting contract from an owner', async () => {
-		const [owner] = await ethers.getSigners();
+		const [owner, addr1] = await ethers.getSigners();
 		const current = await token.vestingContract();
 
-		await expect(token.setVestingContract(owner.address))
+		await expect(token.grantRole(ROLE_TOKEN_CREATOR, addr1.address))
 			.to.emit(token, 'VestingContractChanged')
-			.withArgs(current, owner.address);
+			.withArgs(current, addr1.address);
 	});
 
 	it('Should increase total supply on vesting', async () => {
 		const [owner] = await ethers.getSigners();
 		const current = await token.totalSupply();
 
-		await token.setVestingContract(owner.address);
-		await token.vestingMint(owner.address, ethers.utils.parseEther('100'));
+		await token.mint(owner.address, ethers.utils.parseEther('100'));
 
 		expect(await token.totalSupply()).to.equal(current.add(ethers.utils.parseEther('100')));
 	});
