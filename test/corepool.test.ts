@@ -10,13 +10,13 @@ import {
 	fromTimestampBN,
 	toTimestampBN,
 	mineBlocks,
-	YEAR,
-	DAY,
-	MILLIS,
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
-	MINUTE,
 	ROLE_POOL_STAKING,
+	MINUTE,
+	MILLIS,
+	DAY,
+	blockNow,
 } from './utils';
 
 const userBalances = [parseEther('2000'), parseEther('200')];
@@ -67,6 +67,8 @@ describe('Core Pool', () => {
 
 		await token.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
 		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
+
+		start = await blockNow();
 	});
 
 	it('Should refuse any but a CorePool to create a pool stake', async () => {
@@ -78,9 +80,7 @@ describe('Core Pool', () => {
 	});
 
 	it('Should revert on invalid lock interval', async () => {
-		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + YEAR + DAY);
-		let lockedUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
+		const lockedUntil = toTimestampBN(add(start, { days: 1, years: 1 }));
 		await expect(
 			corePool.connect(user0).stake(parseEther('100'), lockedUntil, false)
 		).to.be.revertedWith('invalid lock interval');
@@ -91,10 +91,7 @@ describe('Core Pool', () => {
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
 		// Calculate a suitable locking end date
-		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + YEAR - 10 * MINUTE);
-		let lockUntil: BigNumber = toTimestampBN(endDate);
-		//console.log('lockedUntil', lockUntil);
+		const lockUntil: BigNumber = toTimestampBN(add(start, { years: 1, minutes: -10 }));
 		const amount: BigNumber = parseEther('104');
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(user0.address, corePool.address)).to.equal(amount);
@@ -102,7 +99,6 @@ describe('Core Pool', () => {
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0].sub(amount));
-		//console.log(contractTx);
 		expect(await corePool.getDepositsLength(user0.address)).to.equal(1);
 		let [
 			tokenAmount, // @dev token amount staked
@@ -122,7 +118,7 @@ describe('Core Pool', () => {
 		).to.be.revertedWith('deposit not yet unlocked');
 		// Wait for more than a year though and...
 		await fastForward(add(start, { years: 1, days: 1 }));
-		await mineBlocks(1000);
+
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(user0.address)).to.equal(userEscrowBalance[0]);
 		await corePool.connect(user0).processRewards(claimSMODARewards);
@@ -133,7 +129,7 @@ describe('Core Pool', () => {
 		await corePool.processRewards(claimSMODARewards);
 
 		expect(await escrowToken.balanceOf(user0.address)).to.equal(
-			BigNumber.from('149400199999923851360000000')
+			BigNumber.from('600199999780001600000000')
 		);
 		// Is there anything remaining?
 		expect(await corePool.getDepositsLength(user0.address)).to.equal(1);
@@ -153,14 +149,11 @@ describe('Core Pool', () => {
 	});
 
 	it('Should allow a user to stake deposit for 1 month. Claim SMODA rewards.', async () => {
-		//logSetup();
 		// Set up the balance first
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
 		// Calculate a suitable locking end date
-		let endDate: Date = add(start, { days: 28 });
-		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
-		//console.log('lockedUntil', lockUntil);
+		const lockUntil = toTimestampBN(add(start, { days: 28 }));
 		const amount: BigNumber = parseEther('104');
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(user0.address, corePool.address)).to.equal(amount);
@@ -215,10 +208,7 @@ describe('Core Pool', () => {
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
 		// Calculate a suitable locking end date
-		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + 28 * DAY);
-		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
-		//console.log('lockedUntil', lockUntil);
+		const lockUntil = toTimestampBN(add(start, { days: 28 }));
 		const amount: BigNumber = parseEther('104');
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(user0.address, corePool.address)).to.equal(amount);
@@ -326,7 +316,6 @@ describe('Core Pool', () => {
 		] = await corePool.getDeposit(user0.address, 0);
 		expect(tokenAmount.eq(amount));
 		expect(weight.eq(BigNumber.from('111977944000000000000000000')));
-		//expect(lockedFrom).to.equal(lockUntil); // timey wimey
 		expect(lockedUntil).to.equal(lockUntil);
 		expect(isYield).to.equal(false);
 

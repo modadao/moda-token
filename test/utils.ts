@@ -6,10 +6,37 @@ export const fastForward = async (newDate: Date) => {
 	await network.provider.send('evm_mine');
 };
 
+export const blockNow = async () => {
+	const { timestamp } = await ethers.provider.getBlock('latest');
+	return fromTimestamp(timestamp);
+};
+
 export const add = (
 	date: Date,
-	{ years = 0, months = 0, days = 0 }: { years?: number; months?: number; days?: number }
-) => new Date(years + date.getFullYear(), months + date.getMonth(), days + date.getDate());
+	{
+		years = 0,
+		months = 0,
+		days = 0,
+		hours = 0,
+		minutes = 0,
+		seconds = 0,
+	}: {
+		years?: number;
+		months?: number;
+		days?: number;
+		hours?: number;
+		minutes?: number;
+		seconds?: number;
+	}
+) =>
+	new Date(
+		years + date.getFullYear(),
+		months + date.getMonth(),
+		days + date.getDate(),
+		hours + date.getHours(),
+		minutes + date.getMinutes(),
+		seconds + date.getSeconds()
+	);
 
 export const toTimestamp = (date: Date) => Math.floor(date.getTime() / 1000);
 export const toTimestampBN = (date: Date) => BigNumber.from(toTimestamp(date));
@@ -23,12 +50,12 @@ export const addTimestamp = (
 
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 
-export const MILLIS: number = 1000;
-export const SECOND: number = MILLIS;
-export const MINUTE: number = 60 * SECOND;
-export const HOUR: number = 60 * MINUTE;
-export const DAY: number = 24 * HOUR;
-export const YEAR: number = 365 * DAY;
+export const MILLIS = 1000;
+export const SECOND = MILLIS;
+export const MINUTE = 60 * SECOND;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
+export const YEAR = 365 * DAY;
 
 export const toBytes32 = (hexString: string) => `0x${hexString.padEnd(64, '0')}`;
 
