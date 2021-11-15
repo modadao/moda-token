@@ -14,6 +14,7 @@ import {
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
 	ROLE_POOL_STAKING,
+	accessControlError,
 } from './utils';
 
 describe('Shadow Pool', () => {
@@ -105,9 +106,7 @@ describe('Shadow Pool', () => {
 		//logSetup();
 		await expect(
 			shadowPool.connect(user0).stakeAsPool(user1.address, ethers.utils.parseEther('100'))
-		).to.be.revertedWith(
-			`AccessControl: account ${addr[0].toLowerCase()} is missing role 0x000b000000000000000000000000000000000000000000000000000000000000`
-		);
+		).to.be.revertedWith(accessControlError(addr[0], ROLE_POOL_STAKING));
 	});
 
 	it('Should revert on invalid lock interval', async () => {

@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { Token, UpgradeTestToken } from '../typechain';
-import { ROLE_TOKEN_CREATOR } from './utils';
+import { accessControlError, ROLE_ADMIN, ROLE_TOKEN_CREATOR, ROLE_UPGRADER } from './utils';
 
 describe('Token', () => {
 	let token: Token;
@@ -170,7 +170,7 @@ describe('Token', () => {
 		expect(await tokenV2.holderCount()).to.equal(2);
 	});
 
-	it('Should only accept upgrade requests from the current owner', async () => {
+	it('Should only accept upgrade requests from someone with the ROLE_UPGRADER role', async () => {
 		const [_, addr1] = await ethers.getSigners();
 
 		const UpgradeTestTokenFactory = await ethers.getContractFactory('UpgradeTestToken');
@@ -178,14 +178,14 @@ describe('Token', () => {
 		await tokenV2.deployed();
 
 		await expect(token.connect(addr1).upgradeTo(tokenV2.address)).to.be.revertedWith(
-			'Ownable: caller is not the owner'
+			accessControlError(addr1.address, ROLE_UPGRADER)
 		);
 	});
 
 	it('Should reject requests to mint from an address without the Token Creator role', async () => {
 		const [owner, address1] = await ethers.getSigners();
-		await expect(token.mint(owner.address, 1)).to.be.revertedWith(
-			'Token: caller is not the vesting contract'
+		await expect(token.connect(address1).mint(owner.address, 1)).to.be.revertedWith(
+			accessControlError(address1.address, ROLE_TOKEN_CREATOR)
 		);
 	});
 
@@ -194,18 +194,15 @@ describe('Token', () => {
 
 		await expect(
 			token.connect(addr1).grantRole(ROLE_TOKEN_CREATOR, owner.address)
-		).to.be.revertedWith(
-			`AccessControl: account ${addr1.address.toLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
-		);
+		).to.be.revertedWith(accessControlError(addr1.address, ROLE_ADMIN));
 	});
 
-	it('Should allow requests to change the vesting contract from an owner', async () => {
+	it('Should allow requests to change token creator role from an owner', async () => {
 		const [owner, addr1] = await ethers.getSigners();
-		const current = await token.vestingContract();
 
 		await expect(token.grantRole(ROLE_TOKEN_CREATOR, addr1.address))
-			.to.emit(token, 'VestingContractChanged')
-			.withArgs(current, addr1.address);
+			.to.emit(token, 'RoleGranted')
+			.withArgs(ROLE_TOKEN_CREATOR, addr1.address, owner.address);
 	});
 
 	it('Should increase total supply on vesting', async () => {
