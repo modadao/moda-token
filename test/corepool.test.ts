@@ -24,7 +24,7 @@ const userEscrowBalance = [parseEther('200'), parseEther('10')];
 const claimSMODARewards = true;
 const rolloverInvestment = false;
 
-describe.only('Core Pool', () => {
+describe('Core Pool', () => {
 	let token: Token;
 	let escrowToken: EscrowedModaERC20;
 	let corePool: ModaCorePool;
