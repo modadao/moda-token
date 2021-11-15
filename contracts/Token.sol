@@ -70,12 +70,14 @@ contract Token is
 		address to,
 		uint256 amount
 	) private {
-		if (balanceOf(to) == 0 && amount > 0) {
-			++holderCount;
-		}
+		if (from != to) {
+			if (balanceOf(to) == 0 && amount > 0) {
+				++holderCount;
+			}
 
-		if (balanceOf(from) == amount && amount > 0) {
-			--holderCount;
+			if (balanceOf(from) == amount && amount > 0) {
+				--holderCount;
+			}
 		}
 	}
 

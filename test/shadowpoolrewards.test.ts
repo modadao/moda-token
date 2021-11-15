@@ -7,8 +7,6 @@ import {
 	add,
 	fastForward,
 	fromTimestamp,
-	toEth,
-	BIGZERO,
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
 	ROLE_POOL_STAKING,
@@ -23,8 +21,8 @@ describe('Shadow Pool Rewards', () => {
 	let start = new Date();
 	let owner: SignerWithAddress, user0: SignerWithAddress, user1: SignerWithAddress;
 	let addr: string[];
-	const userBalances = [toEth('6500000'), toEth('3500000')];
-	const userEscrowBalance = [toEth('211'), toEth('11')];
+	const userBalances = [ethers.utils.parseEther('6500000'), ethers.utils.parseEther('3500000')];
+	const userEscrowBalance = [ethers.utils.parseEther('211'), ethers.utils.parseEther('11')];
 	const claimSMODARewards = true;
 	//const rolloverInvestment = false;
 
@@ -64,7 +62,7 @@ describe('Shadow Pool Rewards', () => {
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			toEth('150000'), // modaPerBlock initial MODA/block value for rewards
+			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
 			100, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
 			nextBlock, // initBlock initial block used to calculate the rewards
 			nextBlock + 1000 // endBlock block number when farming stops and rewards cannot be updated anymore
@@ -80,7 +78,7 @@ describe('Shadow Pool Rewards', () => {
 			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			escrowToken.address, // poolToken escrowToken the pool operates on, for example MODA or MODA/ETH pair, or even SMO
 			900, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			toEth('150000'), // modaPerBlock initial MODA/block value for rewards
+			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
 			10, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
 			nextBlock, // initBlock initial block used to calculate the rewards
 			nextBlock + 1700 // endBlock block number when farming stops and rewards cannot be updated anymore
@@ -104,8 +102,8 @@ describe('Shadow Pool Rewards', () => {
 		// let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
 
 		//console.log('lockedUntil', lockUntil);
-		const amount: BigNumber = toEth('104');
-		const unlocked: BigNumber = BIGZERO;
+		const amount: BigNumber = ethers.utils.parseEther('104');
+		const unlocked: BigNumber = BigNumber.from('0');
 		await escrowToken.connect(user0).approve(shadowPool.address, amount);
 		expect(await escrowToken.allowance(addr[0], shadowPool.address)).is.equal(amount);
 		// Regardless of the useSMODA flag used _this_ shadow pool will always use SMODA.
@@ -122,9 +120,9 @@ describe('Shadow Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], BIGZERO);
+		] = await shadowPool.getDeposit(addr[0], '0');
 		expect(tokenAmount).is.equal(amount);
-		expect(weight).is.equal(toEth('104000000'));
+		expect(weight).is.equal(ethers.utils.parseEther('104000000'));
 		//expect(lockedFrom).is.equal(0);
 		expect(lockedUntil).is.equal(0);
 		expect(isYield).is.equal(false);
@@ -139,11 +137,11 @@ describe('Shadow Pool Rewards', () => {
 		let ReturnsOnInvestment = Array<ROI_Record>();
 
 		let RoI_: ROI_Record = {
-			Deposit: BIGZERO,
-			Amount: BIGZERO,
-			Weight: BIGZERO,
-			MODA: BIGZERO,
-			SMODA: BIGZERO,
+			Deposit: BigNumber.from('0'),
+			Amount: BigNumber.from('0'),
+			Weight: BigNumber.from('0'),
+			MODA: BigNumber.from('0'),
+			SMODA: BigNumber.from('0'),
 		};
 		let RoI: ROI_Record = Object.assign({}, RoI_);
 
@@ -178,7 +176,7 @@ describe('Shadow Pool Rewards', () => {
 			RoI = Object.assign({}, RoI_);
 		}
 		// Unstake completely after yield farming ends.
-		await shadowPool.connect(user0).unstake(BIGZERO, amount, claimSMODARewards);
+		await shadowPool.connect(user0).unstake('0', amount, claimSMODARewards);
 
 		// Examine the tokens this address now owns.
 		RoI.Deposit = BigNumber.from(maxMonths + 1);
@@ -190,7 +188,7 @@ describe('Shadow Pool Rewards', () => {
 			lockedFrom, //  @dev locking period - from
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], BIGZERO);
+		] = await shadowPool.getDeposit(addr[0], '0');
 		RoI.Amount = tokenAmount;
 		RoI.Weight = weight;
 		ReturnsOnInvestment.push(RoI);

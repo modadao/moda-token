@@ -364,3 +364,6 @@ build/
 
 # Open Zeppelin Upgrade Plugin files aren't relevant on local network
 .openzeppelin/unknown-1337.json
+
+# Secrets
+.env
