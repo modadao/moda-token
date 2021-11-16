@@ -26,7 +26,6 @@ contract ModaCorePool is ModaPoolBase {
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
 	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
-	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
@@ -38,7 +37,6 @@ contract ModaCorePool is ModaPoolBase {
 	constructor(
 		address _moda,
 		address _modaPool,
-		address _smoda,
 		address _poolToken,
 		uint32 _weight,
 		uint256 _modaPerBlock,
@@ -49,7 +47,6 @@ contract ModaCorePool is ModaPoolBase {
 		ModaPoolBase(
 			_moda,
 			_modaPool,
-			_smoda,
 			_poolToken,
 			_weight,
 			_modaPerBlock,
@@ -76,23 +73,15 @@ contract ModaCorePool is ModaPoolBase {
 	 * @dev Executed internally when "staking as a pool" (`stakeAsPool`)
 	 * @dev When timing conditions are not met (executed too frequently, or after
 	 *      end block), function doesn't throw and exits silently
-	 *
-	 * @dev _useSMODA flag has a context of yield rewards only
-	 *
-	 * @param _useSMODA flag indicating whether to mint sMODA token as a reward or not;
-	 *      when set to true - sMODA reward is minted immediately and sent to sender,
-	 *      when set to false - new MODA reward deposit gets created if pool is an MODA pool
-	 *      (poolToken is MODA token), or new pool deposit gets created together with sMODA minted
-	 *      when pool is not an MODA pool (poolToken is not an MODA token)
 	 */
-	function processRewards(bool _useSMODA) external override {
-		_processRewards(msg.sender, _useSMODA, true);
+	function processRewards() external override {
+		_processRewards(msg.sender, true);
 	}
 
 	/**
 	 * @dev Executed internally by the pool itself (from the parent `ModaPoolBase` smart contract)
 	 *      as part of yield rewards processing logic (`ModaPoolBase._processRewards` function)
-	 * @dev Executed when _useSMODA is false and pool is not an MODA pool - see `ModaPoolBase._processRewards`
+	 * @dev Executed when pool is not an MODA pool - see `ModaPoolBase._processRewards`
 	 *
 	 * @param _staker an address which stakes (the yield reward)
 	 * @param _amount amount to be staked (yield reward amount)
@@ -104,7 +93,7 @@ contract ModaCorePool is ModaPoolBase {
 		_sync();
 		User storage user = users[_staker];
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, true, false);
+			_processRewards(_staker, false);
 		}
 		uint256 depositWeight = _amount * YEAR_STAKE_WEIGHT_MULTIPLIER;
 		Deposit memory newDeposit = Deposit({
@@ -136,10 +125,9 @@ contract ModaCorePool is ModaPoolBase {
 		address _staker,
 		uint256 _amount,
 		uint256 _lockUntil,
-		bool _useSMODA,
 		bool _isYield
 	) internal override {
-		super._stake(_staker, _amount, _lockUntil, _useSMODA, _isYield);
+		super._stake(_staker, _amount, _lockUntil, _isYield);
 		poolTokenReserve += _amount;
 	}
 
@@ -153,8 +141,7 @@ contract ModaCorePool is ModaPoolBase {
 	function _unstake(
 		address _staker,
 		uint256 _depositId,
-		uint256 _amount,
-		bool _useSMODA
+		uint256 _amount
 	) internal override {
 		User storage user = users[_staker];
 		Deposit memory stakeDeposit = user.deposits[_depositId];
@@ -163,7 +150,7 @@ contract ModaCorePool is ModaPoolBase {
 			'deposit not yet unlocked'
 		);
 		poolTokenReserve -= _amount;
-		super._unstake(_staker, _depositId, _amount, _useSMODA);
+		super._unstake(_staker, _depositId, _amount);
 	}
 
 	/**
@@ -175,13 +162,12 @@ contract ModaCorePool is ModaPoolBase {
 	 */
 	function _processRewards(
 		address _staker,
-		bool _useSMODA,
 		bool _withUpdate
 	) internal override returns (uint256 rewards) {
-		rewards = super._processRewards(_staker, _useSMODA, _withUpdate);
+		rewards = super._processRewards(_staker, _withUpdate);
 
 		// update `poolTokenReserve` only if this is a MODA Core Pool
-		if (poolToken == moda && !_useSMODA) {
+		if (poolToken == moda) {
 			poolTokenReserve += rewards;
 		}
 	}

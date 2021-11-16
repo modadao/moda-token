@@ -29,9 +29,6 @@ describe('Shadow Pool', () => {
 	const userBalances = [ethers.utils.parseEther('2000'), ethers.utils.parseEther('100')];
 	const userEscrowBalance = [ethers.utils.parseEther('211'), ethers.utils.parseEther('11')];
 
-	const claimSMODARewards = true;
-	const useMODA = false;
-
 	function logSetup() {
 		console.log('Owner', owner.address);
 		console.log('Users', addr);
@@ -65,7 +62,6 @@ describe('Shadow Pool', () => {
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			ADDRESS0, // This is a modaPool, so set to zero.
-			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken Token that the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
 			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
@@ -81,7 +77,6 @@ describe('Shadow Pool', () => {
 		shadowPool = (await shadowPoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			corePool.address, // This is the moda Core Pool.
-			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			escrowToken.address, // poolToken escrowToken the pool operates on, for example MODA or MODA/ETH pair, or even SMO
 			900, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
 			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
@@ -114,80 +109,8 @@ describe('Shadow Pool', () => {
 		endDate.setTime(start.getTime() + YEAR + DAY);
 		let lockedUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
 		await expect(
-			shadowPool.connect(user0).stake(ethers.utils.parseEther('100'), lockedUntil, false)
+			shadowPool.connect(user0).stake(ethers.utils.parseEther('100'), lockedUntil)
 		).to.be.revertedWith('invalid lock interval');
-	});
-
-	it('Should allow a user to unstake a locked deposit after 1 year. Using SMODA.', async () => {
-		//logSetup();
-		// Check up the balances first
-		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
-		expect(await escrowToken.balanceOf(addr[0])).to.equal(userEscrowBalance[0]);
-
-		// Calculate a suitable locking end date
-		let endDate: Date = new Date();
-		endDate.setTime(start.getTime() + YEAR - 10 * MILLIS);
-		let lockUntil: BigNumber = BigNumber.from(endDate.getTime()).div(MILLIS);
-		//console.log('lockedUntil', lockUntil);
-		const amount: BigNumber = ethers.utils.parseEther('104');
-		const newBalance: BigNumber = userEscrowBalance[0].sub(amount);
-
-		await escrowToken.connect(user0).approve(shadowPool.address, amount);
-		expect(await escrowToken.allowance(addr[0], shadowPool.address)).to.equal(amount);
-		// The useMODA flag is ignored here because this is a shadow pool.
-		await shadowPool.connect(user0).stake(amount, lockUntil, claimSMODARewards);
-		await expect(
-			shadowPool.connect(user1).stake(amount, lockUntil, claimSMODARewards)
-		).to.be.revertedWith('transfer amount exceeds balance');
-
-		// Staking moves the user's MODA from the Token contract to the CorePool.
-		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		//console.log(contractTx);
-		expect(await shadowPool.getDepositsLength(addr[0])).to.equal(1);
-		let [
-			tokenAmount, // @dev escrowToken amount staked
-			weight, //      @dev stake weight
-			lockedFrom, //  @dev locking period - from
-			lockedUntil, // @dev locking period - until
-			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], '0');
-		expect(tokenAmount).to.equal(amount);
-		expect(weight).to.equal(ethers.utils.parseEther('207999896'));
-		expect(lockedUntil).to.equal(lockUntil);
-		expect(isYield).to.equal(false);
-
-		// Now attempt to withdraw it.
-		await expect(
-			shadowPool
-				.connect(user0)
-				.unstake(ethers.utils.parseEther('0'), ethers.utils.parseEther('100'), claimSMODARewards)
-		).to.be.revertedWith('deposit not yet unlocked');
-		// Wait for more than a year though and...
-		await fastForward(add(start, { years: 1, days: 1 }));
-		await mineBlocks(1000);
-		// Before unstake executes the user should have zero sMODA.
-		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake('0', amount, claimSMODARewards);
-
-		// Examine the escrowTokens this address now owns.
-		// Nothing increased, so this is pointless.
-		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
-		expect(await escrowToken.balanceOf(addr[0])).gt(ethers.utils.parseEther('600210'));
-		// Is there anything remaining?
-		expect(await shadowPool.getDepositsLength(addr[0])).to.equal(1);
-		// It may seem that way but...
-		[
-			tokenAmount, // @dev escrowToken amount staked
-			weight, //      @dev stake weight
-			lockedFrom, //  @dev locking period - from
-			lockedUntil, // @dev locking period - until
-			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await shadowPool.getDeposit(addr[0], '0');
-		expect(tokenAmount).to.equal(0);
-		expect(weight).to.equal(0);
-		expect(lockedFrom).to.equal(0);
-		expect(lockedUntil).to.equal(0);
-		expect(isYield).to.equal(false);
 	});
 
 	it('Should allow a user to unstake a locked deposit after 1 year. Using MODA.', async () => {
@@ -207,8 +130,8 @@ describe('Shadow Pool', () => {
 		await escrowToken.connect(user0).approve(shadowPool.address, amount);
 		expect(await escrowToken.allowance(addr[0], shadowPool.address)).to.equal(amount);
 		// This is a shadow pool it behaves differently when processing rewards.
-		await shadowPool.connect(user0).stake(amount, lockUntil, useMODA);
-		await expect(shadowPool.connect(user1).stake(amount, lockUntil, useMODA)).to.be.revertedWith(
+		await shadowPool.connect(user0).stake(amount, lockUntil);
+		await expect(shadowPool.connect(user1).stake(amount, lockUntil)).to.be.revertedWith(
 			'transfer amount exceeds balance'
 		);
 
@@ -232,14 +155,14 @@ describe('Shadow Pool', () => {
 		await expect(
 			shadowPool
 				.connect(user0)
-				.unstake(ethers.utils.parseEther('0'), ethers.utils.parseEther('100'), useMODA)
+				.unstake(ethers.utils.parseEther('0'), ethers.utils.parseEther('100'))
 		).to.be.revertedWith('deposit not yet unlocked');
 		// Wait for more than a year though and...
 		await fastForward(add(start, { years: 1, days: 1 }));
 		await mineBlocks(1000);
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake('0', amount, useMODA);
+		await shadowPool.connect(user0).unstake('0', amount);
 
 		// Examine the escrowTokens this address now owns.
 		// Nothing increased, so this is pointless.
@@ -283,7 +206,7 @@ describe('Shadow Pool', () => {
 
 		// Before unstake executes the user should have their SMODAy original balance.
 		expect(await token.balanceOf(addr[0])).to.equal(userBalances[0]);
-		await corePool.connect(user0).unstake('0', tokenAmount, useMODA);
+		await corePool.connect(user0).unstake('0', tokenAmount);
 		// After unstake the user should have more MODA.
 		expect(await token.balanceOf(addr[0])).gte(ethers.utils.parseEther('149101000'));
 
@@ -322,9 +245,9 @@ describe('Shadow Pool', () => {
 		expect(await escrowToken.allowance(addr[0], shadowPool.address)).to.equal(amount);
 		// The claimSMODARewards flag is ignored here because this is a shadow pool.
 		// It cannot hold MODA so it will always use SMODA
-		await shadowPool.connect(user0).stake(amount, lockUntil, claimSMODARewards);
+		await shadowPool.connect(user0).stake(amount, lockUntil);
 		await expect(
-			shadowPool.connect(user1).stake(amount, lockUntil, claimSMODARewards)
+			shadowPool.connect(user1).stake(amount, lockUntil)
 		).to.be.revertedWith('transfer amount exceeds balance');
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
@@ -348,7 +271,7 @@ describe('Shadow Pool', () => {
 		await expect(
 			shadowPool
 				.connect(user0)
-				.unstake(ethers.utils.parseEther('0'), ethers.utils.parseEther('100'), claimSMODARewards)
+				.unstake(ethers.utils.parseEther('0'), ethers.utils.parseEther('100'))
 		).to.be.revertedWith('deposit not yet unlocked');
 		// Wait for less than 28 days and expect failure.
 		await fastForward(add(start, { days: 27 }));
@@ -357,7 +280,7 @@ describe('Shadow Pool', () => {
 		// Before unstake executes the user should have the reduced amount of sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
 		await expect(
-			shadowPool.connect(user0).unstake('0', amount, claimSMODARewards)
+			shadowPool.connect(user0).unstake('0', amount)
 		).to.be.revertedWith('deposit not yet unlocked');
 
 		// Wait a little longer though
@@ -365,7 +288,7 @@ describe('Shadow Pool', () => {
 		await mineBlocks(500);
 		// Before unstake executes the user should have the reduced amount of sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake('0', amount, claimSMODARewards);
+		await shadowPool.connect(user0).unstake('0', amount);
 
 		// Examine the escrowTokens this address now owns.
 		expect(await escrowToken.balanceOf(addr[0])).gt(ethers.utils.parseEther('149250'));
@@ -400,7 +323,7 @@ describe('Shadow Pool', () => {
 		const newBalance: BigNumber = userEscrowBalance[0].sub(amount);
 		await escrowToken.connect(user0).approve(shadowPool.address, amount);
 		expect(await escrowToken.allowance(addr[0], shadowPool.address)).to.equal(amount);
-		await shadowPool.connect(user0).stake(amount, lockUntil, claimSMODARewards);
+		await shadowPool.connect(user0).stake(amount, lockUntil);
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
@@ -411,14 +334,14 @@ describe('Shadow Pool', () => {
 		await expect(
 			shadowPool
 				.connect(user0)
-				.unstake(ethers.utils.parseEther('0'), amount.div(2), claimSMODARewards)
+				.unstake(ethers.utils.parseEther('0'), amount.div(2))
 		).to.be.revertedWith('deposit not yet unlocked');
 		// Wait for less than a 28 days and expect failure.
 		await fastForward(add(start, { days: 27 }));
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
 		await expect(
-			shadowPool.connect(user0).unstake('0', amount.div(2), claimSMODARewards)
+			shadowPool.connect(user0).unstake('0', amount.div(2))
 		).to.be.revertedWith('deposit not yet unlocked');
 
 		// Wait a little longer though
@@ -426,7 +349,7 @@ describe('Shadow Pool', () => {
 		await mineBlocks(1000);
 		// Before unstake executes the user should have zero sMODA.
 		expect(await escrowToken.balanceOf(addr[0])).to.equal(newBalance);
-		await shadowPool.connect(user0).unstake('0', amount.div(2), claimSMODARewards);
+		await shadowPool.connect(user0).unstake('0', amount.div(2));
 
 		// Examine the escrowTokens this address now owns.
 		expect((await escrowToken.balanceOf(addr[0])).eq(userEscrowBalance[0]));
@@ -453,7 +376,7 @@ describe('Shadow Pool', () => {
 		expect(await escrowToken.balanceOf(addr[0])).gt(ethers.utils.parseEther('148950000'));
 		expect(await token.balanceOf(addr[0])).equal(userBalances[0]);
 		// Unstake whatever remains.
-		await shadowPool.connect(user0).unstake('0', tokenAmount, claimSMODARewards);
+		await shadowPool.connect(user0).unstake('0', tokenAmount);
 		expect(await shadowPool.getDepositsLength(addr[0])).to.equal(1);
 
 		// Examine the escrowTokens this address now owns.

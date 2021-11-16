@@ -20,7 +20,6 @@ import './ModaPoolFactory.sol';
  * @dev Deployment and initialization.
  *      Any pool deployed must have 3 token instance addresses defined on deployment:
  *          - MODA token address
- *          - sMODA token address, used to mint sMODA rewards
  *          - pool token address, it can be MODA token address, MODA/ETH pair address, and others
  */
 abstract contract ModaPoolBase is
@@ -41,7 +40,7 @@ abstract contract ModaPoolBase is
 	// @dev This is used in the case where poolToken != moda.
 	//      The use case relates to shadowing Liquidity Pool stakes
 	//      by allowing people to store the LP tokens here to gain
-	//      further MODA/sMODA rewards. I'm not sure it's both. (dex 2021.09.16)
+	//      further MODA rewards. I'm not sure it's both. (dex 2021.09.16)
 	address modaPool;
 
 	/// @dev Data structure representing token holder using a pool
@@ -60,9 +59,6 @@ abstract contract ModaPoolBase is
 
 	/// @dev Token holder storage, maps token holder address to their data record
 	mapping(address => User) public users;
-
-	/// @dev Link to sMODA ERC20 Token EscrowedModaERC20 instance
-	address public immutable override smoda;
 
 	/// @dev Link to the pool token instance, for example MODA or MODA/ETH pair
 	address public immutable override poolToken;
@@ -155,10 +151,9 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param _by an address which performed an operation
 	 * @param _to an address which claimed the yield reward
-	 * @param sModa flag indicating if reward was paid (minted) in sMODA
 	 * @param amount amount of yield paid
 	 */
-	event YieldClaimed(address indexed _by, address indexed _to, bool sModa, uint256 amount);
+	event YieldClaimed(address indexed _by, address indexed _to, uint256 amount);
 
 	/**
 	 * @dev Fired in setWeight()
@@ -174,7 +169,6 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
 	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
-	 * @param _smoda sMODA ERC20 Token EscrowedModaERC20 address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _initBlock initial block used to calculate the rewards
 	 *      note: _initBlock can be set to the future effectively meaning _sync() calls will do nothing
@@ -187,7 +181,6 @@ abstract contract ModaPoolBase is
 	constructor(
 		address _moda,
 		address _modaPool,
-		address _smoda,
 		address _poolToken,
 		uint32 _weight,
 		uint256 _modaPerBlock,
@@ -196,7 +189,6 @@ abstract contract ModaPoolBase is
 		uint256 _endBlock
 	) ModaPoolFactory(_moda, _modaPerBlock, _blocksPerUpdate, _initBlock, _endBlock) {
 		// verify the inputs are set
-		require(_smoda != address(0), 'sMODA address not set');
 		require(_poolToken != address(0), 'pool token address not set');
 		require(_initBlock >= block.number, 'init block not set');
 		require(_weight > 0, 'pool weight not set');
@@ -208,17 +200,11 @@ abstract contract ModaPoolBase is
 		// verify MODA instance supplied
 		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'MODA TOKEN_UID invalid');
 
-		// verify sMODA instance supplied
-		require(
-			EscrowedModaERC20(_smoda).ESCROWTOKEN_UID() == ModaConstants.ESCROWTOKEN_UID,
-			'sMODA ESCROWTOKEN_UID invalid'
-		);
 		if (_modaPool != address(0)) {
 			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID);
 		}
 		// save the inputs into internal state variables
 		modaPool = _modaPool;
-		smoda = _smoda;
 		poolToken = _poolToken;
 		_setWeight(_weight);
 
@@ -325,15 +311,13 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param _amount amount of tokens to stake
 	 * @param _lockUntil stake period as unix timestamp; zero means no locking
-	 * @param _useSMODA a flag indicating if previous reward to be paid as sMODA
 	 */
 	function stake(
 		uint256 _amount,
-		uint256 _lockUntil,
-		bool _useSMODA
+		uint256 _lockUntil
 	) external override {
 		// delegate call to an internal function
-		_stake(msg.sender, _amount, _lockUntil, _useSMODA, false);
+		_stake(msg.sender, _amount, _lockUntil,  false);
 	}
 
 	/**
@@ -343,16 +327,14 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param _depositId deposit ID to unstake from, zero-indexed
 	 * @param _amount amount of tokens to unstake
-	 * @param _useSMODA a flag indicating if reward to be paid as sMODA
 	 */
 	function unstake(
 		uint256 _depositId,
-		uint256 _amount,
-		bool _useSMODA
+		uint256 _amount
 	) external override {
 		// delegate call to an internal function
 		//console.log('ModaPoolBase unstake', _msgSender());
-		_unstake(msg.sender, _depositId, _amount, _useSMODA);
+		_unstake(msg.sender, _depositId, _amount);
 	}
 
 	/**
@@ -365,16 +347,14 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param depositId updated deposit ID
 	 * @param lockedUntil updated deposit locked until value
-	 * @param useSMODA used for _processRewards check if it should use MODA or sMODA
 	 */
 	function updateStakeLock(
 		uint256 depositId,
-		uint256 lockedUntil,
-		bool useSMODA
+		uint256 lockedUntil
 	) external {
 		// sync and call processRewards
 		_sync();
-		_processRewards(msg.sender, useSMODA, false);
+		_processRewards(msg.sender, false);
 		// delegate call to an internal function
 		_updateStakeLock(msg.sender, depositId, lockedUntil);
 	}
@@ -402,16 +382,10 @@ abstract contract ModaPoolBase is
 	 *      previous reward processing
 	 * @dev When timing conditions are not met (executed too frequently, or after
 	 *      end block), function doesn't throw and exits silently
-	 *
-	 * @param _useSMODA flag indicating whether to mint sMODA token as a reward or not;
-	 *      when set to true - sMODA reward is minted immediately and sent to sender,
-	 *      when set to false - new MODA reward deposit gets created if pool is an MODA pool
-	 *      (poolToken is MODA token), or new pool deposit gets created together with sMODA minted
-	 *      when pool is not an MODA pool (poolToken is not an MODA token)
 	 */
-	function processRewards(bool _useSMODA) external virtual override {
+	function processRewards() external virtual override {
 		// delegate call to an internal function
-		_processRewards(msg.sender, _useSMODA, true);
+		_processRewards(msg.sender, true);
 	}
 
 	/**
@@ -466,7 +440,6 @@ abstract contract ModaPoolBase is
 	 * @param _staker an address which stakes tokens and which will receive them back
 	 * @param _amount amount of tokens to stake
 	 * @param _lockUntil stake period as unix timestamp; zero means no locking
-	 * @param _useSMODA a flag indicating if previous reward to be paid as sMODA
 	 * @param _isYield a flag indicating if that stake is created to store yield reward
 	 *      from the previously unstaked stake
 	 */
@@ -474,7 +447,6 @@ abstract contract ModaPoolBase is
 		address _staker,
 		uint256 _amount,
 		uint256 _lockUntil,
-		bool _useSMODA,
 		bool _isYield
 	) internal virtual {
 		// validate the inputs
@@ -494,7 +466,7 @@ abstract contract ModaPoolBase is
 		User storage user = users[_staker];
 		// process current pending rewards if any
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, _useSMODA, false);
+			_processRewards(_staker, false);
 		}
 
 		// in most of the cases added amount `addedAmount` is simply `_amount`
@@ -552,13 +524,11 @@ abstract contract ModaPoolBase is
 	 * @param _staker an address which unstakes tokens (which previously staked them)
 	 * @param _depositId deposit ID to unstake from, zero-indexed
 	 * @param _amount amount of tokens to unstake
-	 * @param _useSMODA a flag indicating if reward to be paid as sMODA
 	 */
 	function _unstake(
 		address _staker,
 		uint256 _depositId,
-		uint256 _amount,
-		bool _useSMODA
+		uint256 _amount
 	) internal virtual {
 		// verify an amount is set
 		require(_amount > 0, 'zero amount');
@@ -577,7 +547,7 @@ abstract contract ModaPoolBase is
 		// update smart contract state
 		_sync();
 		// and process current pending rewards if any
-		_processRewards(_staker, _useSMODA, false);
+		_processRewards(_staker, false);
 
 		// recalculate deposit weight
 		uint256 previousWeight = stakeDeposit.weight;
@@ -661,13 +631,11 @@ abstract contract ModaPoolBase is
 	 * @dev Used internally, mostly by children implementations, see processRewards()
 	 *
 	 * @param _staker an address which receives the reward (which has staked some tokens earlier)
-	 * @param _useSMODA flag indicating whether to mint sMODA token as a reward or not, see processRewards()
 	 * @param _withUpdate flag allowing to disable synchronization (see sync()) if set to false
 	 * @return pendingYield the rewards calculated and optionally re-staked
 	 */
 	function _processRewards(
 		address _staker,
-		bool _useSMODA,
 		bool _withUpdate
 	) internal virtual returns (uint256 pendingYield) {
 		// update smart contract state if required
@@ -684,11 +652,7 @@ abstract contract ModaPoolBase is
 		// get link to a user data structure, we will write into it later
 		User storage user = users[_staker];
 
-		// if sMODA is requested
-		if (_useSMODA) {
-			// - mint sMODA
-			mintSModa(_staker, pendingYield);
-		} else if (poolToken == moda) {
+		if (poolToken == moda) {
 			// calculate pending yield weight,
 			// 2e6 is the bonus weight when staking for 1 year
 			uint256 depositWeight = pendingYield * YEAR_STAKE_WEIGHT_MULTIPLIER;
@@ -726,7 +690,7 @@ abstract contract ModaPoolBase is
 		}
 
 		// emit an event
-		emit YieldClaimed(msg.sender, _staker, _useSMODA, pendingYield);
+		emit YieldClaimed(msg.sender, _staker, pendingYield);
 	}
 
 	/**
@@ -814,19 +778,6 @@ abstract contract ModaPoolBase is
 	function rewardToWeight(uint256 reward, uint256 rewardPerWeight) public pure returns (uint256) {
 		// apply the reverse formula and return
 		return (reward * REWARD_PER_WEIGHT_MULTIPLIER) / rewardPerWeight;
-	}
-
-	/**
-	 * @dev Executes EscrowedModaERC20.mint(_to, _values)
-	 *      on the bound EscrowedModaERC20 instance
-	 *
-	 * @dev Reentrancy safe due to the EscrowedModaERC20 design
-	 */
-	function mintSModa(address _to, uint256 _value) private {
-		// just delegate call to the target
-		//console.log(_msgSender());
-
-		EscrowedModaERC20(smoda).mint(_to, _value);
 	}
 
 	/**

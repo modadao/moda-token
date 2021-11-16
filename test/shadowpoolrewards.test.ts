@@ -23,8 +23,6 @@ describe('Shadow Pool Rewards', () => {
 	let addr: string[];
 	const userBalances = [ethers.utils.parseEther('6500000'), ethers.utils.parseEther('3500000')];
 	const userEscrowBalance = [ethers.utils.parseEther('211'), ethers.utils.parseEther('11')];
-	const claimSMODARewards = true;
-	//const rolloverInvestment = false;
 
 	function logSetup() {
 		console.log('Owner', owner.address);
@@ -59,7 +57,6 @@ describe('Shadow Pool Rewards', () => {
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			ADDRESS0, // This is a modaPool, so set to zero.
-			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
 			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
@@ -75,7 +72,6 @@ describe('Shadow Pool Rewards', () => {
 		shadowPool = (await shadowPoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			corePool.address, // This is the moda Core Pool.
-			escrowToken.address, // smoda sMODA ERC20 Token EscrowedModaERC20 address
 			escrowToken.address, // poolToken escrowToken the pool operates on, for example MODA or MODA/ETH pair, or even SMO
 			900, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
 			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
@@ -107,7 +103,7 @@ describe('Shadow Pool Rewards', () => {
 		await escrowToken.connect(user0).approve(shadowPool.address, amount);
 		expect(await escrowToken.allowance(addr[0], shadowPool.address)).is.equal(amount);
 		// Regardless of the useSMODA flag used _this_ shadow pool will always use SMODA.
-		await shadowPool.connect(user0).stake(amount, unlocked, claimSMODARewards);
+		await shadowPool.connect(user0).stake(amount, unlocked);
 
 		// Staking moves the user's MODA from the Token contract to the CorePool.
 		expect(await token.balanceOf(addr[0])).is.equal(userBalances[0]);
@@ -154,7 +150,7 @@ describe('Shadow Pool Rewards', () => {
 			await mineBlocks(100);
 
 			// Collect rewards. This Shadow pool can only use SMODA.
-			await shadowPool.connect(user0).processRewards(claimSMODARewards);
+			await shadowPool.connect(user0).processRewards();
 			let depositIndex = await shadowPool.getDepositsLength(addr[0]);
 			//console.log('depositIndex', depositIndex);
 			RoI.Deposit = depositIndex.sub(1);
@@ -176,7 +172,7 @@ describe('Shadow Pool Rewards', () => {
 			RoI = Object.assign({}, RoI_);
 		}
 		// Unstake completely after yield farming ends.
-		await shadowPool.connect(user0).unstake('0', amount, claimSMODARewards);
+		await shadowPool.connect(user0).unstake('0', amount);
 
 		// Examine the tokens this address now owns.
 		RoI.Deposit = BigNumber.from(maxMonths + 1);
