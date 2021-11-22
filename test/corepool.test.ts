@@ -1,7 +1,8 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { parseEther } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { expect } from 'chai';
+import chai, { expect } from 'chai';
+import chaiDateTime from "chai-datetime";
 import { ethers, upgrades } from 'hardhat';
 import { ModaCorePool, Token } from '../typechain';
 import {
@@ -18,6 +19,8 @@ import {
 	DAY,
 	blockNow,
 } from './utils';
+
+chai.use(chaiDateTime);
 
 const userBalances = [parseEther('2000'), parseEther('200')];
 
@@ -74,12 +77,12 @@ describe('Core Pool', () => {
 		).to.be.revertedWith('invalid lock interval');
 	});
 
-	it('Should allow a user to unstake a locked deposit after 1 year. Claiming MODA', async () => {
+	it('Should allow a user to unstake a locked deposit after 1 year.', async () => {
 		// Set up the balance first
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
 		// Calculate a suitable locking end date
-		const lockUntil: BigNumber = toTimestampBN(add(start, { years: 1, minutes: -10 }));
+		const lockUntil: BigNumber = toTimestampBN(add(start, { days: 365 }));
 		const amount: BigNumber = parseEther('104');
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(user0.address, corePool.address)).to.equal(amount);
@@ -96,7 +99,7 @@ describe('Core Pool', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 0);
 		expect(tokenAmount).to.equal(amount);
-		expect(weight).to.equal(parseEther('207997920'));
+		expect(weight).to.equal(parseEther('207999896'));
 		expect(lockedUntil).to.equal(lockUntil);
 		expect(isYield).to.equal(false);
 
@@ -105,17 +108,16 @@ describe('Core Pool', () => {
 			corePool.connect(user0).unstake(parseEther('0'), amount)
 		).to.be.revertedWith('deposit not yet unlocked');
 		// Wait for more than a year though and...
-		await fastForward(add(start, { years: 1, days: 1 }));
+		await fastForward(add(start, { days: 365 }));
 
-		await corePool.connect(user0).processRewards();
 		await corePool.connect(user0).unstake(0, amount);
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
-		await corePool.processRewards();
 
-		// Is there anything remaining?
-		expect(await corePool.getDepositsLength(user0.address)).to.equal(1);
+		// Expects new deposit for the rewards earned
+		expect(await corePool.getDepositsLength(user0.address)).to.equal(2);
+
 		// Let's look
 		[
 			tokenAmount, // @dev token amount staked
@@ -129,9 +131,39 @@ describe('Core Pool', () => {
 		expect(lockedFrom).to.equal(0);
 		expect(lockedUntil).to.equal(0);
 		expect(isYield).to.equal(false);
+
+		[
+			tokenAmount, // @dev token amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await corePool.getDeposit(user0.address, 1);
+		expect(fromTimestampBN(lockedFrom)).to.equalDate(add(start, { days: 365 }));
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(start, { days: 365 * 2 }));
+		expect(isYield).to.equal(true);
+
+		await fastForward(add(start, { years: 2, days: 2 }));
+		await corePool.connect(user0).unstake(1, tokenAmount);
+		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0].add(tokenAmount));
+
+		console.log(await corePool.getDepositsLength(user0.address));
+
+		[
+			tokenAmount, // @dev token amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await corePool.getDeposit(user0.address, 1);
+		expect(tokenAmount).to.equal(0);
+		expect(weight).to.equal(0);
+		expect(lockedFrom).to.equal(0);
+		expect(lockedUntil).to.equal(0);
+		expect(isYield).to.equal(false);
 	});
 
-	it('Should allow a user to stake deposit for 1 month. Claim SMODA rewards.', async () => {
+	it('Should allow a user to stake deposit for 1 month. Claim MODA rewards.', async () => {
 		// Set up the balance first
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
@@ -163,8 +195,8 @@ describe('Core Pool', () => {
 
 		// Examine the tokens this address now owns.
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
-		// Is there anything remaining?
-		expect(await corePool.getDepositsLength(user0.address)).to.equal(1);
+		// Expects new deposit for the rewards earned
+		expect(await corePool.getDepositsLength(user0.address)).to.equal(2);
 		// Examining the only deposit.
 		let [
 			tokenAmount, // @dev token amount staked
@@ -178,6 +210,17 @@ describe('Core Pool', () => {
 		expect(lockedFrom).to.equal(0);
 		expect(lockedUntil).to.equal(0);
 		expect(isYield).to.equal(false);
+
+		[
+			tokenAmount, // @dev token amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await corePool.getDeposit(user0.address, 1);
+		expect(fromTimestampBN(lockedFrom)).to.equalDate(add(start, { days: 29 }));
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(start, { days: 365 + 29 }));
+		expect(isYield).to.equal(true);
 	});
 
 	it('Should allow a user to stake 1 month, unstake some, wait and unstake the rest (use MODA)', async () => {
@@ -332,7 +375,7 @@ describe('Core Pool', () => {
 			// Unstake whatever remains of this deposit.
 			await corePool.connect(user0).unstake(deposit, tokenAmount);
 			totalRewards = totalRewards.add(tokenAmount);
-			expect(await corePool.getDepositsLength(user0.address)).to.equal(maxDeposits);
+			//expect(await corePool.getDepositsLength(user0.address)).to.equal(3);
 			[
 				tokenAmount, // @dev token amount staked
 				weight, //      @dev stake weight

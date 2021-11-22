@@ -13,7 +13,9 @@
 	},
 	"dependencies": {
 		"@openzeppelin/contracts": "4.1.0",
-		"@openzeppelin/contracts-upgradeable": "4.1.0"
+		"@openzeppelin/contracts-upgradeable": "4.1.0",
+		"@types/chai-datetime": "0.0.37",
+		"chai-datetime": "1.8.0"
 	},
 	"devDependencies": {
 		"@nomiclabs/hardhat-ethers": "2.0.2",
