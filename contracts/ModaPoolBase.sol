@@ -66,7 +66,7 @@ abstract contract ModaPoolBase is
 	/// @dev Pool weight, 100 for MODA pool or 900 for MODA/ETH
 	uint32 public override weight;
 
-	/// @dev Block number of the last yield distribution event
+	/// @dev Block timestamp of the last yield distribution event
 	/// This gets initialised at the first rewards pass after rewardStartTime.
 	uint256 public override lastYieldDistribution;
 
@@ -138,7 +138,7 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param _by an address which performed an operation
 	 * @param yieldRewardsPerWeight updated yield rewards per weight value
-	 * @param lastYieldDistribution usually, current block number
+	 * @param lastYieldDistribution usually, current block timestamp
 	 */
 	event Synchronized(
 		address indexed _by,
@@ -170,27 +170,27 @@ abstract contract ModaPoolBase is
 	 * @param _moda MODA ERC20 Token ModaERC20 address
 	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
-	 * @param _initBlock initial block used to calculate the rewards
-	 *      note: _initBlock can be set to the future effectively meaning _sync() calls will do nothing
+	 * @param _initTimestamp initial block used to calculate the rewards
+	 *      note: _initTimestamp can be set to the future effectively meaning _sync() calls will do nothing
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
-	 * @param _modaPerBlock initial MODA/block value for rewards
-	 * @param _blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
-	 * @param _endBlock block number when farming stops and rewards cannot be updated anymore
+	 * @param _modaPerSecond initial MODA/block value for rewards
+	 * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), seconds
+	 * @param _endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
 	 */
 	constructor(
 		address _moda,
 		address _modaPool,
 		address _poolToken,
 		uint32 _weight,
-		uint256 _modaPerBlock,
-		uint256 _blocksPerUpdate,
-		uint256 _initBlock,
-		uint256 _endBlock
-	) ModaPoolFactory(_moda, _modaPerBlock, _blocksPerUpdate, _initBlock, _endBlock) {
+		uint256 _modaPerSecond,
+		uint256 _secondsPerUpdate,
+		uint256 _initTimestamp,
+		uint256 _endTimestamp
+	) ModaPoolFactory(_moda, _modaPerSecond, _secondsPerUpdate, _initTimestamp, _endTimestamp) {
 		// verify the inputs are set
 		require(_poolToken != address(0), 'pool token address not set');
-		require(_initBlock >= block.number, 'init block not set');
+		require(_initTimestamp >= block.timestamp, 'init timestamp not set');
 		require(_weight > 0, 'pool weight not set');
 		require(
 			((_poolToken == _moda ? 1 : 0) ^ (_modaPool != address(0) ? 1 : 0)) == 1,
@@ -209,7 +209,7 @@ abstract contract ModaPoolBase is
 		_setWeight(_weight);
 
 		// init the dependent internal state variables
-		lastYieldDistribution = _initBlock;
+		lastYieldDistribution = _initTimestamp;
 
 		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, DEFAULT_ADMIN_ROLE);
@@ -236,12 +236,12 @@ abstract contract ModaPoolBase is
 
 		// if smart contract state was not updated recently, `yieldRewardsPerWeight` value
 		// is outdated and we need to recalculate it in order to calculate pending rewards correctly
-		if (block.number > lastYieldDistribution && usersLockingWeight != 0) {
-			uint256 endBlock = endBlock;
-			uint256 multiplier = block.number > endBlock
-				? endBlock - lastYieldDistribution
-				: block.number - lastYieldDistribution;
-			uint256 modaRewards = (multiplier * weight * modaPerBlock) / totalWeight;
+		if (block.timestamp > lastYieldDistribution && usersLockingWeight != 0) {
+			uint256 endTimestamp = endTimestamp;
+			uint256 multiplier = block.timestamp > endTimestamp
+				? endTimestamp - lastYieldDistribution
+				: block.timestamp - lastYieldDistribution;
+			uint256 modaRewards = (multiplier * weight * modaPerSecond) / totalWeight;
 
 			// recalculated value for `yieldRewardsPerWeight`
 			newYieldRewardsPerWeight =
@@ -589,39 +589,39 @@ abstract contract ModaPoolBase is
 	 * @dev Used internally, mostly by children implementations, see sync()
 	 *
 	 * @dev Updates smart contract state (`yieldRewardsPerWeight`, `lastYieldDistribution`),
-	 *      updates factory state via `updateMODAPerBlock`
+	 *      updates factory state via `updateMODAPerSecond`
 	 */
 	function _sync() internal virtual {
 		// update MODA per block value in factory if required
 		if (shouldUpdateRatio()) {
-			updateMODAPerBlock();
+			updateMODAPerSecond();
 		}
 
 		// check bound conditions and if these are not met -
 		// exit silently, without emitting an event
-		uint256 lastBlock = endBlock;
-		if (lastYieldDistribution >= lastBlock) {
+		uint256 lastTimestamp = endTimestamp;
+		if (lastYieldDistribution >= lastTimestamp) {
 			return;
 		}
-		if (block.number <= lastYieldDistribution) {
+		if (block.timestamp <= lastYieldDistribution) {
 			return;
 		}
 		// if locking weight is zero - update only `lastYieldDistribution` and exit
 		if (usersLockingWeight == 0) {
-			lastYieldDistribution = block.number;
+			lastYieldDistribution = block.timestamp;
 			return;
 		}
 
-		// to calculate the reward we need to know how many blocks passed, and reward per block
-		uint256 currentBlock = block.number > endBlock ? endBlock : block.number;
-		uint256 blocksPassed = currentBlock - lastYieldDistribution;
+		// to calculate the reward we need to know how much time has passed, and reward per seconds
+		uint256 currentTimestamp = block.timestamp > endTimestamp ? endTimestamp : block.timestamp;
+		uint256 secondsPassed = currentTimestamp - lastYieldDistribution;
 
 		// calculate the reward
-		uint256 modaReward = (blocksPassed * modaPerBlock * weight) / totalWeight;
+		uint256 modaReward = (secondsPassed * modaPerSecond * weight) / totalWeight;
 
 		// update rewards per weight and `lastYieldDistribution`
 		yieldRewardsPerWeight += rewardToWeight(modaReward, usersLockingWeight);
-		lastYieldDistribution = currentBlock;
+		lastYieldDistribution = currentTimestamp;
 
 		// emit an event
 		emit Synchronized(msg.sender, yieldRewardsPerWeight, lastYieldDistribution);

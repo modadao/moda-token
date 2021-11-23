@@ -58,31 +58,33 @@ describe('Shadow Pool', () => {
 
 		let nextBlock = (await ethers.provider.getBlockNumber()) + 1;
 
+		const latestBlock = await ethers.provider.getBlock("latest");
+		let nextTimestamp = latestBlock.timestamp + 1;
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			ADDRESS0, // This is a modaPool, so set to zero.
-			token.address, // poolToken Token that the pool operates on, for example MODA or MODA/ETH pair
+			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
-			10, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
-			nextBlock, // initBlock initial block used to calculate the rewards
-			nextBlock + 1000 // endBlock block number when farming stops and rewards cannot be updated anymore
+			ethers.utils.parseEther('150000'), // modaPerSeconds initial MODA/block value for rewards
+			10, // secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+			nextTimestamp, // initTimestamp initial block timestamp used to calculate the rewards
+			nextTimestamp + 120 // endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
 		)) as ModaCorePool;
 		await corePool.deployed();
 
 		//console.log(`Block number: ${nextBlock}`);
-		nextBlock = (await ethers.provider.getBlockNumber()) + 1;
+		nextTimestamp = (await ethers.provider.getBlock("latest")).timestamp + 1;
 		const shadowPoolFactory = await ethers.getContractFactory('ModaCorePool');
 		shadowPool = (await shadowPoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			corePool.address, // This is the moda Core Pool.
 			escrowToken.address, // poolToken escrowToken the pool operates on, for example MODA or MODA/ETH pair, or even SMO
 			900, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			ethers.utils.parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
+			ethers.utils.parseEther('150000'), // modaPerSeconds initial MODA/block value for rewards
 			10, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
-			nextBlock, // initBlock initial block used to calculate the rewards
-			nextBlock + 1000 // endBlock block number when farming stops and rewards cannot be updated anymore
+			nextTimestamp, // initTimestamp initial block timestamp used to calculate the rewards
+			nextTimestamp + 1200 // initTimestamp block timestamp when farming stops and rewards cannot be updated anymore
 		)) as ModaCorePool;
 		await shadowPool.deployed();
 

@@ -29,30 +29,30 @@ contract ModaCorePool is ModaPoolBase {
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
-	 * @param _modaPerBlock initial MODA/block value for rewards
-	 * @param _blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
-	 * @param _initBlock initial block used to calculate the rewards
-	 * @param _endBlock block number when farming stops and rewards cannot be updated anymore
+	 * @param _modaPerSecond initial MODA/block value for rewards
+	 * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), seconds
+	 * @param _initTimestamp initial block timestamp used to calculate the rewards
+	 * @param _endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
 	 */
 	constructor(
 		address _moda,
 		address _modaPool,
 		address _poolToken,
 		uint32 _weight,
-		uint256 _modaPerBlock,
-		uint256 _blocksPerUpdate,
-		uint256 _initBlock,
-		uint256 _endBlock
+		uint256 _modaPerSecond,
+		uint256 _secondsPerUpdate,
+		uint256 _initTimestamp,
+		uint256 _endTimestamp
 	)
 		ModaPoolBase(
 			_moda,
 			_modaPool,
 			_poolToken,
 			_weight,
-			_modaPerBlock,
-			_blocksPerUpdate,
-			_initBlock,
-			_endBlock
+			_modaPerSecond,
+			_secondsPerUpdate,
+			_initTimestamp,
+			_endTimestamp
 		)
 	{
 		require(

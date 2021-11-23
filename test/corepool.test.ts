@@ -10,7 +10,6 @@ import {
 	fastForward,
 	fromTimestampBN,
 	toTimestampBN,
-	mineBlocks,
 	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
 	ROLE_POOL_STAKING,
@@ -43,17 +42,18 @@ describe('Core Pool', () => {
 		)) as Token;
 		await token.deployed();
 
-		const nextBlock = (await ethers.provider.getBlockNumber()) + 1;
+		const latestBlock = await ethers.provider.getBlock("latest");
+		const nextTimestamp = latestBlock.timestamp + 1;
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
 			ADDRESS0, // This is a modaPool, so set to zero.
 			token.address, // poolToken token the pool operates on, for example MODA or MODA/ETH pair
 			100, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
-			parseEther('150000'), // modaPerBlock initial MODA/block value for rewards
-			10, // blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
-			nextBlock, // initBlock initial block used to calculate the rewards
-			nextBlock + 1000 // endBlock block number when farming stops and rewards cannot be updated anymore
+			parseEther('150000'), // modaPerSeconds initial MODA/block value for rewards
+			10, // secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+			nextTimestamp, // initTimestamp initial block timestamp used to calculate the rewards
+			nextTimestamp + 120 // endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
 		)) as ModaCorePool;
 		await corePool.deployed();
 
@@ -107,8 +107,10 @@ describe('Core Pool', () => {
 		await expect(
 			corePool.connect(user0).unstake(parseEther('0'), amount)
 		).to.be.revertedWith('deposit not yet unlocked');
+		
 		// Wait for more than a year though and...
-		await fastForward(add(start, { days: 365 }));
+		const futureDate = add(start, { days: 365 });
+		await fastForward(futureDate);
 
 		await corePool.connect(user0).unstake(0, amount);
 
@@ -139,31 +141,12 @@ describe('Core Pool', () => {
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 1);
-		expect(fromTimestampBN(lockedFrom)).to.equalDate(add(start, { days: 365 }));
-		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(start, { days: 365 * 2 }));
+		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
 		expect(isYield).to.equal(true);
-
-		await fastForward(add(start, { years: 2, days: 2 }));
-		await corePool.connect(user0).unstake(1, tokenAmount);
-		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0].add(tokenAmount));
-
-		console.log(await corePool.getDepositsLength(user0.address));
-
-		[
-			tokenAmount, // @dev token amount staked
-			weight, //      @dev stake weight
-			lockedFrom, //  @dev locking period - from
-			lockedUntil, // @dev locking period - until
-			isYield, //     @dev indicates if the stake was created as a yield reward
-		] = await corePool.getDeposit(user0.address, 1);
-		expect(tokenAmount).to.equal(0);
-		expect(weight).to.equal(0);
-		expect(lockedFrom).to.equal(0);
-		expect(lockedUntil).to.equal(0);
-		expect(isYield).to.equal(false);
 	});
 
-	it('Should allow a user to stake deposit for 1 month. Claim MODA rewards.', async () => {
+	it('Should allow a user to stake deposit for 1 month.', async () => {
 		// Set up the balance first
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
@@ -190,7 +173,8 @@ describe('Core Pool', () => {
 		);
 
 		// Wait a little longer though
-		await fastForward(add(start, { days: 29 }));
+		const futureDate = add(start, { days: 29 });
+		await fastForward(futureDate);
 		await corePool.connect(user0).unstake(0, amount);
 
 		// Examine the tokens this address now owns.
@@ -218,8 +202,8 @@ describe('Core Pool', () => {
 			lockedUntil, // @dev locking period - until
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 1);
-		expect(fromTimestampBN(lockedFrom)).to.equalDate(add(start, { days: 29 }));
-		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(start, { days: 365 + 29 }));
+		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
 		expect(isYield).to.equal(true);
 	});
 
@@ -316,7 +300,7 @@ describe('Core Pool', () => {
 		nextRewardTime = fromTimestampBN(lockedUntil.add((65 * MINUTE) / MILLIS));
 
 		await corePool.connect(user0).processRewards();
-		expect(await corePool.getDepositsLength(user0.address)).to.equal(4);
+		expect(await corePool.getDepositsLength(user0.address)).to.equal(3);
 		// DEPOSIT 0 (first)
 		[
 			tokenAmount, // @dev token amount staked
