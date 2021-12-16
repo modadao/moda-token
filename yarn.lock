@@ -1654,6 +1654,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/chai-datetime@0.0.37":
+  version "0.0.37"
+  resolved "https://registry.yarnpkg.com/@types/chai-datetime/-/chai-datetime-0.0.37.tgz#3b187faa6cf0acb55dcaef82f3924d26e5c96daa"
+  integrity sha512-teAlKuUV2mxuN0hRxfSXnk7v5lDZUtQWMZ72pIvm5OJ8SuMmgjQgNiebha+MYr7EiSVCQxDY8yH1j7TIXy3nEQ==
+  dependencies:
+    "@types/chai" "*"
+
 "@types/chai@*":
   version "4.2.18"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.18.tgz#0c8e298dbff8205e2266606c1ea5fbdba29b46e4"
@@ -3090,7 +3097,14 @@ chai-bn@^0.2.1:
   resolved "https://registry.yarnpkg.com/chai-bn/-/chai-bn-0.2.1.tgz#1dad95e24c3afcd8139ab0262e9bbefff8a30ab7"
   integrity sha512-01jt2gSXAw7UYFPT5K8d7HYjdXj2vyeIuE+0T/34FWzlNcVbs1JkPxRu7rYMfQnJhrHT8Nr6qjSf5ZwwLU2EYg==
 
-chai@4.3.4, chai@^4.2.0:
+chai-datetime@1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/chai-datetime/-/chai-datetime-1.8.0.tgz#95a1ff58130f60f16f6d882ec5c014e63aa6d75f"
+  integrity sha512-qBG84K8oQNz8LWacuzmCBfdoeG2UBFfbGKTSQj6lS+sjuzGUdBvjJxfZfGA4zDAMiCSqApKcuqSLO0lQQ25cHw==
+  dependencies:
+    chai ">1.9.0"
+
+chai@4.3.4, chai@>1.9.0, chai@^4.2.0:
   version "4.3.4"
   resolved "https://registry.yarnpkg.com/chai/-/chai-4.3.4.tgz#b55e655b31e1eac7099be4c08c21964fce2e6c49"
   integrity sha512-yS5H68VYOCtN1cjfwumDSuzn/9c+yza4f3reKXlE5rUg7SFcCEy90gJvydNgOYtblyf4Zi6jIWRnXOgErta0KA==

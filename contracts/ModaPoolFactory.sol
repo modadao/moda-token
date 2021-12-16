@@ -19,7 +19,7 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	 * @dev MODA/block determines yield farming reward base
 	 *      used by the yield pools controlled by the factory
 	 */
-	uint256 public modaPerBlock;
+	uint256 public modaPerSecond;
 
 	/**
 	 * @dev The yield is distributed proportionally to pool weights;
@@ -29,20 +29,20 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 
 	/**
 	 * @dev MODA/block decreases by 3% every blocks/update (set to 91252 blocks during deployment);
-	 *      an update is triggered by executing `updateMODAPerBlock` public function
+	 *      an update is triggered by executing `updateMODAPerSecond` public function
 	 */
-	uint256 public immutable blocksPerUpdate;
+	uint256 public immutable secondsPerUpdate;
 
 	/**
-	 * @dev End block is the last block when MODA/block can be decreased;
-	 *      it is implied that yield farming stops after that block
+	 * @dev End timestamp is the last timestamp when MODA/block can be decreased;
+	 *      it is implied that yield farming stops after that timestamp
 	 */
-	uint256 public endBlock;
+	uint256 public endTimestamp;
 
 	/**
-	 * @dev Each time the MODA/block ratio gets updated, the block number
+	 * @dev Each time the MODA/block ratio gets updated, the block timestamp
 	 *      when the operation has occurred gets recorded into `lastRatioUpdate`
-	 * @dev This block number is then used to check if blocks/update `blocksPerUpdate`
+	 * @dev This block timestamp is then used to check if blocks/update `secondsPerUpdate`
 	 *      has passed when decreasing yield reward by 3%
 	 */
 	uint256 public lastRatioUpdate;
@@ -68,64 +68,64 @@ abstract contract ModaPoolFactory is ModaAware, Ownable {
 	 * @dev Creates/deploys a factory instance
 	 *
 	 * @param _moda MODA ERC20 token address
-	 * @param _modaPerBlock initial MODA/block value for rewards
-	 * @param _blocksPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
-	 * @param _initBlock block number to measure _blocksPerUpdate from
-	 * @param _endBlock block number when farming stops and rewards cannot be updated anymore
+	 * @param _modaPerSecond initial MODA/block value for rewards
+	 * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), seconds
+	 * @param _initTimestamp block timestamp to measure _secondsPerUpdate from
+	 * @param _endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
 	 */
 	constructor(
 		address _moda,
-		uint256 _modaPerBlock,
-		uint256 _blocksPerUpdate,
-		uint256 _initBlock,
-		uint256 _endBlock
+		uint256 _modaPerSecond,
+		uint256 _secondsPerUpdate,
+		uint256 _initTimestamp,
+		uint256 _endTimestamp
 	) ModaAware(_moda) {
 		// verify the inputs are set
-		require(_modaPerBlock > 0, 'MODA/block not set');
-		require(_blocksPerUpdate > 0, 'blocks/update not set');
-		require(_initBlock > 0, 'init block not set');
-		require(_endBlock > _initBlock, 'invalid end block: must be greater than init block');
+		require(_modaPerSecond > 0, 'MODA/block not set');
+		require(_secondsPerUpdate > 0, 'blocks/update not set');
+		require(_initTimestamp > 0, 'init timestamp not set');
+		require(_endTimestamp > _initTimestamp, 'invalid end timestamp: must be greater than init timestamp');
 
 		// save the inputs into internal state variables
-		modaPerBlock = _modaPerBlock;
-		blocksPerUpdate = _blocksPerUpdate;
-		lastRatioUpdate = _initBlock;
-		endBlock = _endBlock;
+		modaPerSecond = _modaPerSecond;
+		secondsPerUpdate = _secondsPerUpdate;
+		lastRatioUpdate = _initTimestamp;
+		endTimestamp = _endTimestamp;
 	}
 
 	/**
-	 * @dev Verifies if `blocksPerUpdate` has passed since last MODA/block
+	 * @dev Verifies if `secondsPerUpdate` has passed since last MODA/block
 	 *      ratio update and if MODA/block reward can be decreased by 3%
 	 *
-	 * @return true if enough time has passed and `updateMODAPerBlock` can be executed
+	 * @return true if enough time has passed and `updateMODAPerSecond` can be executed
 	 */
 	function shouldUpdateRatio() internal view returns (bool) {
 		// if yield farming period has ended
-		if (block.number > endBlock) {
+		if (block.timestamp > endTimestamp) {
 			// MODA/block reward cannot be updated anymore
 			return false;
 		}
 
 		// check if blocks/update (91252 blocks) have passed since last update
-		return block.number >= lastRatioUpdate + blocksPerUpdate;
+		return block.timestamp >= lastRatioUpdate + secondsPerUpdate;
 	}
 
 	/**
 	 * @notice Decreases MODA/block reward by 3%, can be executed
-	 *      no more than once per `blocksPerUpdate` blocks
+	 *      no more than once per `secondsPerUpdate` blocks
 	 */
-	function updateMODAPerBlock() internal {
-		// checks if ratio can be updated i.e. if blocks/update (91252 blocks) have passed
+	function updateMODAPerSecond() internal {
+		// checks if ratio can be updated i.e. if enough time has passed
 		require(shouldUpdateRatio(), 'too frequent');
 
 		// decreases MODA/block reward by 3%
-		modaPerBlock = (modaPerBlock * 97) / 100;
+		modaPerSecond = (modaPerSecond * 97) / 100;
 
 		// set current block as the last ratio update block
-		lastRatioUpdate = block.number;
+		lastRatioUpdate = block.timestamp;
 
 		// emit an event
-		emit ModaRatioUpdated(msg.sender, modaPerBlock);
+		emit ModaRatioUpdated(msg.sender, modaPerSecond);
 	}
 
 	/**

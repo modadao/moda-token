@@ -47,6 +47,12 @@ export default {
 				mnemonic: process.env.MNEMONIC,
 			},
 		},
+		ropsten: {
+			url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+			accounts: {
+				mnemonic: process.env.MNEMONIC,
+			},
+		},
 		localhost: {
 			chainId: 1337,
 			url: 'http://127.0.0.1:8545/',

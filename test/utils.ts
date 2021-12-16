@@ -2,7 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { network, ethers } from 'hardhat';
 
 export const fastForward = async (newDate: Date) => {
-	await network.provider.send('evm_setNextBlockTimestamp', [newDate.getTime() / 1000]);
+	await network.provider.send('evm_setNextBlockTimestamp', [Math.floor(newDate.getTime() / 1000)]);
 	await network.provider.send('evm_mine');
 };
 

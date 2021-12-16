@@ -30,8 +30,6 @@ interface IPool is ILinkedToMODA {
 
 	// for the rest of the functions see Soldoc in ModaPoolBase
 
-	function smoda() external view returns (address);
-
 	function poolToken() external view returns (address);
 
 	//function isFlashPool() external view returns (bool);
@@ -54,19 +52,17 @@ interface IPool is ILinkedToMODA {
 
 	function stake(
 		uint256 _amount,
-		uint256 _lockedUntil,
-		bool useSMODA
+		uint256 _lockedUntil
 	) external;
 
 	function unstake(
 		uint256 _depositId,
-		uint256 _amount,
-		bool useSMODA
+		uint256 _amount
 	) external;
 
 	function sync() external;
 
-	function processRewards(bool useSMODA) external;
+	function processRewards() external;
 
 	function setWeight(uint32 _weight) external;
 }
