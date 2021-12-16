@@ -30,9 +30,10 @@ export const add = (
 	}
 ) =>
 	new Date(
-		years + date.getFullYear(),
+		date.getFullYear(),
 		months + date.getMonth(),
-		days + date.getDate(),
+		// Years are always 365 days in solidity so we'll match that logic here.
+		days + years * 365 + date.getDate(),
 		hours + date.getHours(),
 		minutes + date.getMinutes(),
 		seconds + date.getSeconds()

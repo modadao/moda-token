@@ -1,10 +1,12 @@
 {
 	"name": "moda-dao",
 	"scripts": {
+		"build": "hardhat compile",
 		"clean": "hardhat clean",
 		"compile": "hardhat compile",
 		"recompile": "hardhat clean && hardhat compile",
 		"deploy": "hardhat run scripts/deploy.js",
+		"run:script": "hardhat run",
 		"node": "hardhat node",
 		"test": "hardhat test",
 		"coverage": "hardhat coverage --testfiles \"./test/*.test.ts\"",
