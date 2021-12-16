@@ -1,4 +1,5 @@
 const { parseEther } = require('@ethersproject/units');
+const { formatBytes32String } = require('ethers/lib/utils');
 const { ethers, upgrades } = require('hardhat');
 
 const toBytes32 = (hexString) => `0x${hexString.padEnd(64, '0')}`;
@@ -42,7 +43,7 @@ const deploy = async () => {
 
 	console.log('Deploying vesting contract...');
 	const VestingFactory = await ethers.getContractFactory('Vesting');
-	const vesting = await VestingFactory.deploy(token.address);
+	const vesting = await VestingFactory.deploy(token.address, formatBytes32String('Investors'));
 	await vesting.deployed();
 	console.log(`Vesting deployed to: ${vesting.address}`);
 
