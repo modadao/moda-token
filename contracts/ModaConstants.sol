@@ -31,6 +31,15 @@ library ModaConstants {
 		0x8ca5f5bb5e4f02345a019a993ce37018dd549b22e88027f4f5c1f614ef6fb3c0;
 
 	/**
+	 * @dev Smart contract unique identifier, a random number
+	 * @dev Should be regenerated each time smart contact source code is changed
+	 *      and changes smart contract itself is to be redeployed
+	 * @dev Generated using https://www.random.org/bytes/
+	 */
+	uint256 public constant FACTORY_UID =
+		0x871acfd60315c19d4e011a9b2fe668860c17caf2dea3882043e8270ec8b5696c;
+
+	/**
 	 * @notice Upgrader is responsible for managing future versions
 	 *         of the contract.
 	 */

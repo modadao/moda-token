@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-//import 'hardhat/console.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
@@ -25,9 +23,7 @@ import './ModaPoolFactory.sol';
 abstract contract ModaPoolBase is
 	IPool,
 	ModaAware,
-	ModaPoolFactory,
-	ReentrancyGuard,
-	AccessControl
+	ReentrancyGuard
 {
 	// @dev POOL_UID defined to add another check to ensure compliance with the contract.
 	function POOL_UID() public pure returns (uint256) {
@@ -62,6 +58,9 @@ abstract contract ModaPoolBase is
 
 	/// @dev Link to the pool token instance, for example MODA or MODA/ETH pair
 	address public immutable override poolToken;
+
+	/// @dev Link to the pool factory instance that manages weights
+	ModaPoolFactory public immutable modaPoolFactory;
 
 	/// @dev Pool weight, 100 for MODA pool or 900 for MODA/ETH
 	uint32 public override weight;
@@ -168,60 +167,50 @@ abstract contract ModaPoolBase is
 	 * @dev Overridden in sub-contracts to construct the pool
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
+	 * @param _modaPoolFactory MODA Pool Factory Address
 	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
 	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
-	 * @param _initTimestamp initial block used to calculate the rewards
-	 *      note: _initTimestamp can be set to the future effectively meaning _sync() calls will do nothing
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
-	 * @param _modaPerSecond initial MODA/block value for rewards
-	 * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), seconds
-	 * @param _endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
+	 * @param _startTimestamp timestamp that pool should start from
 	 */
 	constructor(
 		address _moda,
+		address _modaPoolFactory,
 		address _modaPool,
 		address _poolToken,
 		uint32 _weight,
-		uint256 _modaPerSecond,
-		uint256 _secondsPerUpdate,
-		uint256 _initTimestamp,
-		uint256 _endTimestamp
-	) ModaPoolFactory(_moda, _modaPerSecond, _secondsPerUpdate, _initTimestamp, _endTimestamp) {
+		uint256 _startTimestamp
+	) ModaAware(_moda) {
 		// verify the inputs are set
 		require(_poolToken != address(0), 'pool token address not set');
-		require(_initTimestamp >= block.timestamp, 'init timestamp not set');
+		require(_modaPoolFactory != address(0), 'pool factory address not set');
 		require(_weight > 0, 'pool weight not set');
+		require(_startTimestamp >= block.timestamp, 'start already passed');
 		require(
 			((_poolToken == _moda ? 1 : 0) ^ (_modaPool != address(0) ? 1 : 0)) == 1,
 			'The pool is either a MODA pool or manages external tokens, never both'
 		);
 
-		// verify MODA instance supplied
-		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'MODA TOKEN_UID invalid');
+		// Verify Moda instance supplied
+		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'Moda TOKEN_UID invalid');
 
+		// Verify Moda factory instance supplied
+		require(ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID, 'Moda FACTORY_UID invalid');
+
+		// Verify Moda pool instance supplied
 		if (_modaPool != address(0)) {
 			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID);
 		}
+
 		// save the inputs into internal state variables
 		modaPool = _modaPool;
+		modaPoolFactory = ModaPoolFactory(_modaPoolFactory);
 		poolToken = _poolToken;
-		_setWeight(_weight);
+		weight = _weight;
 
 		// init the dependent internal state variables
-		lastYieldDistribution = _initTimestamp;
-
-		_setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-		_setRoleAdmin(ModaConstants.ROLE_TOKEN_CREATOR, DEFAULT_ADMIN_ROLE);
-		grantRole(ModaConstants.ROLE_TOKEN_CREATOR, _msgSender());
-	}
-
-	/**
-	 * @dev Granting privileges required for allowing ModaCorePool and whatever else later,
-	 *     the ability to mint Tokens as required.
-	 */
-	function grantPrivilege(bytes32 _role, address _account) public onlyOwner {
-		grantRole(_role, _account);
+		lastYieldDistribution = _startTimestamp;
 	}
 
 	/**
@@ -237,11 +226,11 @@ abstract contract ModaPoolBase is
 		// if smart contract state was not updated recently, `yieldRewardsPerWeight` value
 		// is outdated and we need to recalculate it in order to calculate pending rewards correctly
 		if (block.timestamp > lastYieldDistribution && usersLockingWeight != 0) {
-			uint256 endTimestamp = endTimestamp;
+			uint256 endTimestamp = modaPoolFactory.endTimestamp();
 			uint256 multiplier = block.timestamp > endTimestamp
 				? endTimestamp - lastYieldDistribution
 				: block.timestamp - lastYieldDistribution;
-			uint256 modaRewards = (multiplier * weight * modaPerSecond) / totalWeight;
+			uint256 modaRewards = (multiplier * weight * modaPoolFactory.modaPerSecond()) / modaPoolFactory.totalWeight();
 
 			// recalculated value for `yieldRewardsPerWeight`
 			newYieldRewardsPerWeight =
@@ -333,7 +322,6 @@ abstract contract ModaPoolBase is
 		uint256 _amount
 	) external override {
 		// delegate call to an internal function
-		//console.log('ModaPoolBase unstake', _msgSender());
 		_unstake(msg.sender, _depositId, _amount);
 	}
 
@@ -396,26 +384,15 @@ abstract contract ModaPoolBase is
 	 *
 	 * @param _weight new weight to set for the pool
 	 */
-	function setWeight(uint32 _weight) external override onlyOwner {
-		_setWeight(_weight);
-	}
-
-	/**
-	 * @dev Executed by the factory to modify pool weight; the factory is expected
-	 *      to keep track of the total pools weight when updating
-	 *
-	 * @dev Set weight to zero to disable the pool
-	 *
-	 * @param _weight new weight to set for the pool
-	 */
-	function _setWeight(uint32 _weight) internal onlyOwner {
-		///TODO: this could be more efficient.
-		// order of operations is important here.
-		_changePoolWeight(_weight);
-		// set the new weight value
+	function setWeight(uint32 _weight) external override {
+		// Only the factory can send a set weight command
+		require(msg.sender == address(modaPoolFactory), 'Access denied: factory only');
+		
+		uint32 oldWeight = weight;
 		weight = _weight;
+
 		// emit an event logging old and new weight values
-		emit PoolWeightUpdated(msg.sender, weight, _weight);
+		emit PoolWeightUpdated(msg.sender, oldWeight, weight);
 	}
 
 	/**
@@ -449,9 +426,6 @@ abstract contract ModaPoolBase is
 		uint256 _lockUntil,
 		bool _isYield
 	) internal virtual {
-		// validate the inputs
-		// console.log('lockUntil', _lockUntil);
-		// console.log('timestamp', block.timestamp);
 		require(_amount > 0, 'zero amount');
 		require(
 			_lockUntil == 0 ||
@@ -575,7 +549,7 @@ abstract contract ModaPoolBase is
 		// if the deposit was created by the pool itself as a yield reward
 		if (isYield) {
 			// mint the yield via the factory
-			mintYieldTo(msg.sender, _amount);
+			modaPoolFactory.mintYieldTo(msg.sender, _amount);
 		} else {
 			// otherwise just return tokens back to holder
 			transferPoolToken(msg.sender, _amount);
@@ -593,13 +567,13 @@ abstract contract ModaPoolBase is
 	 */
 	function _sync() internal virtual {
 		// update MODA per block value in factory if required
-		if (shouldUpdateRatio()) {
-			updateMODAPerSecond();
+		if (modaPoolFactory.shouldUpdateRatio()) {
+			modaPoolFactory.updateModaPerSecond();
 		}
 
 		// check bound conditions and if these are not met -
 		// exit silently, without emitting an event
-		uint256 lastTimestamp = endTimestamp;
+		uint256 lastTimestamp = modaPoolFactory.endTimestamp();
 		if (lastYieldDistribution >= lastTimestamp) {
 			return;
 		}
@@ -613,11 +587,11 @@ abstract contract ModaPoolBase is
 		}
 
 		// to calculate the reward we need to know how much time has passed, and reward per seconds
-		uint256 currentTimestamp = block.timestamp > endTimestamp ? endTimestamp : block.timestamp;
+		uint256 currentTimestamp = block.timestamp >= lastTimestamp ? lastTimestamp : block.timestamp;
 		uint256 secondsPassed = currentTimestamp - lastYieldDistribution;
 
 		// calculate the reward
-		uint256 modaReward = (secondsPassed * modaPerSecond * weight) / totalWeight;
+		uint256 modaReward = (secondsPassed * modaPoolFactory.modaPerSecond() * weight) / modaPoolFactory.totalWeight();
 
 		// update rewards per weight and `lastYieldDistribution`
 		yieldRewardsPerWeight += rewardToWeight(modaReward, usersLockingWeight);
@@ -802,9 +776,5 @@ abstract contract ModaPoolBase is
 	) internal nonReentrant {
 		// just delegate call to the target
 		SafeERC20.safeTransferFrom(IERC20(poolToken), _from, _to, _value);
-	}
-
-	function _poolWeight() internal view override returns (uint32) {
-		return weight;
 	}
 }
