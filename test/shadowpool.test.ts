@@ -56,9 +56,7 @@ describe('Shadow Pool', () => {
 		await escrowToken.mint(addr[0], userEscrowBalance[0]);
 		await escrowToken.mint(addr[1], userEscrowBalance[1]);
 
-		let nextBlock = (await ethers.provider.getBlockNumber()) + 1;
-
-		const latestBlock = await ethers.provider.getBlock("latest");
+		const latestBlock = await ethers.provider.getBlock('latest');
 		let nextTimestamp = latestBlock.timestamp + 1;
 		const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 		corePool = (await corePoolFactory.deploy(
@@ -74,7 +72,7 @@ describe('Shadow Pool', () => {
 		await corePool.deployed();
 
 		//console.log(`Block number: ${nextBlock}`);
-		nextTimestamp = (await ethers.provider.getBlock("latest")).timestamp + 1;
+		nextTimestamp = (await ethers.provider.getBlock('latest')).timestamp + 1;
 		const shadowPoolFactory = await ethers.getContractFactory('ModaCorePool');
 		shadowPool = (await shadowPoolFactory.deploy(
 			token.address, // moda MODA ERC20 Token ModaERC20 address
@@ -91,7 +89,6 @@ describe('Shadow Pool', () => {
 		await token.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
 		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, corePool.address);
 		await escrowToken.grantRole(ROLE_TOKEN_CREATOR, shadowPool.address);
-		await corePool.grantRole(ROLE_POOL_STAKING, shadowPool.address);
 	});
 
 	it.skip('Should log the set up', async () => {

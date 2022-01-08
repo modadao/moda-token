@@ -52,11 +52,4 @@ library ModaConstants {
 	 *      (calling `mint` function)
 	 */
 	bytes32 public constant ROLE_TOKEN_CREATOR = '\x00\x0B\x00\x00';
-
-	/**
-	 * @notice Token stakeAsPool is responsible for stakes in Moda Pools
-	 *         for an arbitrary address.
-	 * @dev Role ROLE_POOL_STAKING allows creating stakes for non-Moda tokens.
-	 */
-	bytes32 public constant ROLE_POOL_STAKING = '\x00\x0C\x00\x00';
 }
