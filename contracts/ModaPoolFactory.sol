@@ -132,7 +132,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
         require(_modaPerSecond > 0, "Moda/second not set");
         require(_secondsPerUpdate > 0, "seconds/update not set");
         require(_startTimestamp > 0, "start timestamp not set");
-        require(_endTimestamp > _endTimestamp, "invalid end timestamp: must be greater than init timestamp");
+        require(_endTimestamp > _startTimestamp, "invalid end timestamp: must be greater than init timestamp");
 
         // save the inputs into internal state variables
         modaPerSecond = _modaPerSecond;
