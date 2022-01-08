@@ -3,15 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
 import { EscrowedModaERC20, ModaCorePool, Token } from '../typechain';
-import {
-	add,
-	fastForward,
-	fromTimestamp,
-	ADDRESS0,
-	ROLE_TOKEN_CREATOR,
-	ROLE_POOL_STAKING,
-	mineBlocks,
-} from './utils';
+import { add, fastForward, fromTimestamp, ADDRESS0, ROLE_TOKEN_CREATOR, mineBlocks } from './utils';
 
 describe('Shadow Pool Rewards', () => {
 	let token: Token;

@@ -63,7 +63,6 @@ export const toBytes32 = (hexString: string) => `0x${hexString.padEnd(64, '0')}`
 export const ROLE_ADMIN = toBytes32('0');
 export const ROLE_UPGRADER = toBytes32('000a');
 export const ROLE_TOKEN_CREATOR = toBytes32('000b');
-export const ROLE_POOL_STAKING = toBytes32('000c');
 
 export const accessControlError = (address: string, role: string) =>
 	`AccessControl: account ${address.toLowerCase()} is missing role ${role.toLowerCase()}`;
