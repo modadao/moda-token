@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 import { add, blockNow, toTimestamp } from '../test/utils';
-import { Token__factory, ModaCorePool__factory } from '../typechain';
+import { Token__factory, ModaCorePool__factory } from '../typechain-types';
 
 const deploy = async () => {
 	console.log('Attaching token...');

@@ -3,7 +3,7 @@ import { BigNumberish } from 'ethers';
 import { formatBytes32String } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
 import { ROLE_TOKEN_CREATOR, toTimestamp } from '../test/utils';
-import { Token, Token__factory, Vesting__factory } from '../typechain';
+import { Token, Token__factory, Vesting__factory } from '../typechain-types';
 import { vestingTablePrivate } from './vesting-table-private';
 import { vestingTableTS } from './vesting-table-ts';
 

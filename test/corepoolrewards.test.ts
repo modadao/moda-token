@@ -3,7 +3,7 @@ import { parseEther } from '@ethersproject/units';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { ModaCorePool, ModaPoolFactory, Token } from '../typechain';
+import { ModaCorePool, ModaPoolFactory, Token } from '../typechain-types';
 import {
 	add,
 	fastForward,

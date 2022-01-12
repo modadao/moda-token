@@ -488,7 +488,7 @@ abstract contract ModaPoolBase is
 		// update global variable
 		usersLockingWeight += stakeWeight;
 
-		// emit an event
+		// let the world know
 		emit Staked(msg.sender, _staker, _amount);
 	}
 
@@ -649,9 +649,9 @@ abstract contract ModaPoolBase is
 			// update global variable
 			usersLockingWeight += depositWeight;
 		} else {
-			// Force a hard error in this case.
-			// The pool was somehow not constructed correctly.
+			// This pool was somehow not constructed correctly if it has address(0) as the pool address.
 			assert(modaPool != address(0));
+			
 			// for other pools - stake as pool.
 			// NB: the target modaPool must be configured to give
 			// this contract instance the ROLE_TOKEN_CREATOR role/privilege.

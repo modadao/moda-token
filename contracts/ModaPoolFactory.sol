@@ -208,7 +208,14 @@ contract ModaPoolFactory is Ownable, ModaAware {
         uint32 weight
     ) external virtual onlyOwner {
         // create/deploy new core pool instance
-        IPool pool = new ModaCorePool(moda, address(this), weight, startTimestamp);
+        IPool pool = new ModaCorePool(
+            moda,
+            address(this),
+            address(0),
+            moda,
+            weight,
+            startTimestamp
+        );
 
         // register it within this factory
         registerPool(address(pool));
@@ -270,7 +277,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      */
     function mintYieldTo(address _to, uint256 _amount) external {
         // verify that sender is a pool registered withing the factory
-        require(poolExists[msg.sender], "access denied");
+        require(poolExists[msg.sender], "pool is not registered with this factory");
 
         // mint Moda tokens as required
         mintModa(_to, _amount);

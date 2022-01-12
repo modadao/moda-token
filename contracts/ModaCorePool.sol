@@ -28,20 +28,25 @@ contract ModaCorePool is ModaPoolBase {
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
 	 * @param _modaPoolFactory MODA Pool Factory Address
+	 * @param _modaPool MODA Pool Address or address(0) if this is the Moda pool.
+	 * @param _poolToken The token this pool uses.
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
+	 * @param _startTimestamp The start time for this pool as an EVM timestamp (seconds since epoch)
 	 */
 	constructor(
 		address _moda,
 		address _modaPoolFactory,
+		address _modaPool,
+		address _poolToken,
 		uint32 _weight,
 		uint256 _startTimestamp
 	)
 		ModaPoolBase(
 			_moda,
 			_modaPoolFactory,
-			address(0),
-			_moda,
+			_modaPool,
+			_poolToken,
 			_weight,
 			_startTimestamp
 		)
@@ -67,7 +72,7 @@ contract ModaCorePool is ModaPoolBase {
 	}
 
 	/**
-	 * @dev Executed internally by the pool itself (from the parent `ModaPoolBase` smart contract)
+	 * @dev Executed by another pool (from the parent `ModaPoolBase` smart contract)
 	 *      as part of yield rewards processing logic (`ModaPoolBase._processRewards` function)
 	 * @dev Executed when pool is not an Moda pool - see `ModaPoolBase._processRewards`
 	 *
@@ -77,7 +82,7 @@ contract ModaCorePool is ModaPoolBase {
 	function stakeAsPool(address _staker, uint256 _amount)
 		external
 	{
-		require(modaPoolFactory.poolExists(msg.sender), 'access denied');
+		require(modaPoolFactory.poolExists(msg.sender), 'pool is not registered');
 
 		_sync();
 		User storage user = users[_staker];

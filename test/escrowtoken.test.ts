@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { EscrowedModaERC20, Token } from '../typechain';
+import { EscrowedModaERC20, Token } from '../typechain-types';
 
 describe('Escrow Token', () => {
 	const initialSupply = ethers.utils.parseEther('1000000');

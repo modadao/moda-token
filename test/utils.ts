@@ -51,13 +51,6 @@ export const addTimestamp = (
 
 export const ADDRESS0 = '0x0000000000000000000000000000000000000000';
 
-export const MILLIS = 1000;
-export const SECOND = MILLIS;
-export const MINUTE = 60 * SECOND;
-export const HOUR = 60 * MINUTE;
-export const DAY = 24 * HOUR;
-export const YEAR = 365 * DAY;
-
 export const toBytes32 = (hexString: string) => `0x${hexString.padEnd(64, '0')}`;
 
 export const ROLE_ADMIN = toBytes32('0');

@@ -4,7 +4,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import chai, { expect } from 'chai';
 import chaiDateTime from 'chai-datetime';
 import { ethers, upgrades } from 'hardhat';
-import { ModaCorePool, ModaPoolFactory, Token } from '../typechain';
+import { ModaCorePool, ModaPoolFactory, Token } from '../typechain-types';
 import {
 	add,
 	fastForward,
@@ -68,7 +68,7 @@ describe('Core Pool', () => {
 	it('Should refuse any but a CorePool to create a pool stake', async () => {
 		await expect(
 			corePool.connect(user0).stakeAsPool(user1.address, parseEther('100'))
-		).to.be.revertedWith('access denied');
+		).to.be.revertedWith('pool is not registered');
 	});
 
 	it('Should revert on invalid lock interval', async () => {

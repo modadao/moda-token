@@ -359,7 +359,7 @@ MigrationBackup/
 
 # Working files for Hardhat
 cache/
-typechain/
+typechain-types/
 build/
 
 # Open Zeppelin Upgrade Plugin files aren't relevant on local network

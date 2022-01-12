@@ -1,8 +1,8 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { formatBytes32String, formatEther, parseBytes32String, parseEther } from 'ethers/lib/utils';
+import { formatBytes32String, parseBytes32String, parseEther } from 'ethers/lib/utils';
 import { ethers, upgrades } from 'hardhat';
-import { Vesting, Token } from '../typechain';
+import { Vesting, Token } from '../typechain-types';
 import { add, addTimestamp, blockNow, fastForward, ROLE_TOKEN_CREATOR, toTimestamp } from './utils';
 
 describe('Vesting', () => {
