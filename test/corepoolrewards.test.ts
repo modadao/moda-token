@@ -46,7 +46,7 @@ describe('Core Pool Rewards', () => {
 		factory = (await factoryFactory.deploy(
 			token.address,
 			parseEther('10'),
-			15,
+			30 * 24 * 60 * 60, // 30 days per update
 			nextTimestamp,
 			addTimestamp(fromTimestamp(nextTimestamp), { years: 2 })
 		)) as ModaPoolFactory;

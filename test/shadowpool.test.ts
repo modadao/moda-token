@@ -25,7 +25,7 @@ describe('Shadow Pool', () => {
 	let escrowToken: EscrowedModaERC20;
 	let factory: ModaPoolFactory;
 	let corePool: ModaCorePool;
-	let shadowPool: ModaPoolBase;
+	let shadowPool: ModaCorePool;
 
 	let start = new Date();
 	let owner: SignerWithAddress, user0: SignerWithAddress, user1: SignerWithAddress;
@@ -67,7 +67,7 @@ describe('Shadow Pool', () => {
 		factory = (await factoryFactory.deploy(
 			token.address,
 			parseEther('10'),
-			15,
+			30 * 24 * 60 * 60, // 30 days per update
 			nextTimestamp,
 			addTimestamp(fromTimestamp(nextTimestamp), { years: 2 })
 		)) as ModaPoolFactory;

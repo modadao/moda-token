@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@openzeppelin/contracts": "4.4.1",
 		"@openzeppelin/contracts-upgradeable": "4.4.1",
+		"abdk-libraries-solidity": "3.0.0",
 		"chai-datetime": "1.8.0"
 	},
 	"devDependencies": {

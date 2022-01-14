@@ -6,6 +6,7 @@ import "./ModaAware.sol";
 import "./ModaCorePool.sol";
 import "./EscrowedModaERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
 /**
  * @title Moda Pool Factory
@@ -30,11 +31,11 @@ contract ModaPoolFactory is Ownable, ModaAware {
 
     /// @dev Auxiliary data structure used only in getPoolData() view function
     struct PoolData {
-        // @dev pool token address (like ILV)
+        // @dev pool token address (like Moda, or an LP token)
         address poolToken;
         // @dev pool address (like deployed core pool instance)
         address poolAddress;
-        // @dev pool weight (200 for ILV pools, 800 for ILV/ETH pools - set during deployment)
+        // @dev pool weight (200 for Moda pools, 800 for Moda/ETH pools - set during deployment)
         uint32 weight;
         // @dev flash pool flag
         bool isFlashPool;
@@ -44,7 +45,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @dev Moda/second determines yield farming reward base
      *      used by the yield pools controlled by the factory
      */
-    uint256 public modaPerSecond;
+    uint256 public initialModaPerSecond;
 
     /**
      * @dev The yield is distributed proportionally to pool weights;
@@ -54,23 +55,20 @@ contract ModaPoolFactory is Ownable, ModaAware {
 
     /**
      * @dev Moda/second decreases by 3% every period;
-     *      an update is triggered by executing `updateModaPerSecond` public function
+     *      updates are lazy calculated via a compound interest function.
      */
     uint32 public immutable secondsPerUpdate;
+
+    /**
+     * @dev Start timestamp is when the pool starts.
+     */
+    uint public startTimestamp;
 
     /**
      * @dev End timestamp is the last time when Moda/second can be decreased;
      *      it is implied that yield farming stops after that block
      */
     uint public endTimestamp;
-
-    /**
-     * @dev Each time the Moda/second ratio gets updated, the block number
-     *      when the operation has occurred gets recorded into `lastRatioUpdate`
-     * @dev This block number is then used to check if blocks/update `blocksPerUpdate`
-     *      has passed when decreasing yield reward by 3%
-     */
-    uint256 public lastRatioUpdate;
 
     /// @dev Maps pool token address (like Moda) -> pool address (like core pool instance)
     mapping(address => address) public pools;
@@ -82,7 +80,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @dev Fired in createPool() and registerPool()
      *
      * @param _by an address which executed an action
-     * @param poolToken pool token address (like ILV)
+     * @param poolToken pool token address (like Moda or a Moda / ETH LP token)
      * @param poolAddress deployed pool instance address
      * @param weight pool weight
      * @param isFlashPool flag indicating if pool is a flash pool
@@ -105,17 +103,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
     event WeightUpdated(address indexed _by, address indexed poolAddress, uint32 weight);
 
     /**
-     * @dev Fired in updateModaPerSecond()
-     *
-     * @param _by an address which executed an action
-     * @param newModaPerSecond new Moda/second value
-     */
-    event ModaRatioUpdated(address indexed _by, uint256 newModaPerSecond);
-
-    /**
      * @dev Creates/deploys a factory instance
      *
-     * @param _moda ILV ERC20 token address
+     * @param _moda Moda ERC20 token address
      * @param _modaPerSecond initial Moda/second value for rewards
      * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
      * @param _startTimestamp timestamp to measure _secondsPerUpdate from
@@ -135,9 +125,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
         require(_endTimestamp > _startTimestamp, "invalid end timestamp: must be greater than init timestamp");
 
         // save the inputs into internal state variables
-        modaPerSecond = _modaPerSecond;
+        initialModaPerSecond = _modaPerSecond;
         secondsPerUpdate = _secondsPerUpdate;
-        lastRatioUpdate = _startTimestamp;
+        startTimestamp = _startTimestamp;
         endTimestamp = _endTimestamp;
     }
 
@@ -179,32 +169,15 @@ contract ModaPoolFactory is Ownable, ModaAware {
     }
 
     /**
-     * @dev Verifies if `blocksPerUpdate` has passed since last Moda/second
-     *      ratio update and if Moda/second reward can be decreased by 3%
-     *
-     * @return true if enough time has passed and `updateModaPerSecond` can be executed
-     */
-    function shouldUpdateRatio() public view returns (bool) {
-        // if yield farming period has ended
-        if (block.timestamp > endTimestamp) {
-            // Moda/second reward cannot be updated anymore
-            return false;
-        }
-
-        // check if seconds/update have passed since last update
-        return block.timestamp >= lastRatioUpdate + secondsPerUpdate;
-    }
-
-    /**
      * @dev Creates a core pool (ModaCorePool) and registers it within the factory
      *
      * @dev Can be executed by the pool factory owner only
      *
-     * @param startTimestamp init timestamp to be used for the pool creation time
+     * @param poolStartTimestamp init timestamp to be used for the pool creation time
      * @param weight weight of the pool to be created
      */
     function createCorePool(
-        uint256 startTimestamp,
+        uint256 poolStartTimestamp,
         uint32 weight
     ) external virtual onlyOwner {
         // create/deploy new core pool instance
@@ -214,7 +187,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
             address(0),
             moda,
             weight,
-            startTimestamp
+            poolStartTimestamp
         );
 
         // register it within this factory
@@ -249,21 +222,32 @@ contract ModaPoolFactory is Ownable, ModaAware {
     }
 
     /**
-     * @notice Decreases Moda/second reward by 3%, can be executed
-     *      no more than once per `blocksPerUpdate` blocks
+     * @notice Calculates compound interest
      */
-    function updateModaPerSecond() external {
-        // checks if ratio can be updated i.e. if blocks/update (91252 blocks) have passed
-        require(shouldUpdateRatio(), "too frequent");
+    function compound(uint principal, uint periods) public pure returns (uint) {
+        return ABDKMath64x64.mulu(
+            // Rate is -3% per period, e.g. 97/100.
+            ABDKMath64x64.pow(ABDKMath64x64.div(97, 100), periods),
+            principal
+        );
+    }
 
-        // decreases ILV/block reward by 3%
-        modaPerSecond = (modaPerSecond * 97) / 100;
+    /**
+     * @notice Calculates the effective moda per second at a future timestamp.
+     */
+    function modaPerSecondAt(uint time) public view returns (uint256) {
+        // If we're before the start, just return initial.
+        if (time < startTimestamp) return initialModaPerSecond;
+        
+        // If we're at the end, we don't continue to decrease.
+        if (time > endTimestamp) time = endTimestamp;
 
-        // set current block as the last ratio update block
-        lastRatioUpdate = block.timestamp;
+        // How many times do we need to decrease the rewards
+        // between the last time we've calculated and now?
+        uint periods = (time - startTimestamp) / secondsPerUpdate;
 
-        // emit an event
-        emit ModaRatioUpdated(msg.sender, modaPerSecond);
+        // Calculate the resulting amount after applying that many decreases.
+        return compound(initialModaPerSecond, periods);
     }
 
     /**

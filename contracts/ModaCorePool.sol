@@ -68,7 +68,7 @@ contract ModaCorePool is ModaPoolBase {
 	 *      end block), function doesn't throw and exits silently
 	 */
 	function processRewards() external override {
-		_processRewards(msg.sender, true);
+		_processRewards(msg.sender);
 	}
 
 	/**
@@ -84,10 +84,9 @@ contract ModaCorePool is ModaPoolBase {
 	{
 		require(modaPoolFactory.poolExists(msg.sender), 'pool is not registered');
 
-		_sync();
 		User storage user = users[_staker];
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, false);
+			_processRewards(_staker);
 		}
 		uint256 depositWeight = _amount * YEAR_STAKE_WEIGHT_MULTIPLIER;
 		Deposit memory newDeposit = Deposit({
@@ -102,8 +101,6 @@ contract ModaCorePool is ModaPoolBase {
 		user.deposits.push(newDeposit);
 
 		usersLockingWeight += depositWeight;
-
-		user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
 
 		// update `poolTokenReserve` only if this is a LP Core Pool (stakeAsPool can be executed only for LP pool)
 		poolTokenReserve += _amount;
@@ -154,11 +151,8 @@ contract ModaCorePool is ModaPoolBase {
 	 *      and for MODA pool updates (increases) pool token reserve
 	 *      (pool tokens value available in the pool)
 	 */
-	function _processRewards(
-		address _staker,
-		bool _withUpdate
-	) internal override returns (uint256 rewards) {
-		rewards = super._processRewards(_staker, _withUpdate);
+	function _processRewards(address _staker) internal override returns (uint256 rewards) {
+		rewards = super._processRewards(_staker);
 
 		// update `poolTokenReserve` only if this is a MODA Core Pool
 		if (poolToken == moda) {

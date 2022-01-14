@@ -45,10 +45,6 @@ abstract contract ModaPoolBase is
 		uint256 tokenAmount;
 		// @dev Total weight
 		uint256 totalWeight;
-		// @dev Auxiliary variable for yield calculation
-		uint256 subYieldRewards;
-		// @dev Auxiliary variable for vault rewards calculation
-		uint256 subVaultRewards;
 		// @dev An array of holder's deposits
 		Deposit[] deposits;
 	}
@@ -62,15 +58,14 @@ abstract contract ModaPoolBase is
 	/// @dev Link to the pool factory instance that manages weights
 	ModaPoolFactory public immutable modaPoolFactory;
 
-	/// @dev Pool weight, 100 for MODA pool or 900 for MODA/ETH
+	/// @dev Pool weight, 200 for MODA pool or 800 for MODA/ETH
 	uint32 public override weight;
-
-	/// @dev Block timestamp of the last yield distribution event
-	/// This gets initialised at the first rewards pass after rewardStartTime.
-	uint256 public override lastYieldDistribution;
 
 	/// @dev Used to calculate yield rewards, keeps track of the tokens weight locked in staking
 	uint256 public override usersLockingWeight;
+
+	/// @dev Used to calculate yield rewards, keeps track of when the pool started
+	uint256 public override startTimestamp;
 
 	/**
 	 * @dev Stake weight is proportional to deposit amount and time locked, precisely
@@ -82,11 +77,6 @@ abstract contract ModaPoolBase is
 	 *      weight is a deposit amount multiplied by 2 * 1e6
 	 */
 	uint256 internal constant WEIGHT_MULTIPLIER = 1e6;
-
-	/// @dev Used to calculate yield rewards
-	/// @dev This value is different from "reward per token" used in locked pool
-	/// @dev Note: stakes are different in duration and "weight" reflects that
-	uint256 public override yieldRewardsPerWeight;
 
 	/**
 	 * @dev When we know beforehand that staking is done for a year, and fraction of the year locked is one,
@@ -133,19 +123,6 @@ abstract contract ModaPoolBase is
 	event Unstaked(address indexed _by, address indexed _to, uint256 amount);
 
 	/**
-	 * @dev Fired in _sync(), sync() and dependent functions (stake, unstake, etc.)
-	 *
-	 * @param _by an address which performed an operation
-	 * @param yieldRewardsPerWeight updated yield rewards per weight value
-	 * @param lastYieldDistribution usually, current block timestamp
-	 */
-	event Synchronized(
-		address indexed _by,
-		uint256 yieldRewardsPerWeight,
-		uint256 lastYieldDistribution
-	);
-
-	/**
 	 * @dev Fired in _processRewards(), processRewards() and dependent functions (stake, unstake, etc.)
 	 *
 	 * @param _by an address which performed an operation
@@ -189,7 +166,7 @@ abstract contract ModaPoolBase is
 		require(_startTimestamp >= block.timestamp, 'start already passed');
 		require(
 			((_poolToken == _moda ? 1 : 0) ^ (_modaPool != address(0) ? 1 : 0)) == 1,
-			'The pool is either a MODA pool or manages external tokens, never both'
+			'Either a MODA pool or manage external tokens, never both'
 		);
 
 		// Verify Moda instance supplied
@@ -208,9 +185,7 @@ abstract contract ModaPoolBase is
 		modaPoolFactory = ModaPoolFactory(_modaPoolFactory);
 		poolToken = _poolToken;
 		weight = _weight;
-
-		// init the dependent internal state variables
-		lastYieldDistribution = _startTimestamp;
+		startTimestamp = _startTimestamp;
 	}
 
 	/**
@@ -219,34 +194,24 @@ abstract contract ModaPoolBase is
 	 * @param _staker an address to calculate yield rewards value for
 	 * @return calculated yield reward value for the given address
 	 */
-	function pendingYieldRewards(address _staker) external view override returns (uint256) {
-		// `newYieldRewardsPerWeight` will store stored a recalculated value for `yieldRewardsPerWeight`
-		uint256 newYieldRewardsPerWeight;
+	function pendingYieldRewards(address _staker) public view override returns (uint256) {
+		if (block.timestamp < startTimestamp) return 0;
 
-		// if smart contract state was not updated recently, `yieldRewardsPerWeight` value
-		// is outdated and we need to recalculate it in order to calculate pending rewards correctly
-		if (block.timestamp > lastYieldDistribution && usersLockingWeight != 0) {
-			uint256 endTimestamp = modaPoolFactory.endTimestamp();
-			uint256 multiplier = block.timestamp > endTimestamp
-				? endTimestamp - lastYieldDistribution
-				: block.timestamp - lastYieldDistribution;
-			uint256 modaRewards = (multiplier * weight * modaPoolFactory.modaPerSecond()) / modaPoolFactory.totalWeight();
+		// Gas optimisation
+		uint256 factoryEnd = modaPoolFactory.endTimestamp();
 
-			// recalculated value for `yieldRewardsPerWeight`
-			newYieldRewardsPerWeight =
-				rewardToWeight(modaRewards, usersLockingWeight) +
-				yieldRewardsPerWeight;
-		} else {
-			// if smart contract state is up to date, we don't recalculate
-			newYieldRewardsPerWeight = yieldRewardsPerWeight;
-		}
+		// Get the current rate of rewards
+		uint256 endOfTimeframe = block.timestamp > factoryEnd ? block.timestamp : factoryEnd;
+		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 
-		// based on the rewards per weight value, calculate pending rewards;
-		User memory user = users[_staker];
-		uint256 pending = weightToReward(user.totalWeight, newYieldRewardsPerWeight) -
-			user.subYieldRewards;
+		// Calculate total rewards for timeframe
+		uint256 totalRewards = modaPerSecond * (endOfTimeframe - startTimestamp);
 
-		return pending;
+		// Weight for the pool.
+		uint256 poolRewards = totalRewards * weight / modaPoolFactory.totalWeight();
+
+		// And finally weight for the user.
+		return poolRewards * users[_staker].totalWeight / usersLockingWeight;
 	}
 
 	/**
@@ -340,26 +305,10 @@ abstract contract ModaPoolBase is
 		uint256 depositId,
 		uint256 lockedUntil
 	) external {
-		// sync and call processRewards
-		_sync();
-		_processRewards(msg.sender, false);
+		// call processRewards
+		_processRewards(msg.sender);
 		// delegate call to an internal function
 		_updateStakeLock(msg.sender, depositId, lockedUntil);
-	}
-
-	/**
-	 * @notice Service function to synchronize pool state with current time
-	 *
-	 * @dev Can be executed by anyone at any time, but has an effect only when
-	 *      at least one block passes between synchronizations
-	 * @dev Executed internally when staking, unstaking, processing rewards in order
-	 *      for calculations to be correct and to reflect state progress of the contract
-	 * @dev When timing conditions are not met (executed too frequently, or after factory
-	 *      end block), function doesn't throw and exits silently
-	 */
-	function sync() external override {
-		// delegate call to an internal function
-		_sync();
 	}
 
 	/**
@@ -373,7 +322,7 @@ abstract contract ModaPoolBase is
 	 */
 	function processRewards() external virtual override {
 		// delegate call to an internal function
-		_processRewards(msg.sender, true);
+		_processRewards(msg.sender);
 	}
 
 	/**
@@ -393,22 +342,6 @@ abstract contract ModaPoolBase is
 
 		// emit an event logging old and new weight values
 		emit PoolWeightUpdated(msg.sender, oldWeight, weight);
-	}
-
-	/**
-	 * @dev Similar to public pendingYieldRewards, but performs calculations based on
-	 *      current smart contract state only, not taking into account any additional
-	 *      time/blocks which might have passed
-	 *
-	 * @param _staker an address to calculate yield rewards value for
-	 * @return pending calculated yield reward value for the given address
-	 */
-	function _pendingYieldRewards(address _staker) internal view returns (uint256 pending) {
-		// read user data structure into memory
-		User memory user = users[_staker];
-
-		// and perform the calculation using the values read
-		return weightToReward(user.totalWeight, yieldRewardsPerWeight) - user.subYieldRewards;
 	}
 
 	/**
@@ -433,14 +366,11 @@ abstract contract ModaPoolBase is
 			'invalid lock interval'
 		);
 
-		// update smart contract state
-		_sync();
-
 		// get a link to user data struct, we will write to it later
 		User storage user = users[_staker];
 		// process current pending rewards if any
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, false);
+			_processRewards(_staker);
 		}
 
 		// in most of the cases added amount `addedAmount` is simply `_amount`
@@ -448,7 +378,8 @@ abstract contract ModaPoolBase is
 
 		// read the current balance
 		uint256 previousBalance = IERC20(poolToken).balanceOf(address(this));
-		// transfer `_amount`; note: some tokens may get burnt here
+		// transfer `_amount`; note: some tokens may get burnt here if the token contract
+		// withholds fees on transfers.
 		transferPoolTokenFrom(address(msg.sender), address(this), _amount);
 		// read new balance, usually this is just the difference `previousBalance - _amount`
 		uint256 newBalance = IERC20(poolToken).balanceOf(address(this));
@@ -483,7 +414,6 @@ abstract contract ModaPoolBase is
 		// update user record
 		user.tokenAmount += addedAmount;
 		user.totalWeight += stakeWeight;
-		user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
 
 		// update global variable
 		usersLockingWeight += stakeWeight;
@@ -517,11 +447,9 @@ abstract contract ModaPoolBase is
 		// verify available balance
 		// if staker address ot deposit doesn't exist this check will fail as well
 		require(stakeDeposit.tokenAmount >= _amount, 'amount exceeds stake');
-
-		// update smart contract state
-		_sync();
+		
 		// and process current pending rewards if any
-		_processRewards(_staker, false);
+		_processRewards(_staker);
 
 		// recalculate deposit weight
 		uint256 previousWeight = stakeDeposit.weight;
@@ -541,7 +469,6 @@ abstract contract ModaPoolBase is
 		// update user record
 		user.tokenAmount -= _amount;
 		user.totalWeight = user.totalWeight - previousWeight + newWeight;
-		user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
 
 		// update global variable
 		usersLockingWeight = usersLockingWeight - previousWeight + newWeight;
@@ -560,65 +487,14 @@ abstract contract ModaPoolBase is
 	}
 
 	/**
-	 * @dev Used internally, mostly by children implementations, see sync()
-	 *
-	 * @dev Updates smart contract state (`yieldRewardsPerWeight`, `lastYieldDistribution`),
-	 *      updates factory state via `updateMODAPerSecond`
-	 */
-	function _sync() internal virtual {
-		// update MODA per block value in factory if required
-		if (modaPoolFactory.shouldUpdateRatio()) {
-			modaPoolFactory.updateModaPerSecond();
-		}
-
-		// check bound conditions and if these are not met -
-		// exit silently, without emitting an event
-		uint256 lastTimestamp = modaPoolFactory.endTimestamp();
-		if (lastYieldDistribution >= lastTimestamp) {
-			return;
-		}
-		if (block.timestamp <= lastYieldDistribution) {
-			return;
-		}
-		// if locking weight is zero - update only `lastYieldDistribution` and exit
-		if (usersLockingWeight == 0) {
-			lastYieldDistribution = block.timestamp;
-			return;
-		}
-
-		// to calculate the reward we need to know how much time has passed, and reward per seconds
-		uint256 currentTimestamp = block.timestamp >= lastTimestamp ? lastTimestamp : block.timestamp;
-		uint256 secondsPassed = currentTimestamp - lastYieldDistribution;
-
-		// calculate the reward
-		uint256 modaReward = (secondsPassed * modaPoolFactory.modaPerSecond() * weight) / modaPoolFactory.totalWeight();
-
-		// update rewards per weight and `lastYieldDistribution`
-		yieldRewardsPerWeight += rewardToWeight(modaReward, usersLockingWeight);
-		lastYieldDistribution = currentTimestamp;
-
-		// emit an event
-		emit Synchronized(msg.sender, yieldRewardsPerWeight, lastYieldDistribution);
-	}
-
-	/**
 	 * @dev Used internally, mostly by children implementations, see processRewards()
 	 *
 	 * @param _staker an address which receives the reward (which has staked some tokens earlier)
-	 * @param _withUpdate flag allowing to disable synchronization (see sync()) if set to false
 	 * @return pendingYield the rewards calculated and optionally re-staked
 	 */
-	function _processRewards(
-		address _staker,
-		bool _withUpdate
-	) internal virtual returns (uint256 pendingYield) {
-		// update smart contract state if required
-		if (_withUpdate) {
-			_sync();
-		}
-
+	function _processRewards(address _staker) internal virtual returns (uint256 pendingYield) {
 		// calculate pending yield rewards, this value will be returned
-		pendingYield = _pendingYieldRewards(_staker);
+		pendingYield = pendingYieldRewards(_staker);
 
 		// if pending yield is zero - just return silently
 		if (pendingYield == 0) return 0;
@@ -656,11 +532,6 @@ abstract contract ModaPoolBase is
 			// NB: the target modaPool must be configured to give
 			// this contract instance the ROLE_TOKEN_CREATOR role/privilege.
 			ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
-		}
-
-		// update users's record for `subYieldRewards` if requested
-		if (_withUpdate) {
-			user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
 		}
 
 		// emit an event
@@ -719,39 +590,6 @@ abstract contract ModaPoolBase is
 
 		// emit an event
 		emit StakeLockUpdated(_staker, _depositId, stakeDeposit.lockedFrom, _lockedUntil);
-	}
-
-	/**
-	 * @dev Converts stake weight (not to be mixed with the pool weight) to
-	 *      MODA reward value, applying the 10^12 division on weight
-	 *
-	 * @param _weight stake weight
-	 * @param rewardPerWeight MODA reward per weight
-	 * @return reward value normalized to 10^12
-	 */
-	function weightToReward(uint256 _weight, uint256 rewardPerWeight)
-		public
-		pure
-		returns (uint256)
-	{
-		// apply the formula and return
-		return (_weight * rewardPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
-	}
-
-	/**
-	 * @dev Converts reward MODA value to stake weight (not to be mixed with the pool weight),
-	 *      applying the 10^12 multiplication on the reward
-	 *      - OR -
-	 * @dev Converts reward MODA value to reward/weight if stake weight is supplied as second
-	 *      function parameter instead of reward/weight
-	 *
-	 * @param reward yield reward
-	 * @param rewardPerWeight reward/weight (or stake weight)
-	 * @return stake weight (or reward/weight)
-	 */
-	function rewardToWeight(uint256 reward, uint256 rewardPerWeight) public pure returns (uint256) {
-		// apply the reverse formula and return
-		return (reward * REWARD_PER_WEIGHT_MULTIPLIER) / rewardPerWeight;
 	}
 
 	/**

@@ -48,7 +48,7 @@ describe('Core Pool', () => {
 		factory = (await factoryFactory.deploy(
 			token.address,
 			parseEther('10'),
-			15,
+			30 * 24 * 60 * 60, // 30 days per update
 			nextTimestamp,
 			addTimestamp(fromTimestamp(nextTimestamp), { years: 2 })
 		)) as ModaPoolFactory;
@@ -78,13 +78,13 @@ describe('Core Pool', () => {
 		);
 	});
 
-	it('Should allow a user to unstake a locked deposit after 1 year.', async () => {
+	it('Should allow a user to unstake a locked deposit after 1 year', async () => {
 		// Set up the balance first
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
 		// Calculate a suitable locking end date
-		const lockUntil: BigNumber = toTimestampBN(add(start, { years: 1 }));
-		const amount: BigNumber = parseEther('104');
+		const lockUntil = toTimestampBN(add(start, { years: 1 }));
+		const amount = parseEther('104');
 		await token.connect(user0).approve(corePool.address, amount);
 		expect(await token.allowance(user0.address, corePool.address)).to.equal(amount);
 		await corePool.connect(user0).stake(amount, lockUntil);
@@ -222,7 +222,7 @@ describe('Core Pool', () => {
 
 		// Is there a new Deposit?
 		expect(await corePool.getDepositsLength(user0.address)).to.equal(1);
-		let lastLocked = BigNumber.from(0);
+		let lastLocked = 0;
 		// DEPOSIT 0
 		let [
 			tokenAmount, // @dev token amount staked
@@ -240,17 +240,17 @@ describe('Core Pool', () => {
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0].sub(amount));
 		expect(await corePool.getDepositsLength(user0.address)).to.equal(1);
 
-		// Now attempt to withdraw it.
+		// Now attempt to withdraw part of it.
+		// Wait for less than a 28 days and expect failure.
 		await expect(corePool.connect(user0).unstake(0, parseEther('100'))).to.be.revertedWith(
 			'deposit not yet unlocked'
 		);
-		// Wait for less than a 28 days and expect failure.
 		await fastForward(add(start, { days: 27, hours: 23, minutes: 59 }));
 
 		// Before unstake executes the user should have the previous balances.
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0].sub(amount));
 
-		// And a withdrawal should fail.
+		// And a withdrawal should still fail.
 		await expect(corePool.connect(user0).unstake(0, amount.div(2))).to.be.revertedWith(
 			'deposit not yet unlocked'
 		);
@@ -283,16 +283,15 @@ describe('Core Pool', () => {
 		expect(lockedUntil).to.equal(toTimestampBN(lockUntil));
 		expect(isYield).to.equal(false);
 
+		// If we lock it a bit longer...
 		await expect(
 			corePool
 				.connect(user0)
 				.updateStakeLock(0, addTimestamp(fromTimestampBN(lockedUntil), { days: 2 }))
 		).to.emit(corePool, 'StakeLockUpdated');
 
-		lastLocked = toTimestampBN(add(fromTimestampBN(lockedUntil), { days: 2 }));
+		lastLocked = toTimestamp(add(fromTimestampBN(lockedUntil), { days: 2 }));
 		let nextRewardTime = add(fromTimestampBN(lockedUntil), { days: 2, minutes: 2 });
-
-		let reward1Amount = tokenAmount;
 
 		// Wait a until the first deposit is unlocked to claim it.
 		await fastForward(nextRewardTime);
@@ -300,7 +299,7 @@ describe('Core Pool', () => {
 		nextRewardTime = add(fromTimestampBN(lockedUntil), { minutes: 65 });
 
 		await corePool.connect(user0).processRewards();
-		expect(await corePool.getDepositsLength(user0.address)).to.equal(3);
+		expect(await corePool.getDepositsLength(user0.address)).to.equal(4);
 		// DEPOSIT 0 (first)
 		[
 			tokenAmount, // @dev token amount staked
@@ -339,7 +338,7 @@ describe('Core Pool', () => {
 		let lastTimestamp = lastLocked;
 		let totalRewards = BigNumber.from(0);
 		// Let's go grab all those rewards.
-		for (let deposit = 1; deposit < 3; deposit++) {
+		for (let deposit = 1; deposit < 4; deposit++) {
 			[
 				tokenAmount, // @dev token amount staked
 				weight, //      @dev stake weight
@@ -348,11 +347,11 @@ describe('Core Pool', () => {
 				isYield, //     @dev indicates if the stake was created as a yield reward
 			] = await corePool.getDeposit(user0.address, deposit);
 
-			if (lockedUntil > lastTimestamp) {
+			if (lockedUntil.toNumber() > lastTimestamp) {
 				// Wait a until the first deposit is unlocked to claim it.
 				nextRewardTime = fromTimestampBN(lockedUntil.add(1));
 				await fastForward(nextRewardTime);
-				lastTimestamp = lockedUntil.add(1);
+				lastTimestamp = lockedUntil.toNumber() + 1;
 			}
 
 			// Unstake whatever remains of this deposit.
@@ -374,6 +373,6 @@ describe('Core Pool', () => {
 		}
 
 		// Before unstaking the first deposit executes the user should have the previous balances.
-		expect(await token.balanceOf(user0.address)).to.equal(parseEther('25154794.55971173066076928'));
+		expect(await token.balanceOf(user0.address)).to.equal(parseEther('910920410.612487122436128'));
 	});
 });
