@@ -2,8 +2,7 @@
 
 pragma solidity 0.8.6;
 
-import '@openzeppelin/contracts/access/AccessControl.sol';
-//import './ModaConstants.sol';
+import './ModaConstants.sol';
 import './ModaPoolBase.sol';
 
 /**
@@ -15,6 +14,9 @@ import './ModaPoolBase.sol';
  * @dev See ModaPoolBase for more details
  */
 contract ModaCorePool is ModaPoolBase {
+	/// @dev Flag indicating pool type, false means "core pool"
+    bool public constant override isFlashPool = false;
+
 	/// @dev Pool tokens value available in the pool;
 	///      pool token examples are MODA (MODA core pool) or MODA/ETH pair (LP core pool)
 	/// @dev For LP core pool this value doesn't count for MODA tokens received as Vault rewards
@@ -25,40 +27,31 @@ contract ModaCorePool is ModaPoolBase {
 	 * @dev Creates/deploys an instance of the core pool
 	 *
 	 * @param _moda MODA ERC20 Token ModaERC20 address
-	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
-	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
+	 * @param _modaPoolFactory MODA Pool Factory Address
+	 * @param _modaPool MODA Pool Address or address(0) if this is the Moda pool.
+	 * @param _poolToken The token this pool uses.
 	 * @param _weight number representing a weight of the pool, actual weight fraction
 	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
-	 * @param _modaPerSecond initial MODA/block value for rewards
-	 * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), seconds
-	 * @param _initTimestamp initial block timestamp used to calculate the rewards
-	 * @param _endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
+	 * @param _startTimestamp The start time for this pool as an EVM timestamp (seconds since epoch)
 	 */
 	constructor(
 		address _moda,
+		address _modaPoolFactory,
 		address _modaPool,
 		address _poolToken,
 		uint32 _weight,
-		uint256 _modaPerSecond,
-		uint256 _secondsPerUpdate,
-		uint256 _initTimestamp,
-		uint256 _endTimestamp
+		uint256 _startTimestamp
 	)
 		ModaPoolBase(
 			_moda,
+			_modaPoolFactory,
 			_modaPool,
 			_poolToken,
 			_weight,
-			_modaPerSecond,
-			_secondsPerUpdate,
-			_initTimestamp,
-			_endTimestamp
+			_startTimestamp
 		)
 	{
-		require(
-			poolTokenReserve == 0,
-			'poolTokenReserve was not initialised to zero on construction'
-		);
+		poolTokenReserve = 0;
 	}
 
 	/**
@@ -75,25 +68,25 @@ contract ModaCorePool is ModaPoolBase {
 	 *      end block), function doesn't throw and exits silently
 	 */
 	function processRewards() external override {
-		_processRewards(msg.sender, true);
+		_processRewards(msg.sender);
 	}
 
 	/**
-	 * @dev Executed internally by the pool itself (from the parent `ModaPoolBase` smart contract)
+	 * @dev Executed by another pool (from the parent `ModaPoolBase` smart contract)
 	 *      as part of yield rewards processing logic (`ModaPoolBase._processRewards` function)
-	 * @dev Executed when pool is not an MODA pool - see `ModaPoolBase._processRewards`
+	 * @dev Executed when pool is not an Moda pool - see `ModaPoolBase._processRewards`
 	 *
 	 * @param _staker an address which stakes (the yield reward)
 	 * @param _amount amount to be staked (yield reward amount)
 	 */
 	function stakeAsPool(address _staker, uint256 _amount)
 		external
-		onlyRole(ModaConstants.ROLE_POOL_STAKING)
 	{
-		_sync();
+		require(modaPoolFactory.poolExists(msg.sender), 'pool is not registered');
+
 		User storage user = users[_staker];
 		if (user.tokenAmount > 0) {
-			_processRewards(_staker, false);
+			_processRewards(_staker);
 		}
 		uint256 depositWeight = _amount * YEAR_STAKE_WEIGHT_MULTIPLIER;
 		Deposit memory newDeposit = Deposit({
@@ -108,8 +101,6 @@ contract ModaCorePool is ModaPoolBase {
 		user.deposits.push(newDeposit);
 
 		usersLockingWeight += depositWeight;
-
-		user.subYieldRewards = weightToReward(user.totalWeight, yieldRewardsPerWeight);
 
 		// update `poolTokenReserve` only if this is a LP Core Pool (stakeAsPool can be executed only for LP pool)
 		poolTokenReserve += _amount;
@@ -160,11 +151,8 @@ contract ModaCorePool is ModaPoolBase {
 	 *      and for MODA pool updates (increases) pool token reserve
 	 *      (pool tokens value available in the pool)
 	 */
-	function _processRewards(
-		address _staker,
-		bool _withUpdate
-	) internal override returns (uint256 rewards) {
-		rewards = super._processRewards(_staker, _withUpdate);
+	function _processRewards(address _staker) internal override returns (uint256 rewards) {
+		rewards = super._processRewards(_staker);
 
 		// update `poolTokenReserve` only if this is a MODA Core Pool
 		if (poolToken == moda) {

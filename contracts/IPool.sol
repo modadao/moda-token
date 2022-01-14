@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.4;
+pragma solidity =0.8.6;
 
 import './ILinkedToMODA.sol';
 
@@ -32,15 +32,13 @@ interface IPool is ILinkedToMODA {
 
 	function poolToken() external view returns (address);
 
-	//function isFlashPool() external view returns (bool);
+	function isFlashPool() external view returns (bool);
 
 	function weight() external view returns (uint32);
 
-	function lastYieldDistribution() external view returns (uint256);
-
-	function yieldRewardsPerWeight() external view returns (uint256);
-
 	function usersLockingWeight() external view returns (uint256);
+
+	function startTimestamp() external view returns (uint256);
 
 	function pendingYieldRewards(address _user) external view returns (uint256);
 
@@ -59,8 +57,6 @@ interface IPool is ILinkedToMODA {
 		uint256 _depositId,
 		uint256 _amount
 	) external;
-
-	function sync() external;
 
 	function processRewards() external;
 

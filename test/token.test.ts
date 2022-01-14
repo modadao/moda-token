@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers, upgrades } from 'hardhat';
-import { Token, UpgradeTestToken } from '../typechain';
+import { Token, UpgradeTestToken } from '../typechain-types';
 import { accessControlError, ROLE_ADMIN, ROLE_TOKEN_CREATOR, ROLE_UPGRADER } from './utils';
 
 describe('Token', () => {

@@ -6,6 +6,12 @@ import 'solidity-coverage';
 import { config } from 'dotenv';
 config();
 
+if (!process.env.MNEMONIC) {
+	throw new Error(
+		'MNEMONIC environment variable must be defined. Copy .env.example to .env and set values accordingly.'
+	);
+}
+
 export default {
 	solidity: {
 		version: '0.8.6',
