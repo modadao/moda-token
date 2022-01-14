@@ -10,7 +10,7 @@ chai.use(chaiDateTime);
 
 const userBalances = [parseEther('2000'), parseEther('200')];
 
-describe('Core Pool', () => {
+describe('Factory', () => {
 	let token: Token;
 	let factory: ModaPoolFactory;
 	let corePool: ModaCorePool;
@@ -54,8 +54,7 @@ describe('Core Pool', () => {
 		start = await blockNow();
 	});
 
-	it('should reject stakeAsPool calls from arbitrary addresses');
-	it('should correctly compound moda per second', async () => {
+	it('Should correctly compound moda per second', async () => {
 		const start = await factory.modaPerSecondAt(await factory.startTimestamp());
 		const secondsPerUpdate = await factory.secondsPerUpdate();
 
@@ -73,6 +72,27 @@ describe('Core Pool', () => {
 
 		expect(
 			await factory.modaPerSecondAt((await factory.startTimestamp()).add(secondsPerUpdate * 50))
+		);
+	});
+
+	it('Should reject stakeAsPool calls from arbitrary addresses', async () => {
+		await expect(
+			corePool.connect(user1).stakeAsPool(user1.address, parseEther('100'))
+		).to.be.revertedWith('pool is not registered');
+	});
+
+	it('Should return initial modaPerSecond if requested before start time of factory', async () => {
+		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).sub(36000000))).to.equal(
+			await factory.initialModaPerSecond()
+		);
+		expect(await factory.modaPerSecondAt(await factory.startTimestamp())).to.equal(
+			await factory.initialModaPerSecond()
+		);
+	});
+
+	it('Should return the minimum modaPerSecond if requested after end time of factory', async () => {
+		expect(await factory.modaPerSecondAt(await factory.endTimestamp())).to.equal(
+			await factory.modaPerSecondAt((await factory.endTimestamp()).add(36000000))
 		);
 	});
 });

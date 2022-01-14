@@ -96,11 +96,7 @@ describe('Core Pool Rewards', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 1);
 
-		console.log('Old:     ', ethers.utils.formatEther(oldTokenAmount));
-		console.log('Pending: ', ethers.utils.formatEther(pendingRewards));
-		console.log('Actual:  ', ethers.utils.formatEther(tokenAmount));
-
-		expect(tokenAmount.gt(pendingRewards)).to.be.true;
+		expect(tokenAmount.eq(pendingRewards)).to.be.true;
 		expect(weight).to.equal(depositWeight);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
 		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
