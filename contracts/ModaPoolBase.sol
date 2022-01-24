@@ -80,7 +80,7 @@ abstract contract ModaPoolBase is
 
 	/**
 	 * @dev When we know beforehand that staking is done for a year, and fraction of the year locked is one,
-	 *      we use simplified calculation and use the following constant instead previos one
+	 *      we use simplified calculation and use the following constant instead previous one
 	 */
 	uint256 internal constant YEAR_STAKE_WEIGHT_MULTIPLIER = 2 * WEIGHT_MULTIPLIER;
 
