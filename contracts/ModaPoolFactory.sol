@@ -113,10 +113,10 @@ contract ModaPoolFactory is Ownable, ModaAware {
      */
     constructor(
         address _moda,
-        uint192 _modaPerSecond,
+        uint256 _modaPerSecond,
         uint32 _secondsPerUpdate,
-        uint32 _startTimestamp,
-        uint32 _endTimestamp
+        uint _startTimestamp,
+        uint _endTimestamp
     ) ModaAware(_moda) {
         // verify the inputs are set
         require(_modaPerSecond > 0, "Moda/second not set");
