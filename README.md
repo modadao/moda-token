@@ -44,7 +44,7 @@ Emanate native app release
 ## Node 14.15.4
 The dependencies require Node -v 14.15.4
 
-`nvm use 14.15.4`
+Run `nvm use`
 
 ## Kovan
 
