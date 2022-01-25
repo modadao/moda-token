@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
 import './ICorePool.sol';
 import './ModaConstants.sol';
-import './EscrowedModaERC20.sol';
 import './ModaPoolFactory.sol';
 
 /**
@@ -336,7 +335,7 @@ abstract contract ModaPoolBase is
 	function setWeight(uint32 _weight) external override {
 		// Only the factory can send a set weight command
 		require(msg.sender == address(modaPoolFactory), 'Access denied: factory only');
-		
+
 		uint32 oldWeight = weight;
 		weight = _weight;
 
@@ -447,7 +446,7 @@ abstract contract ModaPoolBase is
 		// verify available balance
 		// if staker address ot deposit doesn't exist this check will fail as well
 		require(stakeDeposit.tokenAmount >= _amount, 'amount exceeds stake');
-		
+
 		// and process current pending rewards if any
 		_processRewards(_staker);
 
@@ -527,7 +526,7 @@ abstract contract ModaPoolBase is
 		} else {
 			// This pool was somehow not constructed correctly if it has address(0) as the pool address.
 			assert(modaPool != address(0));
-			
+
 			// for other pools - stake as pool.
 			// NB: the target modaPool must be configured to give
 			// this contract instance the ROLE_TOKEN_CREATOR role/privilege.
