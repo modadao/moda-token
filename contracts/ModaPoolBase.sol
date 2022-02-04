@@ -31,7 +31,7 @@ abstract contract ModaPoolBase is
 
 	// @dev modaPool MODA ERC20 Liquidity Pool contract address.
 	// @dev This value is address(0) for the default MODA Core Pool.
-	// @dev This value MUST be provided for any pool created which is not a MODA pool.
+	 // @dev This value MUST be provided for any pool created which is not a MODA pool.
 	// @dev This is used in the case where poolToken != moda.
 	//      The use case relates to shadowing Liquidity Pool stakes
 	//      by allowing people to store the LP tokens here to gain
@@ -195,6 +195,7 @@ abstract contract ModaPoolBase is
 	 */
 	function pendingYieldRewards(address _staker) public view override returns (uint256) {
 		if (block.timestamp < startTimestamp) return 0;
+        if (usersLockingWeight == 0) return 0;
 
 		// Gas optimisation
 		uint256 factoryEnd = modaPoolFactory.endTimestamp();
