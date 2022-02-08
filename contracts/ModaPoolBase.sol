@@ -195,7 +195,7 @@ abstract contract ModaPoolBase is
 	 */
 	function pendingYieldRewards(address _staker) public view override returns (uint256) {
 		if (block.timestamp < startTimestamp) return 0;
-        if (usersLockingWeight == 0) return 0;
+		if (usersLockingWeight == 0) return 0;
 
 		// Gas optimisation
 		uint256 factoryEnd = modaPoolFactory.endTimestamp();
@@ -445,7 +445,7 @@ abstract contract ModaPoolBase is
 		bool isYield = stakeDeposit.isYield;
 
 		// verify available balance
-		// if staker address ot deposit doesn't exist this check will fail as well
+		// if staker address at deposit doesn't exist this check will fail as well
 		require(stakeDeposit.tokenAmount >= _amount, 'amount exceeds stake');
 
 		// and process current pending rewards if any
