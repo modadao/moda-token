@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
 import './ICorePool.sol';
 import './ModaConstants.sol';
-import './EscrowedModaERC20.sol';
 import './ModaPoolFactory.sol';
 
 /**
@@ -32,7 +31,7 @@ abstract contract ModaPoolBase is
 
 	// @dev modaPool MODA ERC20 Liquidity Pool contract address.
 	// @dev This value is address(0) for the default MODA Core Pool.
-	// @dev This value MUST be provided for any pool created which is not a MODA pool.
+	 // @dev This value MUST be provided for any pool created which is not a MODA pool.
 	// @dev This is used in the case where poolToken != moda.
 	//      The use case relates to shadowing Liquidity Pool stakes
 	//      by allowing people to store the LP tokens here to gain
@@ -80,7 +79,7 @@ abstract contract ModaPoolBase is
 
 	/**
 	 * @dev When we know beforehand that staking is done for a year, and fraction of the year locked is one,
-	 *      we use simplified calculation and use the following constant instead previos one
+	 *      we use simplified calculation and use the following constant instead previous one
 	 */
 	uint256 internal constant YEAR_STAKE_WEIGHT_MULTIPLIER = 2 * WEIGHT_MULTIPLIER;
 
@@ -196,6 +195,7 @@ abstract contract ModaPoolBase is
 	 */
 	function pendingYieldRewards(address _staker) public view override returns (uint256) {
 		if (block.timestamp < startTimestamp) return 0;
+		if (usersLockingWeight == 0) return 0;
 
 		// Gas optimisation
 		uint256 factoryEnd = modaPoolFactory.endTimestamp();
@@ -336,7 +336,7 @@ abstract contract ModaPoolBase is
 	function setWeight(uint32 _weight) external override {
 		// Only the factory can send a set weight command
 		require(msg.sender == address(modaPoolFactory), 'Access denied: factory only');
-		
+
 		uint32 oldWeight = weight;
 		weight = _weight;
 
@@ -445,9 +445,9 @@ abstract contract ModaPoolBase is
 		bool isYield = stakeDeposit.isYield;
 
 		// verify available balance
-		// if staker address ot deposit doesn't exist this check will fail as well
+		// if staker address at deposit doesn't exist this check will fail as well
 		require(stakeDeposit.tokenAmount >= _amount, 'amount exceeds stake');
-		
+
 		// and process current pending rewards if any
 		_processRewards(_staker);
 
@@ -527,7 +527,7 @@ abstract contract ModaPoolBase is
 		} else {
 			// This pool was somehow not constructed correctly if it has address(0) as the pool address.
 			assert(modaPool != address(0));
-			
+
 			// for other pools - stake as pool.
 			// NB: the target modaPool must be configured to give
 			// this contract instance the ROLE_TOKEN_CREATOR role/privilege.

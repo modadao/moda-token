@@ -4,7 +4,6 @@ pragma solidity 0.8.6;
 import "./IPool.sol";
 import "./ModaAware.sol";
 import "./ModaCorePool.sol";
-import "./EscrowedModaERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "abdk-libraries-solidity/ABDKMath64x64.sol";
 
@@ -238,7 +237,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
     function modaPerSecondAt(uint time) public view returns (uint256) {
         // If we're before the start, just return initial.
         if (time < startTimestamp) return initialModaPerSecond;
-        
+
         // If we're at the end, we don't continue to decrease.
         if (time > endTimestamp) time = endTimestamp;
 
