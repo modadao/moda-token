@@ -21,14 +21,14 @@ const deploy = async () => {
 	const FactoryFactory = (await ethers.getContractFactory(
 		'ModaPoolFactory'
 	)) as ModaPoolFactory__factory;
-	const factory = FactoryFactory.attach('0xB9CBE2f422d3f821fE599471A931De8e8cf6E2dF');
+	const factory = FactoryFactory.attach('0xE69Bc3312EF8213d65FE54Fea8F138F99F14aaE1');
 	// const factory = FactoryFactory.attach('0x1117ac6ad6cdf1a3bc543bad3b133724620522d5');
 	console.log(`Factory at: ${token.address}`);
 
 	const CorePoolFactory = (await ethers.getContractFactory(
 		'ModaCorePool'
 	)) as ModaCorePool__factory;
-	const corePool = CorePoolFactory.attach('0xBe0FF1cfD41FeCf22ee13E8508fCb570bD5e5277');
+	const corePool = CorePoolFactory.attach('0x10CF6c372849870B06411485127Ca552c1fa2897');
 
 	const MintableTestTokenFactory = (await ethers.getContractFactory(
 		'MintableTestToken'
