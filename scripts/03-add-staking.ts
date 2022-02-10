@@ -1,6 +1,11 @@
+import { formatEther, parseEther } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
-import { add, blockNow, toTimestamp } from '../test/utils';
-import { Token__factory, ModaCorePool__factory } from '../typechain-types';
+import { add, addTimestamp, blockNow, toTimestamp } from '../test/utils';
+import {
+	Token__factory,
+	ModaCorePool__factory,
+	ModaPoolFactory__factory,
+} from '../typechain-types';
 
 const deploy = async () => {
 	console.log('Attaching token...');
@@ -11,54 +16,52 @@ const deploy = async () => {
 
 	const start = add(await blockNow(), { hours: 1 });
 
-	/*
-	 * @param _moda MODA ERC20 Token ModaERC20 address
-	 * @param _modaPool MODA ERC20 Liquidity Pool contract address
-	 * @param _poolToken token the pool operates on, for example MODA or MODA/ETH pair
-	 * @param _weight number representing a weight of the pool, actual weight fraction
-	 *      is calculated as that number divided by the total pools weight and doesn't exceed one
-	 * @param _modaPerSecond initial MODA/block value for rewards
-	 * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), seconds
-	 * @param _initTimestamp initial block timestamp used to calculate the rewards
-	 * @param _endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
-	 */
+	console.log('Deploying factory contract...');
+	const FactoryFactory = (await ethers.getContractFactory(
+		'ModaPoolFactory'
+	)) as ModaPoolFactory__factory;
+	const factory = await FactoryFactory.deploy(
+		token.address,
+		parseEther('1'),
+		86400, // One day
+		toTimestamp(start),
+		addTimestamp(start, { months: 1 })
+	);
+	console.log('Transaction sent, awaiting deployed...');
+	console.log(factory.deployTransaction.hash);
+	await factory.deployed();
+
+	console.log('Initial Moda per Second: ', formatEther(await factory.initialModaPerSecond()));
+
 	console.log('Deploying CorePool contract...');
-	const ModaCorePoolFactory = (await ethers.getContractFactory(
+	const trx = await factory.createCorePool(toTimestamp(start), 200);
+	console.log(`Transaction sent: ${trx.hash}`);
+	console.log('Waiting for confirmation...');
+	await trx.wait();
+
+	const registrations = await factory.queryFilter(factory.filters.PoolRegistered());
+	if (registrations.length !== 1) {
+		throw new Error(`Expected 1 registration, got ${registrations.length}`);
+	}
+
+	const CorePoolFactory = (await ethers.getContractFactory(
 		'ModaCorePool'
 	)) as ModaCorePool__factory;
-	// const trx = await ModaCorePoolFactory.getDeployTransaction(
-	// 	token.address,
-	// 	ethers.constants.AddressZero,
-	// 	token.address,
-	// 	80,
-	// 	100,
-	// 	5,
-	// 	toTimestamp(now),
-	// 	toTimestamp(add(now, { days: 7 }))
-	// );
-
-	// console.log(await ModaCorePoolFactory.signer.estimateGas(trx));
-	const corePool = await ModaCorePoolFactory.deploy(
-		token.address,
-		ethers.constants.AddressZero,
-		token.address,
-		80,
-		100,
-		5,
-		toTimestamp(start),
-		toTimestamp(add(start, { days: 7 }))
-	);
-	console.log(`Transaction sent ${corePool.deployTransaction.hash}. Mining...`);
-	await corePool.deployed();
-	console.log(`Core Pool deployed to: ${corePool.address}`);
-
+	const corePool = CorePoolFactory.attach(registrations[0].args.poolAddress);
 	console.log('Done!');
+
+	console.log(`Verify Factory with:`);
+	console.log(
+		`yarn verify ${factory.address} ${token.address} ${parseEther('1')} 86400 ${toTimestamp(
+			start
+		)} ${toTimestamp(add(start, { months: 1 }))}`
+	);
 
 	console.log(`Verify CorePool with:`);
 	console.log(
-		`yarn verify ${corePool.address} ${token.address} ${ethers.constants.AddressZero} ${
-			token.address
-		} 80 100 5 ${toTimestamp(start)} ${toTimestamp(add(start, { days: 7 }))}`
+		`yarn verify ${corePool.address} ${token.address} ${factory.address} ${
+			ethers.constants.AddressZero
+		} ${token.address} 200 ${toTimestamp(start)}`
 	);
 };
 
