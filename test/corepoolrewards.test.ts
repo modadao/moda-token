@@ -10,14 +10,12 @@ import {
 	fromTimestampBN,
 	toTimestampBN,
 	mineBlocks,
-	ADDRESS0,
 	ROLE_TOKEN_CREATOR,
 	blockNow,
 	addTimestamp,
 	fromTimestamp,
 } from './utils';
 
-// 2e6 is the bonus weight when staking for 1 year
 const YEAR_STAKE_WEIGHT_MULTIPLIER = 2 * 1e6;
 
 describe('Core Pool Rewards', () => {

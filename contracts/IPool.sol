@@ -32,8 +32,6 @@ interface IPool is ILinkedToMODA {
 
 	function poolToken() external view returns (address);
 
-	function isFlashPool() external view returns (bool);
-
 	function weight() external view returns (uint32);
 
 	function usersLockingWeight() external view returns (uint256);
