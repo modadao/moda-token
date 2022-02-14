@@ -5,7 +5,7 @@
 		"clean": "hardhat clean",
 		"compile": "hardhat compile",
 		"recompile": "hardhat clean && hardhat compile",
-		"deploy": "hardhat run scripts/deploy.js",
+		"deploy:rinkeby": "hardhat run scripts/01-initial-deploy.js --network rinkeby",
 		"run:script": "hardhat run",
 		"node": "hardhat node",
 		"test": "hardhat test",

@@ -1,6 +1,6 @@
 const { parseEther } = require('@ethersproject/units');
 const { formatBytes32String } = require('ethers/lib/utils');
-const { ethers, upgrades } = require('hardhat');
+const { ethers, upgrades, network } = require('hardhat');
 
 const toBytes32 = (hexString) => `0x${hexString.padEnd(64, '0')}`;
 const ROLE_TOKEN_CREATOR = toBytes32('000b');
@@ -44,9 +44,9 @@ const deploy = async () => {
 	console.log(`Token Proxy deployed to: ${token.address}`);
 
 	console.log('Deploying ModaCorePool...');
-	const latestBlock = await ethers.provider.getBlock("latest");
+	const latestBlock = await ethers.provider.getBlock('latest');
 	const nextTimestamp = latestBlock.timestamp + 1;
-	console.log('nextTimestamp='+ nextTimestamp);
+	console.log('nextTimestamp=' + nextTimestamp);
 	const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
 	const corePool = await corePoolFactory.deploy(
 		token.address, // moda MODA ERC20 Token ModaERC20 address
@@ -74,6 +74,35 @@ const deploy = async () => {
 	console.log('Granting vesting contract permission on Token');
 	const vestingTransaction = await token.grantRole(ROLE_TOKEN_CREATOR, vesting.address);
 	console.log(`Granted in vesting transaction: ${vestingTransaction.hash}`);
+
+	// Add Sushi Pool -----------------------------------------------------------------------------
+
+	const sushiPoolFactory = await ethers.getContractFactory('UniswapV2ERC20');
+	const sushiPool = await sushiPoolFactory.deploy();
+	await sushiPool.deployed();
+
+	const wrappedEth = '';
+	await sushiPool.init(token.address, wrappedEth);
+	console.log(`Sushi Pool deployed to: ${sushiPool.address}`);
+
+	const sushiCorePool = await corePoolFactory.deploy(
+		token.address, // moda MODA ERC20 Token ModaERC20 address
+		corePool.address, // This is a modaPool address
+		sushiPool.address, // Sushi LP token
+		800, // weight number representing a weight of the pool, actual weight fraction is calculated as that number divided by the total pools weight and doesn't exceed one
+		parseEther('150000'), // modaPerSeconds initial MODA/block value for rewards
+		10, // secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+		nextTimestamp, // initTimestamp initial block timestamp used to calculate the rewards
+		nextTimestamp + 120 // endTimestamp block timestamp when farming stops and rewards cannot be updated anymore
+	);
+	await sushiCorePool.deployed();
+	console.log(`Sushi Core Pool deployed to: ${sushiCorePool.address}`);
+
+	console.log('Granting LP core pool contract permission on Token');
+	const sushiCoreTransaction = await token.grantRole(ROLE_TOKEN_CREATOR, sushiCorePool.address);
+	console.log(`Granted in sushi core pool transaction: ${sushiCoreTransaction.hash}`);
+
+	// --------------------------------------------------------------------------------------------
 
 	console.log('Done!');
 };
