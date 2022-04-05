@@ -20,13 +20,14 @@ export type Setup = {
 	owner: SignerWithAddress;
 	secondUser: SignerWithAddress;
 	start: Date;
+	thirdUser:SignerWithAddress;
 };
 
 const MODA_POOL_WEIGHT = 200;
 const LP_POOL_WEIGHT = 400;
 
 export const setup = async (): Promise<Setup> => {
-	const [owner, firstUser, secondUser] = await ethers.getSigners();
+	const [owner, firstUser, secondUser, thirdUser] = await ethers.getSigners();
 	const start = await blockNow();
 	const nextTimestamp = start.getTime() / 1000 + 15;
 	const userBalance = parseEther('100');
@@ -99,5 +100,6 @@ export const setup = async (): Promise<Setup> => {
 		owner,
 		secondUser,
 		start,
+		thirdUser
 	};
 };

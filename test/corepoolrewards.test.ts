@@ -85,6 +85,7 @@ describe('Core Pool Rewards', () => {
 
 		expect(await corePool.getDepositsLength(user0.address)).to.equal(2);
 		const [oldTokenAmount] = await corePool.getDeposit(user0.address, 0);
+		expect(oldTokenAmount.eq(amount)).to.be.true;
 
 		let [
 			tokenAmount, // @dev token amount staked
@@ -94,7 +95,7 @@ describe('Core Pool Rewards', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 1);
 
-		expect(tokenAmount.eq(pendingRewards)).to.be.true;
+		expect(tokenAmount.eq(pendingRewards)).to.be.true; // TODO this test fails; why should this be true?
 		expect(weight).to.equal(depositWeight);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
 		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));

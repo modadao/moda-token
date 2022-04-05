@@ -21,7 +21,7 @@ describe('LP Pool yields are created on Moda Core Pool', () => {
 
 		const timeOfCompounding = (await blockNow()).getTime() / 1000;
 		const lpPoolRewardsAfter30Days = await lpPool.pendingYieldRewards(firstUser.address);
-		expect(lpPoolRewardsAfter30Days).to.eq('8307287439586513051774470');
+		expect(lpPoolRewardsAfter30Days).to.eq(BigNumber.from('8307287439586513051774470'));
 
 		let modaPoolDepositLength = await modaCorePool.getDepositsLength(firstUser.address);
 		let lpPoolDepositLength = await lpPool.getDepositsLength(firstUser.address);
