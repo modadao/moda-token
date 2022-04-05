@@ -95,7 +95,8 @@ describe('Core Pool Rewards', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 1);
 
-		expect(tokenAmount.eq(pendingRewards)).to.be.true; // TODO this test fails; why should this be true?
+		// TODO this test fails; why should this be true?
+		expect(tokenAmount).to.eq(pendingRewards); 	
 		expect(weight).to.equal(depositWeight);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
 		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));

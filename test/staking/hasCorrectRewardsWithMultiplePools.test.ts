@@ -27,7 +27,8 @@ describe('Multiple pool rewards', () => {
 		const MULTIPLIER = Math.trunc(30e6 / 365);
 		const expected = userStakeAmount.mul(MULTIPLIER);
 		expect(modaPoolRewardsAfter30Days).to.eq(expected);
-		// expect(modaPoolRewardsAfter30Days).to.eq(BigNumber.from('4153643719793256525887235')); 
+		// const actual = BigNumber.from('4159420726456197210326835');
+
 		expect(
 			await lpPool.pendingYieldRewards(firstUser.address),
 			'LP pool rewards for first user after 30 days'

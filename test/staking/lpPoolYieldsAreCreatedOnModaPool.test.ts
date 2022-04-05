@@ -9,7 +9,7 @@ import { formatEther } from 'ethers/lib/utils';
 chai.use(chaiDateTime);
 
 describe('LP Pool yields are created on Moda Core Pool', () => {
-	it('creates the correct deposits', async () => {
+	it('Should create the correct deposits', async () => {
 		const { start, firstUser, secondUser, modaCorePool, lpPool } = await setup();
 		const userStakeAmount = parseEther('10');
 		const lockUntil = toTimestampBN(add(start, { years: 1 }));
@@ -21,7 +21,11 @@ describe('LP Pool yields are created on Moda Core Pool', () => {
 
 		const timeOfCompounding = (await blockNow()).getTime() / 1000;
 		const lpPoolRewardsAfter30Days = await lpPool.pendingYieldRewards(firstUser.address);
-		expect(lpPoolRewardsAfter30Days).to.eq(BigNumber.from('8307287439586513051774470'));
+
+		const MULTIPLIER = Math.trunc(30e6 / 365);
+		const expected = userStakeAmount.mul(MULTIPLIER);
+		expect(lpPoolRewardsAfter30Days).to.eq(expected);
+		// const actual = BigNumber.from('8330395466238275789532870');
 
 		let modaPoolDepositLength = await modaCorePool.getDepositsLength(firstUser.address);
 		let lpPoolDepositLength = await lpPool.getDepositsLength(firstUser.address);
