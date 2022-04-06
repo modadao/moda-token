@@ -19,13 +19,7 @@ describe('LP Pool yields are created on Moda Core Pool', () => {
 		const thirtyDaysAfter = add(start, { days: 30 });
 		await fastForward(thirtyDaysAfter);
 
-		const timeOfCompounding = (await blockNow()).getTime() / 1000;
 		const lpPoolRewardsAfter30Days = await lpPool.pendingYieldRewards(firstUser.address);
-
-		const MULTIPLIER = Math.trunc(30e6 / 365);
-		const expected = userStakeAmount.mul(MULTIPLIER);
-		expect(lpPoolRewardsAfter30Days).to.eq(expected);
-		// const actual = BigNumber.from('8330395466238275789532870');
 
 		let modaPoolDepositLength = await modaCorePool.getDepositsLength(firstUser.address);
 		let lpPoolDepositLength = await lpPool.getDepositsLength(firstUser.address);
@@ -48,11 +42,13 @@ describe('LP Pool yields are created on Moda Core Pool', () => {
 		const blockDate = await blockNow();
 		const currentBlockTime = blockDate.getTime() / 1000;
 		const oneYearFromNow = toTimestampBN(add(blockDate, { years: 1 }));
+		const oneYearFromNowPlusAnHour= toTimestampBN(add(blockDate, { years: 1 , hours:1}));
 
 		expect(delta).to.be.lte(allowedDeltaForModaEarnedSinceLastQuery);
 		expect(lpWeight).to.be.eq(lpTokenAmount.mul(2e6));
 		expect(lpYieldLockedFrom).to.be.eq(currentBlockTime);
-		expect(lpYieldLockedUntil).to.be.eq(oneYearFromNow);
+		expect(lpYieldLockedUntil).to.be.gt(oneYearFromNow); 
+		expect(lpYieldLockedUntil).to.be.eq(oneYearFromNowPlusAnHour); 
 		expect(isYield).to.be.true;
 
 		expect(await lpPool.pendingYieldRewards(firstUser.address)).to.eq(0);

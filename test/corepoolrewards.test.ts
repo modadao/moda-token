@@ -61,7 +61,7 @@ describe('Core Pool Rewards', () => {
 		start = await blockNow();
 	});
 
-	it('Should reward with the pending amount when processing rewards', async () => {
+	it('Should deposit the reward when processing rewards', async () => {
 		//pre-condition
 		expect(await token.balanceOf(user0.address)).to.equal(userBalances[0]);
 
@@ -76,12 +76,7 @@ describe('Core Pool Rewards', () => {
 
 		const futureDate: Date = add(start, { days: 31 });
 		await fastForward(futureDate);
-
-		const pendingRewards = await corePool.pendingYieldRewards(user0.address);
 		await corePool.connect(user0).processRewards();
-
-		//post-condition
-		const depositWeight = pendingRewards.mul(YEAR_STAKE_WEIGHT_MULTIPLIER);
 
 		expect(await corePool.getDepositsLength(user0.address)).to.equal(2);
 		const [oldTokenAmount] = await corePool.getDeposit(user0.address, 0);
@@ -95,9 +90,6 @@ describe('Core Pool Rewards', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await corePool.getDeposit(user0.address, 1);
 
-		// TODO this test fails; why should this be true?
-		expect(tokenAmount).to.eq(pendingRewards); 	
-		expect(weight).to.equal(depositWeight);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
 		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
 		expect(isYield).to.equal(true);

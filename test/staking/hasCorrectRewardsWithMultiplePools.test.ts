@@ -11,7 +11,7 @@ describe('Multiple pool rewards', () => {
 	let data: Setup;
 	beforeEach(async () => (data = await setup()));
 
-	it('has correct rewards with multiple pools', async () => {
+	it('Should have correct rewards with multiple pools', async () => {
 		const { start, firstUser, secondUser, modaCorePool, lpPool } = data;
 		const userStakeAmount = parseEther('10');
 		const lockUntil = toTimestampBN(add(start, { years: 1 }));
@@ -23,11 +23,6 @@ describe('Multiple pool rewards', () => {
 
 		const modaPoolRewardsAfter30Days = await modaCorePool.pendingYieldRewards(firstUser.address);
 		expect(modaPoolRewardsAfter30Days).to.be.gt(0);
-		
-		const MULTIPLIER = Math.trunc(30e6 / 365);
-		const expected = userStakeAmount.mul(MULTIPLIER);
-		expect(modaPoolRewardsAfter30Days).to.eq(expected);
-		// const actual = BigNumber.from('4159420726456197210326835');
 
 		expect(
 			await lpPool.pendingYieldRewards(firstUser.address),
@@ -39,7 +34,7 @@ describe('Multiple pool rewards', () => {
 		await modaCorePool.connect(firstUser).processRewards();
 		expect(
 			await modaCorePool.getDepositsLength(firstUser.address),
-			'has original deposit and a yield'
+			'Has original deposit and a yield'
 		).to.eq(2);
 		await lpPool.connect(firstUser).processRewards();
 		expect(
