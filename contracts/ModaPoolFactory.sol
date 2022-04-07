@@ -34,10 +34,8 @@ contract ModaPoolFactory is Ownable, ModaAware {
         address poolToken;
         // @dev pool address (like deployed core pool instance)
         address poolAddress;
-        // @dev pool weight (200 for Moda pools, 800 for Moda/ETH pools - set during deployment)
+        // @dev pool weight (200 for Moda pools, 400 for Moda/ETH pools - set during deployment)
         uint32 weight;
-        // @dev flash pool flag
-        bool isFlashPool;
     }
 
     /**
@@ -82,14 +80,12 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @param poolToken pool token address (like Moda or a Moda / ETH LP token)
      * @param poolAddress deployed pool instance address
      * @param weight pool weight
-     * @param isFlashPool flag indicating if pool is a flash pool
      */
     event PoolRegistered(
         address indexed _by,
         address indexed poolToken,
         address indexed poolAddress,
-        uint64 weight,
-        bool isFlashPool
+        uint64 weight
     );
 
     /**
@@ -160,11 +156,10 @@ contract ModaPoolFactory is Ownable, ModaAware {
         // read pool information from the pool smart contract
         // via the pool interface (IPool)
         address poolToken = IPool(poolAddr).poolToken();
-        bool isFlashPool = IPool(poolAddr).isFlashPool();
         uint32 weight = IPool(poolAddr).weight();
 
         // create the in-memory structure and return it
-        return PoolData({ poolToken: poolToken, poolAddress: poolAddr, weight: weight, isFlashPool: isFlashPool });
+        return PoolData({ poolToken: poolToken, poolAddress: poolAddr, weight: weight });
     }
 
     /**
@@ -204,7 +199,6 @@ contract ModaPoolFactory is Ownable, ModaAware {
         // read pool information from the pool smart contract
         // via the pool interface (IPool)
         address poolToken = IPool(poolAddr).poolToken();
-        bool isFlashPool = IPool(poolAddr).isFlashPool();
         uint32 weight = IPool(poolAddr).weight();
 
         // ensure that the pool is not already registered within the factory
@@ -217,7 +211,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
         totalWeight += weight;
 
         // emit an event
-        emit PoolRegistered(msg.sender, poolToken, poolAddr, weight, isFlashPool);
+        emit PoolRegistered(msg.sender, poolToken, poolAddr, weight);
     }
 
     /**
@@ -231,9 +225,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
         );
     }
 
-    /**
-     * @notice Calculates the effective moda per second at a future timestamp.
-     */
+    /// @notice Calculates the effective moda per second at a future timestamp.
     function modaPerSecondAt(uint time) public view returns (uint256) {
         // If we're before the start, just return initial.
         if (time < startTimestamp) return initialModaPerSecond;

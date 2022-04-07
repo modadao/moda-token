@@ -372,7 +372,6 @@ describe('Core Pool', () => {
 			expect(isYield).to.be.false;
 		}
 
-		// Before unstaking the first deposit executes the user should have the previous balances.
-		expect(await token.balanceOf(user0.address)).to.equal(parseEther('910920410.612487122436128'));
+		expect(await token.balanceOf(user0.address)).to.equal('12480859136723762168372597');
 	});
 });

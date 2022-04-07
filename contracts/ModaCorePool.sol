@@ -14,9 +14,6 @@ import './ModaPoolBase.sol';
  * @dev See ModaPoolBase for more details
  */
 contract ModaCorePool is ModaPoolBase {
-	/// @dev Flag indicating pool type, false means "core pool"
-    bool public constant override isFlashPool = false;
-
 	/// @dev Pool tokens value available in the pool;
 	///      pool token examples are MODA (MODA core pool) or MODA/ETH pair (LP core pool)
 	/// @dev For LP core pool this value doesn't count for MODA tokens received as Vault rewards
@@ -88,6 +85,7 @@ contract ModaCorePool is ModaPoolBase {
 		if (user.tokenAmount > 0) {
 			_processRewards(_staker);
 		}
+
 		uint256 depositWeight = _amount * YEAR_STAKE_WEIGHT_MULTIPLIER;
 		Deposit memory newDeposit = Deposit({
 			tokenAmount: _amount,
