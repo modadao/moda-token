@@ -40,7 +40,7 @@ describe('Multiple pool rewards', () => {
 		expect(
 			await modaCorePool.getDepositsLength(firstUser.address),
 			'LP Pool rewards paid out in MODA Pool yield deposits'
-		).to.eq(3);
+		).to.eq(4);
 
 		const rewardsAfterClaim = await modaCorePool.pendingYieldRewards(firstUser.address);
 		expect(rewardsAfterClaim).to.equal(0);
@@ -53,7 +53,7 @@ describe('Multiple pool rewards', () => {
 		const firstUserRewards = await modaCorePool.pendingYieldRewards(firstUser.address);
 		const secondUserRewards = await modaCorePool.pendingYieldRewards(secondUser.address);
 
-		expect(firstUserRewards, 'First user').to.equal(BigNumber.from('4159343326799630002681388'));
-		expect(secondUserRewards, 'Second user').to.equal(BigNumber.from('199592846106416223898'));
+		expect(firstUserRewards, 'First user').to.equal(BigNumber.from('4165215393737488061985121'));
+		expect(secondUserRewards, 'Second user').to.equal(BigNumber.from('6397136248225413888'));
 	});
 });

@@ -42,13 +42,11 @@ describe('LP Pool yields are created on Moda Core Pool', () => {
 		const blockDate = await blockNow();
 		const currentBlockTime = blockDate.getTime() / 1000;
 		const oneYearFromNow = toTimestampBN(add(blockDate, { years: 1 }));
-		const oneYearFromNowPlusAnHour= toTimestampBN(add(blockDate, { years: 1 , hours:1}));
 
 		expect(delta).to.be.lte(allowedDeltaForModaEarnedSinceLastQuery);
 		expect(lpWeight).to.be.eq(lpTokenAmount.mul(2e6));
 		expect(lpYieldLockedFrom).to.be.eq(currentBlockTime);
-		expect(lpYieldLockedUntil).to.be.gt(oneYearFromNow); 
-		expect(lpYieldLockedUntil).to.be.eq(oneYearFromNowPlusAnHour); 
+		expect(lpYieldLockedUntil).to.be.gte(oneYearFromNow); 
 		expect(isYield).to.be.true;
 
 		expect(await lpPool.pendingYieldRewards(firstUser.address)).to.eq(0);
