@@ -66,14 +66,13 @@ describe('Rewards', () => {
 		const deposits = await modaCorePool.getDepositsLength(firstUser.address);
 		expect(deposits).to.eq(4);
 
-		let totalRewards = BigNumber.from(0);
-		for (let i = 0; i < deposits.toNumber(); i++) {
-			const deposit = await modaCorePool.getDeposit(firstUser.address, i);
-			const tokens = deposit.tokenAmount.div(eth);
-			totalRewards = totalRewards.add(deposit.tokenAmount);
-		}
+		const deposit1 = await modaCorePool.getDeposit(firstUser.address, 1);
+		const deposit2 = await modaCorePool.getDeposit(firstUser.address, 3);
+		const tokens1 = deposit1.tokenAmount.div(eth);
+		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 
-		const allowedRewards = BigNumber.from(202428);
+		const totalRewards = deposit2.tokenAmount.add(deposit1.tokenAmount);
+		const allowedRewards = BigNumber.from(202428); // this number 202428 includes the 1ETH deposits #0 and #2
 		expect(totalRewards.div(eth).lt(allowedRewards)).to.be.true;
 	});
 
