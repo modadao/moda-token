@@ -29,7 +29,6 @@ const LP_POOL_WEIGHT = 400;
 export const setup = async (): Promise<Setup> => {
 	const [owner, firstUser, secondUser, thirdUser] = await ethers.getSigners();
 	const start = await blockNow();
-	console.log('Start time',start);
 	
 	const nextTimestamp = start.getTime() / 1000 + 15;
 	const userBalance = parseEther('100');

@@ -13,7 +13,7 @@ describe('Rewards', () => {
     let data: Setup;
     beforeEach(async () => (data = await setup()));
 
-	it('Should have less than 202428 moda total rewards after 2 years', async () => {
+	it('Should have less than the allowed moda total rewards after 2 years', async () => {
 		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = await setup();
 
         const eth = parseEther('1');
@@ -53,13 +53,15 @@ describe('Rewards', () => {
         const deposits = await modaCorePool.getDepositsLength(firstUser.address);
         expect(deposits).to.eq(4);
 
-        let totalRewards = BigNumber.from('0');
+        let totalRewards = BigNumber.from(0);
         for (let i=0; i < deposits.toNumber(); i++){
             const deposit = await modaCorePool.getDeposit(firstUser.address, i);
             const tokens = (deposit.tokenAmount.div(eth));
             totalRewards = totalRewards.add(deposit.tokenAmount);
         }
-        expect(totalRewards.div(eth)).of.be.lessThan(202428);
+
+        const allowedRewards = BigNumber.from(202428);
+        expect(totalRewards.div(eth).lte(allowedRewards)).to.be.true;
 	});
     
 });
