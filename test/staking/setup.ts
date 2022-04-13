@@ -29,6 +29,8 @@ const LP_POOL_WEIGHT = 400;
 export const setup = async (): Promise<Setup> => {
 	const [owner, firstUser, secondUser, thirdUser] = await ethers.getSigners();
 	const start = await blockNow();
+	console.log('Start time',start);
+	
 	const nextTimestamp = start.getTime() / 1000 + 15;
 	const userBalance = parseEther('100');
 
@@ -45,7 +47,7 @@ export const setup = async (): Promise<Setup> => {
 	)) as Token;
 	await moda.deployed();
 
-	const modaPerSecond = parseEther('10');
+	const modaPerSecond = parseEther('0.02');
 
 	const modaPoolFactory = await ethers.getContractFactory('ModaPoolFactory');
 	const factory = (await modaPoolFactory.deploy(

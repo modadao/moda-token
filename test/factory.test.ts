@@ -4,7 +4,7 @@ import chai, { expect } from 'chai';
 import chaiDateTime from 'chai-datetime';
 import { ethers, upgrades } from 'hardhat';
 import { ModaCorePool, ModaPoolFactory, Token } from '../typechain-types';
-import { ROLE_TOKEN_CREATOR, addTimestamp, fromTimestamp, blockNow, toTimestamp } from './utils';
+import { ROLE_TOKEN_CREATOR, addTimestamp, fromTimestamp, blockNow, fromTimestampBN } from './utils';
 
 chai.use(chaiDateTime);
 
@@ -81,10 +81,8 @@ describe('Factory', () => {
 		).to.be.revertedWith('pool is not registered');
 	});
 
-	it('Should return initial modaPerSecond if requested before start time of factory', async () => {
-		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).sub(36000000))).to.equal(
-			await factory.initialModaPerSecond()
-		);
+	it('Should return zero modaPerSecond if requested before start time of factory', async () => {
+		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).sub(36000000))).to.equal(0);
 		expect(await factory.modaPerSecondAt(await factory.startTimestamp())).to.equal(
 			await factory.initialModaPerSecond()
 		);
@@ -94,5 +92,22 @@ describe('Factory', () => {
 		expect(await factory.modaPerSecondAt(await factory.endTimestamp())).to.equal(
 			await factory.modaPerSecondAt((await factory.endTimestamp()).add(36000000))
 		);
+	});
+
+	it('Should have decreasing moda per second over time', async () => {
+		const epochStart = await factory.startTimestamp();
+		const epochFinish = await factory.endTimestamp();
+		const startRate = await factory.modaPerSecondAt(epochStart);
+		const finishRate = await factory.modaPerSecondAt(epochFinish);
+		expect(startRate.gt(finishRate)).to.be.true;
+	});
+
+	it('Should have a diminishing rewards epoch of 2 years (730 days)', async () => {
+		const epochStart = await factory.startTimestamp();
+		const epochFinish = await factory.endTimestamp();
+		const start = fromTimestampBN(epochStart);
+		const finish = fromTimestampBN(epochFinish);
+		const duration = +finish - +start;
+		expect(duration/86400000).to.eq(730);
 	});
 });

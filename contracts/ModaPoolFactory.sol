@@ -228,7 +228,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
     /// @notice Calculates the effective moda per second at a future timestamp.
     function modaPerSecondAt(uint time) public view returns (uint256) {
         // If we're before the start, just return initial.
-        if (time < startTimestamp) return initialModaPerSecond;
+        if (time < startTimestamp) return 0;
 
         // If we're at the end, we don't continue to decrease.
         if (time > endTimestamp) time = endTimestamp;
