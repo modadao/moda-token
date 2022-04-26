@@ -35,7 +35,6 @@ export const setup = async (): Promise<Setup> => {
 	const start = await blockNow();
 
 	const nextTimestamp = start.getTime() / 1000 + 15;
-	// const userBalance = parseEther('200');
 
 	const tokenFactory = await ethers.getContractFactory('Token');
 	const moda = (await upgrades.deployProxy(
