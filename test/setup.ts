@@ -50,7 +50,7 @@ export const setup = async (): Promise<Setup> => {
 	)) as Token;
 	await moda.deployed();
 
-	const modaPerSecond = parseEther('0.02');
+	const modaPerSecond = parseEther('0.131625');
 
 	const modaPoolFactory = await ethers.getContractFactory('ModaPoolFactory');
 	const factory = (await modaPoolFactory.deploy(
