@@ -84,11 +84,6 @@ abstract contract ModaPoolBase is
 	uint256 internal constant YEAR_STAKE_WEIGHT_MULTIPLIER = 2 * WEIGHT_MULTIPLIER;
 
 	/**
-	 * @dev Rewards per weight are stored multiplied by 1e12, as integers.
-	 */
-	uint256 internal constant REWARD_PER_WEIGHT_MULTIPLIER = 1e12;
-
-	/**
 	 * @dev Fired in _stake() and stake()
 	 *
 	 * @param _by an address which performed an operation, usually token holder
