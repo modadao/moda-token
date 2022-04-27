@@ -24,7 +24,7 @@ import "abdk-libraries-solidity/ABDKMath64x64.sol";
  */
 contract ModaPoolFactory is Ownable, ModaAware {
     // @dev FACTORY_UID defined to add another check to ensure compliance with the contract.
-	function FACTORY_UID() public pure returns (uint256) {
+	function FACTORY_UID() external pure returns (uint256) {
 		return ModaConstants.FACTORY_UID;
 	}
 
@@ -162,7 +162,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @param _poolToken pool token address to query pool information for
      * @return pool information packed in a PoolData struct
      */
-    function getPoolData(address _poolToken) public view returns (PoolData memory) {
+    function getPoolData(address _poolToken) external view returns (PoolData memory) {
         // get the pool address from the mapping
         address poolAddr = pools[_poolToken];
 
@@ -245,7 +245,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
     }
 
     /// @notice Calculates the effective moda per second at a future timestamp.
-    function modaPerSecondAt(uint time) public view returns (uint256) {
+    function modaPerSecondAt(uint time) external view returns (uint256) {
         // If we're before the start, just return initial.
         if (time < startTimestamp) return 0;
 
