@@ -190,7 +190,7 @@ abstract contract ModaPoolBase is
 		if (usersLockingWeight == 0) return 0;
 
 		uint256 factoryEnd = modaPoolFactory.endTimestamp();
-		uint256 endOfTimeframe = block.timestamp > factoryEnd ? block.timestamp : factoryEnd;
+		uint256 endOfTimeframe = block.timestamp > factoryEnd ? factoryEnd : block.timestamp;
 
 		User memory user = users[_staker];
 		if (user.lastProcessedRewards > endOfTimeframe) return 0;
