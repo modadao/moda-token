@@ -170,7 +170,7 @@ abstract contract ModaPoolBase is
 		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'Moda TOKEN_UID invalid');
 		require(ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID, 'Moda FACTORY_UID invalid');
 		if (_modaPool != address(0)) {
-			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID);
+			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID, "Moda POOL_UID invalid");
 		}
 
 		modaPool = _modaPool;
@@ -356,7 +356,7 @@ abstract contract ModaPoolBase is
 			365 days +
 			WEIGHT_MULTIPLIER) * addedAmount;
 
-		assert(stakeWeight > 0);
+		require(stakeWeight > 0, "Stake weight is zero");
 
 		Deposit memory deposit = Deposit({
 			tokenAmount: addedAmount,
@@ -452,7 +452,7 @@ abstract contract ModaPoolBase is
 
 			usersLockingWeight += depositWeight;
 		} else {
-			assert(modaPool != address(0));
+			require(modaPool != address(0), "modaPool address is zero");
 
 			ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
 		}

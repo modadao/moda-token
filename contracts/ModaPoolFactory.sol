@@ -289,7 +289,8 @@ contract ModaPoolFactory is Ownable, ModaAware {
      */
     function changePoolWeight(address poolAddr, uint32 weight) external {
         // verify function is executed either by factory owner or by the pool itself
-        require(msg.sender == owner() || poolExists[msg.sender]);
+        require(msg.sender == owner(), "Must be owner");
+        require(poolExists[poolAddr], "Pool not registered");
 
         // recalculate total weight
         totalWeight = totalWeight + weight - IPool(poolAddr).weight();
