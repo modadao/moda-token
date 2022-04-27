@@ -102,6 +102,9 @@ contract ModaCorePool is ModaPoolBase {
 
 		// update `poolTokenReserve` only if this is a LP Core Pool (stakeAsPool can be executed only for LP pool)
 		poolTokenReserve += _amount;
+
+		// Tell the world we've done this
+		emit Staked(_staker, _staker, _amount);
 	}
 
 	/**

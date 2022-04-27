@@ -92,10 +92,26 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @dev Fired in changePoolWeight()
      *
      * @param _by an address which executed an action
-     * @param poolAddress deployed pool instance address
-     * @param weight new pool weight
+     * @param _poolAddress deployed pool instance address
+     * @param _weight new pool weight
      */
-    event WeightUpdated(address indexed _by, address indexed poolAddress, uint32 weight);
+    event WeightUpdated(address indexed _by, address indexed _poolAddress, uint32 _weight);
+
+    /**
+     * @dev Fired in mintYieldTo()
+     *
+     * @param _to recipient of the minting
+     * @param _amount amount minted in wei
+     */
+    event YieldMinted(address indexed _to, uint256 _amount);
+
+    /**
+     * @dev Fired in createCorePool()
+     *
+     * @param _by an address which executed an action
+     * @param poolAddress deployed pool instance address
+     */
+    event CorePoolCreated(address indexed _by, address indexed poolAddress);
 
     /**
      * @dev Creates/deploys a factory instance
@@ -186,6 +202,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
 
         // register it within this factory
         registerPool(address(pool));
+
+        // Tell the world we've done that
+        emit CorePoolCreated(msg.sender, address(pool));
     }
 
     /**
@@ -256,6 +275,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
 
         // mint Moda tokens as required
         mintModa(_to, _amount);
+
+        // Tell the world we've done this
+        emit YieldMinted(_to, _amount);
     }
 
     /**
