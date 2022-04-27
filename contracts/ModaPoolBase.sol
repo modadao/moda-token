@@ -34,7 +34,7 @@ abstract contract ModaPoolBase is
 	//      The use case relates to shadowing Liquidity Pool stakes
 	//      by allowing people to store the LP tokens here to gain
 	//      further MODA rewards. I'm not sure it's both. (dex 2021.09.16)
-	address modaPool;
+	address immutable modaPool;
 
 	/// @dev Data structure representing token holder using a pool
 	struct User {
@@ -64,7 +64,7 @@ abstract contract ModaPoolBase is
 	uint256 public override usersLockingWeight;
 
 	/// @dev Used to calculate yield rewards, keeps track of when the pool started
-	uint256 public override startTimestamp;
+	uint256 public immutable override startTimestamp;
 
 	/**
 	 * @dev Stake weight is proportional to deposit amount and time locked, precisely

@@ -42,7 +42,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @dev Moda/second determines yield farming reward base
      *      used by the yield pools controlled by the factory
      */
-    uint256 public initialModaPerSecond;
+    uint256 public immutable initialModaPerSecond;
 
     /**
      * @dev The yield is distributed proportionally to pool weights;
@@ -59,13 +59,13 @@ contract ModaPoolFactory is Ownable, ModaAware {
     /**
      * @dev Start timestamp is when the pool starts.
      */
-    uint public startTimestamp;
+    uint public immutable startTimestamp;
 
     /**
      * @dev End timestamp is the last time when Moda/second can be decreased;
      *      it is implied that yield farming stops after that block
      */
-    uint public endTimestamp;
+    uint public immutable endTimestamp;
 
     /// @dev Maps pool token address (like Moda) -> pool address (like core pool instance)
     mapping(address => address) public pools;
