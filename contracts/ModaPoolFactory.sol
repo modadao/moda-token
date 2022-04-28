@@ -118,7 +118,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      *
      * @param _moda Moda ERC20 token address
      * @param _modaPerSecond initial Moda/second value for rewards
-     * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+     * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%)
      * @param _startTimestamp timestamp to measure _secondsPerUpdate from
      * @param _endTimestamp timestamp when farming stops and rewards cannot be updated anymore
      */
