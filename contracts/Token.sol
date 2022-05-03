@@ -18,7 +18,7 @@ contract Token is
 	uint256 public holderCount;
 	address public vestingContract;
 
-	function TOKEN_UID() public pure returns (uint256) {
+	function TOKEN_UID() external pure returns (uint256) {
 		return ModaConstants.TOKEN_UID;
 	}
 
@@ -91,7 +91,7 @@ contract Token is
 	 * @param _to an address to mint tokens to
 	 * @param _value an amount of tokens to mint (create)
 	 */
-	function mint(address _to, uint256 _value) public override onlyRole(ModaConstants.ROLE_TOKEN_CREATOR) {
+	function mint(address _to, uint256 _value) external override onlyRole(ModaConstants.ROLE_TOKEN_CREATOR) {
 		// non-zero recipient address check
 		require(_to != address(0), 'ERC20: mint to the zero address'); // Zeppelin msg
 		if (_value == 0) return;

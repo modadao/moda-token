@@ -42,7 +42,7 @@ contract Vesting is Ownable {
 
 	event ScheduleChanged(address indexed to, VestingSchedule[] newSchedule);
 
-	function scheduleLength(address to) public view returns (uint256) {
+	function scheduleLength(address to) external view returns (uint256) {
 		return schedule[to].length;
 	}
 
@@ -70,7 +70,7 @@ contract Vesting is Ownable {
 		return claimed >= total ? 0 : total - claimed;
 	}
 
-	function withdraw() public {
+	function withdraw() external {
 		uint256 available = withdrawalAmount(msg.sender);
 
 		require(available > 0, 'Vesting: no amount to withdraw');

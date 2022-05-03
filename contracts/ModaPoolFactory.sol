@@ -24,7 +24,7 @@ import "abdk-libraries-solidity/ABDKMath64x64.sol";
  */
 contract ModaPoolFactory is Ownable, ModaAware {
     // @dev FACTORY_UID defined to add another check to ensure compliance with the contract.
-	function FACTORY_UID() public pure returns (uint256) {
+	function FACTORY_UID() external pure returns (uint256) {
 		return ModaConstants.FACTORY_UID;
 	}
 
@@ -42,7 +42,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @dev Moda/second determines yield farming reward base
      *      used by the yield pools controlled by the factory
      */
-    uint256 public initialModaPerSecond;
+    uint256 public immutable initialModaPerSecond;
 
     /**
      * @dev The yield is distributed proportionally to pool weights;
@@ -59,13 +59,13 @@ contract ModaPoolFactory is Ownable, ModaAware {
     /**
      * @dev Start timestamp is when the pool starts.
      */
-    uint public startTimestamp;
+    uint public immutable startTimestamp;
 
     /**
      * @dev End timestamp is the last time when Moda/second can be decreased;
      *      it is implied that yield farming stops after that block
      */
-    uint public endTimestamp;
+    uint public immutable endTimestamp;
 
     /// @dev Maps pool token address (like Moda) -> pool address (like core pool instance)
     mapping(address => address) public pools;
@@ -92,17 +92,33 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @dev Fired in changePoolWeight()
      *
      * @param _by an address which executed an action
-     * @param poolAddress deployed pool instance address
-     * @param weight new pool weight
+     * @param _poolAddress deployed pool instance address
+     * @param _weight new pool weight
      */
-    event WeightUpdated(address indexed _by, address indexed poolAddress, uint32 weight);
+    event WeightUpdated(address indexed _by, address indexed _poolAddress, uint32 _weight);
+
+    /**
+     * @dev Fired in mintYieldTo()
+     *
+     * @param _to recipient of the minting
+     * @param _amount amount minted in wei
+     */
+    event YieldMinted(address indexed _to, uint256 _amount);
+
+    /**
+     * @dev Fired in createCorePool()
+     *
+     * @param _by an address which executed an action
+     * @param poolAddress deployed pool instance address
+     */
+    event CorePoolCreated(address indexed _by, address indexed poolAddress);
 
     /**
      * @dev Creates/deploys a factory instance
      *
      * @param _moda Moda ERC20 token address
      * @param _modaPerSecond initial Moda/second value for rewards
-     * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%), blocks
+     * @param _secondsPerUpdate how frequently the rewards gets updated (decreased by 3%)
      * @param _startTimestamp timestamp to measure _secondsPerUpdate from
      * @param _endTimestamp timestamp when farming stops and rewards cannot be updated anymore
      */
@@ -146,7 +162,7 @@ contract ModaPoolFactory is Ownable, ModaAware {
      * @param _poolToken pool token address to query pool information for
      * @return pool information packed in a PoolData struct
      */
-    function getPoolData(address _poolToken) public view returns (PoolData memory) {
+    function getPoolData(address _poolToken) external view returns (PoolData memory) {
         // get the pool address from the mapping
         address poolAddr = pools[_poolToken];
 
@@ -186,6 +202,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
 
         // register it within this factory
         registerPool(address(pool));
+
+        // Tell the world we've done that
+        emit CorePoolCreated(msg.sender, address(pool));
     }
 
     /**
@@ -226,9 +245,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
     }
 
     /// @notice Calculates the effective moda per second at a future timestamp.
-    function modaPerSecondAt(uint time) public view returns (uint256) {
+    function modaPerSecondAt(uint time) external view returns (uint256) {
         // If we're before the start, just return initial.
-        if (time < startTimestamp) return initialModaPerSecond;
+        if (time < startTimestamp) return 0;
 
         // If we're at the end, we don't continue to decrease.
         if (time > endTimestamp) time = endTimestamp;
@@ -256,6 +275,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
 
         // mint Moda tokens as required
         mintModa(_to, _amount);
+
+        // Tell the world we've done this
+        emit YieldMinted(_to, _amount);
     }
 
     /**
@@ -267,7 +289,8 @@ contract ModaPoolFactory is Ownable, ModaAware {
      */
     function changePoolWeight(address poolAddr, uint32 weight) external {
         // verify function is executed either by factory owner or by the pool itself
-        require(msg.sender == owner() || poolExists[msg.sender]);
+        require(msg.sender == owner(), "Must be owner");
+        require(poolExists[poolAddr], "Pool not registered");
 
         // recalculate total weight
         totalWeight = totalWeight + weight - IPool(poolAddr).weight();

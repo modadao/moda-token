@@ -1,4 +1,4 @@
-import { ModaCorePool, ModaPoolFactory, TestERC20, Token } from '../../typechain-types';
+import { ModaCorePool, ModaPoolFactory, TestERC20, Token } from '../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
 	addTimestamp,
@@ -6,9 +6,10 @@ import {
 	fromTimestamp,
 	ROLE_TOKEN_CREATOR,
 	THIRTY_DAYS_IN_SECONDS,
-} from '../utils';
+} from './utils';
 import { ethers, upgrades } from 'hardhat';
 import { parseEther } from '@ethersproject/units';
+import { ContractFactory } from 'ethers';
 
 export type Setup = {
 	factory: ModaPoolFactory;
@@ -20,7 +21,10 @@ export type Setup = {
 	owner: SignerWithAddress;
 	secondUser: SignerWithAddress;
 	start: Date;
-	thirdUser:SignerWithAddress;
+	thirdUser: SignerWithAddress;
+	tokenFactory: ContractFactory;
+	modaPoolFactory: ContractFactory;
+	corePoolFactory: ContractFactory;
 };
 
 const MODA_POOL_WEIGHT = 200;
@@ -29,15 +33,15 @@ const LP_POOL_WEIGHT = 400;
 export const setup = async (): Promise<Setup> => {
 	const [owner, firstUser, secondUser, thirdUser] = await ethers.getSigners();
 	const start = await blockNow();
+
 	const nextTimestamp = start.getTime() / 1000 + 15;
-	const userBalance = parseEther('100');
 
 	const tokenFactory = await ethers.getContractFactory('Token');
 	const moda = (await upgrades.deployProxy(
 		tokenFactory,
 		[
 			[firstUser.address, secondUser.address],
-			[userBalance, userBalance],
+			[parseEther('2000'), parseEther('200')],
 		],
 		{
 			kind: 'uups',
@@ -45,7 +49,7 @@ export const setup = async (): Promise<Setup> => {
 	)) as Token;
 	await moda.deployed();
 
-	const modaPerSecond = parseEther('10');
+	const modaPerSecond = parseEther('0.0946593');
 
 	const modaPoolFactory = await ethers.getContractFactory('ModaPoolFactory');
 	const factory = (await modaPoolFactory.deploy(
@@ -70,8 +74,8 @@ export const setup = async (): Promise<Setup> => {
 		'SLP',
 		parseEther('1000000')
 	)) as TestERC20;
-	await lpToken.setBalance(firstUser.address, userBalance);
-	await lpToken.setBalance(secondUser.address, userBalance);
+	await lpToken.setBalance(firstUser.address, parseEther('2000'));
+	await lpToken.setBalance(secondUser.address, parseEther('200'));
 
 	const lpPool = (await corePoolFactory.deploy(
 		moda.address,
@@ -85,10 +89,10 @@ export const setup = async (): Promise<Setup> => {
 	factory.registerPool(lpPool.address);
 
 	await moda.grantRole(ROLE_TOKEN_CREATOR, factory.address);
-	await moda.connect(firstUser).approve(modaCorePool.address, userBalance);
-	await moda.connect(secondUser).approve(modaCorePool.address, userBalance);
-	await lpToken.connect(firstUser).approve(lpPool.address, userBalance);
-	await lpToken.connect(secondUser).approve(lpPool.address, userBalance);
+	await moda.connect(firstUser).approve(modaCorePool.address, parseEther('2000'));
+	await moda.connect(secondUser).approve(modaCorePool.address, parseEther('200'));
+	await lpToken.connect(firstUser).approve(lpPool.address, parseEther('2000'));
+	await lpToken.connect(secondUser).approve(lpPool.address, parseEther('200'));
 
 	return {
 		factory,
@@ -100,6 +104,9 @@ export const setup = async (): Promise<Setup> => {
 		owner,
 		secondUser,
 		start,
-		thirdUser
+		thirdUser,
+		tokenFactory,
+		modaPoolFactory,
+		corePoolFactory,
 	};
 };

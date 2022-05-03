@@ -34,7 +34,7 @@ abstract contract ModaPoolBase is
 	//      The use case relates to shadowing Liquidity Pool stakes
 	//      by allowing people to store the LP tokens here to gain
 	//      further MODA rewards. I'm not sure it's both. (dex 2021.09.16)
-	address modaPool;
+	address immutable modaPool;
 
 	/// @dev Data structure representing token holder using a pool
 	struct User {
@@ -64,7 +64,7 @@ abstract contract ModaPoolBase is
 	uint256 public override usersLockingWeight;
 
 	/// @dev Used to calculate yield rewards, keeps track of when the pool started
-	uint256 public override startTimestamp;
+	uint256 public immutable override startTimestamp;
 
 	/**
 	 * @dev Stake weight is proportional to deposit amount and time locked, precisely
@@ -82,11 +82,6 @@ abstract contract ModaPoolBase is
 	 *      we use simplified calculation and use the following constant instead previous one
 	 */
 	uint256 internal constant YEAR_STAKE_WEIGHT_MULTIPLIER = 2 * WEIGHT_MULTIPLIER;
-
-	/**
-	 * @dev Rewards per weight are stored multiplied by 1e12, as integers.
-	 */
-	uint256 internal constant REWARD_PER_WEIGHT_MULTIPLIER = 1e12;
 
 	/**
 	 * @dev Fired in _stake() and stake()
@@ -170,7 +165,7 @@ abstract contract ModaPoolBase is
 		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'Moda TOKEN_UID invalid');
 		require(ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID, 'Moda FACTORY_UID invalid');
 		if (_modaPool != address(0)) {
-			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID);
+			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID, "Moda POOL_UID invalid");
 		}
 
 		modaPool = _modaPool;
@@ -190,11 +185,11 @@ abstract contract ModaPoolBase is
 		if (usersLockingWeight == 0) return 0;
 
 		uint256 factoryEnd = modaPoolFactory.endTimestamp();
-		uint256 endOfTimeframe = block.timestamp > factoryEnd ? block.timestamp : factoryEnd;
+		uint256 endOfTimeframe = block.timestamp > factoryEnd ? factoryEnd : block.timestamp;
 
 		User memory user = users[_staker];
 		if (user.lastProcessedRewards > endOfTimeframe) return 0;
-        uint timeElapsedSinceLastReward = user.lastProcessedRewards < startTimestamp ? block.timestamp - startTimestamp : block.timestamp - user.lastProcessedRewards;
+        uint timeElapsedSinceLastReward = endOfTimeframe < startTimestamp ? endOfTimeframe - startTimestamp : block.timestamp - user.lastProcessedRewards;
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
@@ -356,7 +351,7 @@ abstract contract ModaPoolBase is
 			365 days +
 			WEIGHT_MULTIPLIER) * addedAmount;
 
-		assert(stakeWeight > 0);
+		require(stakeWeight > 0, "Stake weight is zero");
 
 		Deposit memory deposit = Deposit({
 			tokenAmount: addedAmount,
@@ -452,7 +447,7 @@ abstract contract ModaPoolBase is
 
 			usersLockingWeight += depositWeight;
 		} else {
-			assert(modaPool != address(0));
+			require(modaPool != address(0), "modaPool address is zero");
 
 			ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
 		}
