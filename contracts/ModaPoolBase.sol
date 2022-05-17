@@ -436,7 +436,7 @@ abstract contract ModaPoolBase is
 			Deposit memory newDeposit = Deposit({
 				tokenAmount: pendingYield,
 				lockedFrom: block.timestamp,
-				lockedUntil: block.timestamp + 365 days,
+				lockedUntil: block.timestamp + 150 days,
 				weight: depositWeight,
 				isYield: true
 			});
