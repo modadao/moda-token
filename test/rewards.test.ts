@@ -206,4 +206,45 @@ describe('Rewards', () => {
 		const deposit2 = await modaCorePool.getDeposit(firstUser.address, 3);
 		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 	});
+
+	it('Should have correct rewards calculation with no lock-in', async () => {
+		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
+
+		const eth = parseEther('1');
+		const amount1 = parseEther('1000');
+		const stakeAmount = parseEther('100');
+
+		const tokenFactory = await ethers.getContractFactory('Token');
+		const token = (await upgrades.deployProxy(
+			tokenFactory,
+			[
+				[firstUser.address, secondUser.address, thirdUser.address],
+				[amount1, amount1, amount1],
+			],
+			{
+				kind: 'uups',
+			}
+		)) as Token;
+		await token.deployed();
+
+		await token.connect(firstUser).approve(modaCorePool.address, amount1);
+
+		await modaCorePool.connect(firstUser).stake(stakeAmount, 0);
+
+		const futureDate1: Date = add(start, { hours: 1 });
+		await fastForward(futureDate1);
+
+		const reward = await modaCorePool.pendingYieldRewards(firstUser.address);
+		const percent = reward.div(eth).div(stakeAmount);
+		expect(percent.lt(1)).to.be.true;
+
+		await modaCorePool.connect(firstUser).processRewards();
+
+		const deposits = await modaCorePool.getDepositsLength(firstUser.address);
+		expect(deposits).to.eq(2);
+
+		const deposit1 = await modaCorePool.getDeposit(firstUser.address, 1);
+		expect(deposit1.isYield).to.be.true;
+		expect(deposit1.tokenAmount.div(eth).lt(stakeAmount)).to.be.true;
+	});
 });

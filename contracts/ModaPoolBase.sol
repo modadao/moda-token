@@ -17,11 +17,7 @@ import './ModaPoolFactory.sol';
  *          - MODA token address
  *          - pool token address, it can be MODA token address, MODA/ETH pair address, and others
  */
-abstract contract ModaPoolBase is
-	IPool,
-	ModaAware,
-	ReentrancyGuard
-{
+abstract contract ModaPoolBase is IPool, ModaAware, ReentrancyGuard {
 	// @dev POOL_UID defined to add another check to ensure compliance with the contract.
 	function POOL_UID() public pure returns (uint256) {
 		return ModaConstants.POOL_UID;
@@ -163,9 +159,15 @@ abstract contract ModaPoolBase is
 		);
 
 		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'Moda TOKEN_UID invalid');
-		require(ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID, 'Moda FACTORY_UID invalid');
+		require(
+			ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID,
+			'Moda FACTORY_UID invalid'
+		);
 		if (_modaPool != address(0)) {
-			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID, "Moda POOL_UID invalid");
+			require(
+				ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID,
+				'Moda POOL_UID invalid'
+			);
 		}
 
 		modaPool = _modaPool;
@@ -189,13 +191,16 @@ abstract contract ModaPoolBase is
 
 		User memory user = users[_staker];
 		if (user.lastProcessedRewards > endOfTimeframe) return 0;
-        uint timeElapsedSinceLastReward = endOfTimeframe < startTimestamp ? endOfTimeframe - startTimestamp : block.timestamp - user.lastProcessedRewards;
+		uint256 timeElapsedSinceLastReward = endOfTimeframe < startTimestamp
+			? endOfTimeframe - startTimestamp
+			: block.timestamp - user.lastProcessedRewards;
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
-		uint256 poolRewards = allPoolsTotalSinceLastReward * weight / modaPoolFactory.totalWeight();
+		uint256 poolRewards = (allPoolsTotalSinceLastReward * weight) /
+			modaPoolFactory.totalWeight();
 
-		return poolRewards * users[_staker].totalWeight / usersLockingWeight;
+		return (poolRewards * users[_staker].totalWeight) / usersLockingWeight;
 	}
 
 	/**
@@ -241,11 +246,8 @@ abstract contract ModaPoolBase is
 	 * @param _amount amount of tokens to stake
 	 * @param _lockUntil stake period as unix timestamp; zero means no locking
 	 */
-	function stake(
-		uint256 _amount,
-		uint256 _lockUntil
-	) external override {
-		_stake(msg.sender, _amount, _lockUntil,  false);
+	function stake(uint256 _amount, uint256 _lockUntil) external override {
+		_stake(msg.sender, _amount, _lockUntil, false);
 	}
 
 	/**
@@ -254,10 +256,7 @@ abstract contract ModaPoolBase is
 	 * @param _depositId deposit ID to unstake from, zero-indexed
 	 * @param _amount amount of tokens to unstake
 	 */
-	function unstake(
-		uint256 _depositId,
-		uint256 _amount
-	) external override {
+	function unstake(uint256 _depositId, uint256 _amount) external override {
 		_unstake(msg.sender, _depositId, _amount);
 	}
 
@@ -270,10 +269,7 @@ abstract contract ModaPoolBase is
 	 * @param depositId updated deposit ID
 	 * @param lockedUntil updated deposit locked until value
 	 */
-	function updateStakeLock(
-		uint256 depositId,
-		uint256 lockedUntil
-	) external {
+	function updateStakeLock(uint256 depositId, uint256 lockedUntil) external {
 		_processRewards(msg.sender);
 		_updateStakeLock(msg.sender, depositId, lockedUntil);
 	}
@@ -343,15 +339,17 @@ abstract contract ModaPoolBase is
 		// set the `lockFrom` and `lockUntil` taking into account that
 		// zero value for `_lockUntil` means "no locking" and leads to zero values
 		// for both `lockFrom` and `lockUntil`
-		uint256 lockFrom = _lockUntil > 0 ? block.timestamp : 0;
+		uint256 lockFrom = block.timestamp;
 		uint256 lockUntil = _lockUntil;
 
 		// Stake weight rewards formula for locking
-		uint256 stakeWeight = (((lockUntil - lockFrom) * WEIGHT_MULTIPLIER) /
-			365 days +
-			WEIGHT_MULTIPLIER) * addedAmount;
+		bool unlocked = lockUntil == 0;
+		uint256 unlockedWeight = WEIGHT_MULTIPLIER * addedAmount;
+		uint256 stakeWeight = unlocked
+			? unlockedWeight
+			: ((lockUntil - lockFrom) / 365 days + 1) * unlockedWeight;
 
-		require(stakeWeight > 0, "Stake weight is zero");
+		require(stakeWeight > 0, 'Stake weight is zero');
 
 		Deposit memory deposit = Deposit({
 			tokenAmount: addedAmount,
@@ -392,10 +390,12 @@ abstract contract ModaPoolBase is
 		_processRewards(_staker);
 
 		uint256 previousWeight = stakeDeposit.weight;
-		uint256 newWeight = (((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) *
-			WEIGHT_MULTIPLIER) /
-			365 days +
-			WEIGHT_MULTIPLIER) * (stakeDeposit.tokenAmount - _amount);
+		bool unlocked = stakeDeposit.lockedUntil == 0;
+		uint256 unlockedWeight = WEIGHT_MULTIPLIER * (stakeDeposit.tokenAmount - _amount);
+		uint256 newWeight = unlocked
+			? unlockedWeight
+			: ((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) / 365 days + 1) *
+				unlockedWeight;
 
 		if (stakeDeposit.tokenAmount - _amount == 0) {
 			delete user.deposits[_depositId];
@@ -447,7 +447,7 @@ abstract contract ModaPoolBase is
 
 			usersLockingWeight += depositWeight;
 		} else {
-			require(modaPool != address(0), "modaPool address is zero");
+			require(modaPool != address(0), 'modaPool address is zero');
 
 			ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
 		}
