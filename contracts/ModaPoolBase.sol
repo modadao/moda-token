@@ -189,7 +189,9 @@ abstract contract ModaPoolBase is
 
 		User memory user = users[_staker];
 		if (user.lastProcessedRewards > endOfTimeframe) return 0;
-        uint timeElapsedSinceLastReward = endOfTimeframe < startTimestamp ? endOfTimeframe - startTimestamp : block.timestamp - user.lastProcessedRewards;
+		uint256 timeElapsedSinceLastReward = endOfTimeframe < startTimestamp
+			? endOfTimeframe - startTimestamp
+			: block.timestamp - user.lastProcessedRewards;
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
@@ -347,9 +349,9 @@ abstract contract ModaPoolBase is
 		uint256 lockUntil = _lockUntil;
 
 		// Stake weight rewards formula for locking
-		uint256 stakeWeight = (((lockUntil - lockFrom) * WEIGHT_MULTIPLIER) /
-			365 days +
-			WEIGHT_MULTIPLIER) * addedAmount;
+		uint256 stakeWeight = lockUntil == 0
+			? WEIGHT_MULTIPLIER * addedAmount
+			: ((lockUntil - lockFrom) / 365 days + 1) * (WEIGHT_MULTIPLIER * addedAmount);
 
 		require(stakeWeight > 0, "Stake weight is zero");
 
@@ -392,11 +394,11 @@ abstract contract ModaPoolBase is
 		_processRewards(_staker);
 
 		uint256 previousWeight = stakeDeposit.weight;
-		uint256 newWeight = (((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) *
-			WEIGHT_MULTIPLIER) /
-			365 days +
-			WEIGHT_MULTIPLIER) * (stakeDeposit.tokenAmount - _amount);
-
+		uint256 newWeight = stakeDeposit.lockedUntil == 0
+			? WEIGHT_MULTIPLIER * (stakeDeposit.tokenAmount - _amount)
+			: ((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) / 365 days + 1) *
+				(WEIGHT_MULTIPLIER * (stakeDeposit.tokenAmount - _amount));
+				
 		if (stakeDeposit.tokenAmount - _amount == 0) {
 			delete user.deposits[_depositId];
 		} else {

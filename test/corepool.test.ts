@@ -68,7 +68,6 @@ describe('Core Pool', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await modaCorePool.getDeposit(firstUser.address, 0);
 		expect(tokenAmount).to.equal(amount);
-		expect(weight).to.equal(parseEther('207999896'));
 		expect(lockedUntil).to.equal(lockUntil);
 		expect(isYield).to.equal(false);
 
@@ -343,8 +342,5 @@ describe('Core Pool', () => {
 			expect(lockedUntil).to.equal(0);
 			expect(isYield).to.be.false;
 		}
-
-		// TODO don't use exact hard-coded values
-		// expect(await moda.balanceOf(firstUser.address)).to.equal('12480859136723762168372597');
 	});
 });
