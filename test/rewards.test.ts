@@ -207,7 +207,7 @@ describe('Rewards', () => {
 		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 	});
 
-	it('Should have correct rewards calculation with no lock-in', async () => {
+	it('Should have modest rewards in a short time with no lock-in', async () => {
 		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
 
 		const eth = parseEther('1');
@@ -231,11 +231,11 @@ describe('Rewards', () => {
 
 		await modaCorePool.connect(firstUser).stake(stakeAmount, 0);
 
-		const futureDate1: Date = add(start, { hours: 1 });
+		const futureDate1: Date = add(start, { minutes: 3 });
 		await fastForward(futureDate1);
 
 		const reward = await modaCorePool.pendingYieldRewards(firstUser.address);
-		const percent = reward.div(eth).div(stakeAmount);
+		const percent = reward.div(stakeAmount);
 		expect(percent.lt(1)).to.be.true;
 
 		await modaCorePool.connect(firstUser).processRewards();
@@ -245,6 +245,6 @@ describe('Rewards', () => {
 
 		const deposit1 = await modaCorePool.getDeposit(firstUser.address, 1);
 		expect(deposit1.isYield).to.be.true;
-		expect(deposit1.tokenAmount.div(eth).lt(stakeAmount)).to.be.true;
+		expect(deposit1.tokenAmount.div(eth).lt(stakeAmount.div(1000))).to.be.true;
 	});
 });
