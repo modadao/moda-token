@@ -28,7 +28,7 @@ describe('Core Pool', () => {
 	afterEach(async () => revertSnapshot(snapshotId));
 
 	it('Should refuse any but a CorePool to create a pool stake', async () => {
-		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
+		const { firstUser, secondUser, modaCorePool } = data;
 
 		await expect(
 			modaCorePool.connect(firstUser).stakeAsPool(secondUser.address, parseEther('100'))
@@ -36,7 +36,7 @@ describe('Core Pool', () => {
 	});
 
 	it('Should revert on invalid lock interval', async () => {
-		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
+		const { start, firstUser, modaCorePool } = data;
 
 		const lockedUntil = toTimestampBN(add(start, { days: 1, years: 1 }));
 		await expect(
@@ -45,7 +45,7 @@ describe('Core Pool', () => {
 	});
 
 	it('Should allow a user to unstake a locked deposit after 1 year', async () => {
-		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
+		const { start, firstUser, modaCorePool, moda } = data;
 
 		// Set up the balance first
 		expect(await moda.balanceOf(firstUser.address)).to.equal(userBalances[0]);
@@ -110,7 +110,7 @@ describe('Core Pool', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await modaCorePool.getDeposit(firstUser.address, 1);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
-		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 150 }));
 		expect(isYield).to.equal(true);
 	});
 
@@ -173,7 +173,7 @@ describe('Core Pool', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await modaCorePool.getDeposit(firstUser.address, 1);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
-		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 150 }));
 		expect(isYield).to.equal(true);
 	});
 

@@ -189,9 +189,18 @@ abstract contract ModaPoolBase is
 
 		User memory user = users[_staker];
 		if (user.lastProcessedRewards > endOfTimeframe) return 0;
+
+		uint256 depositCount = user.deposits.length;
+		if (depositCount < 1) return 0;
+
+		Deposit memory stakeDeposit = user.deposits[depositCount - 1];
+		uint256 lastRewards = user.lastProcessedRewards > 0
+			? user.lastProcessedRewards
+			: stakeDeposit.lockedFrom;
+
 		uint256 timeElapsedSinceLastReward = endOfTimeframe < startTimestamp
 			? endOfTimeframe - startTimestamp
-			: block.timestamp - user.lastProcessedRewards;
+			: block.timestamp - lastRewards;
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
