@@ -243,12 +243,12 @@ describe('Staking and unstaking', () => {
 		const delta = lpTokenAmount.sub(lpPoolRewardsAfter30Days);
 		const blockDate = await blockNow();
 		const currentBlockTime = blockDate.getTime() / 1000;
-		const oneYearFromNow = toTimestampBN(add(blockDate, { years: 1 }));
+		const oneHundredFiftyDaysFromNow = toTimestampBN(add(blockDate, { days: 150 }));
 
 		expect(delta).to.be.lte(allowedDeltaForModaEarnedSinceLastQuery);
 		expect(lpWeight).to.be.eq(lpTokenAmount.mul(2e6));
 		expect(lpYieldLockedFrom).to.be.eq(currentBlockTime);
-		expect(lpYieldLockedUntil).to.be.gte(oneYearFromNow);
+		expect(lpYieldLockedUntil).to.be.gte(oneHundredFiftyDaysFromNow);
 		expect(isYield).to.be.true;
 
 		expect(await lpPool.pendingYieldRewards(firstUser.address)).to.eq(0);
