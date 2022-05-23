@@ -235,16 +235,7 @@ describe('Rewards', () => {
 		await fastForward(futureDate1);
 
 		const reward = await modaCorePool.pendingYieldRewards(firstUser.address);
-		const percent = reward.div(stakeAmount);
-		expect(percent.lt(1)).to.be.true;
-
-		await modaCorePool.connect(firstUser).processRewards();
-
-		const deposits = await modaCorePool.getDepositsLength(firstUser.address);
-		expect(deposits).to.eq(2);
-
-		const deposit1 = await modaCorePool.getDeposit(firstUser.address, 1);
-		expect(deposit1.isYield).to.be.true;
-		expect(deposit1.tokenAmount.div(eth).lt(stakeAmount.div(1000))).to.be.true;
+		const percent = reward.div(stakeAmount).mul(100);
+		expect(Number.parseInt(percent.toString())).to.eq(0);
 	});
 });
