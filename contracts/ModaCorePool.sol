@@ -138,7 +138,7 @@ contract ModaCorePool is ModaPoolBase {
 		User storage user = users[_staker];
 		Deposit memory stakeDeposit = user.deposits[_depositId];
 		require(
-			stakeDeposit.lockedFrom == 0 || block.timestamp > stakeDeposit.lockedUntil,
+			block.timestamp > stakeDeposit.lockedUntil,
 			'deposit not yet unlocked'
 		);
 		poolTokenReserve -= _amount;

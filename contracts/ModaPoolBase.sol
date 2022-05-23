@@ -354,7 +354,7 @@ abstract contract ModaPoolBase is
 		// set the `lockFrom` and `lockUntil` taking into account that
 		// zero value for `_lockUntil` means "no locking" and leads to zero values
 		// for both `lockFrom` and `lockUntil`
-		uint256 lockFrom = _lockUntil > 0 ? block.timestamp : 0;
+		uint256 lockFrom = block.timestamp;
 		uint256 lockUntil = _lockUntil;
 
 		// Stake weight rewards formula for locking

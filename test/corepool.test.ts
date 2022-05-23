@@ -77,7 +77,7 @@ describe('Core Pool', () => {
 		).to.be.revertedWith('deposit not yet unlocked');
 
 		// Wait for more than a year though and...
-		const futureDate = add(start, { days: 365 });
+		const futureDate = add(start, { years: 1 });
 		await fastForward(futureDate);
 
 		await modaCorePool.connect(firstUser).unstake(0, amount);
@@ -110,7 +110,7 @@ describe('Core Pool', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await modaCorePool.getDeposit(firstUser.address, 1);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
-		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 150 }));
 		expect(isYield).to.equal(true);
 	});
 
@@ -173,7 +173,7 @@ describe('Core Pool', () => {
 			isYield, //     @dev indicates if the stake was created as a yield reward
 		] = await modaCorePool.getDeposit(firstUser.address, 1);
 		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
-		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 365 }));
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 150 }));
 		expect(isYield).to.equal(true);
 	});
 
