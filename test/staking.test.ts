@@ -253,4 +253,45 @@ describe('Staking and unstaking', () => {
 
 		expect(await lpPool.pendingYieldRewards(firstUser.address)).to.eq(0);
 	});
+
+	it('Locked stakes have double the rewards of unlocked stakes', async () => {
+		const { start, firstUser, secondUser, modaCorePool, lpPool } = data;
+		const userStakeAmount = parseEther('10');
+		const lockUntil = toTimestampBN(add(start, { years: 1 }));
+
+		await modaCorePool.connect(firstUser).stake(userStakeAmount, lockUntil);
+		await modaCorePool.connect(secondUser).stake(userStakeAmount, 0);
+		await lpPool.connect(firstUser).stake(userStakeAmount, lockUntil);
+		await lpPool.connect(secondUser).stake(userStakeAmount, 0);
+
+		const lockedDeposit = await modaCorePool.getDeposit(firstUser.address, 0);
+		expect(lockedDeposit.lockedUntil).gt(0);
+		const aDayInSeconds = 24 * 60 * 60;
+		const multiplier = lockedDeposit.lockedUntil
+			.sub(lockedDeposit.lockedFrom)
+			.mul(1000)
+			.div(aDayInSeconds)
+			.div(365)
+			.add(1000);
+		expect(multiplier).eq(1999);
+		const lockedweight = userStakeAmount.mul(2);
+		expect(lockedDeposit.weight.eq(lockedweight));
+
+		const unlockedDeposit = await modaCorePool.getDeposit(secondUser.address, 0);
+		expect(unlockedDeposit.lockedUntil).eq(0);
+		expect(unlockedDeposit.weight.eq(userStakeAmount));
+
+		const halfYearLater = add(start, { days: 180 });
+		await fastForward(halfYearLater);
+
+		const lockedCoreRewards = await modaCorePool.pendingYieldRewards(firstUser.address);
+		const unlockedCoreRewards = await modaCorePool.pendingYieldRewards(secondUser.address);
+		expect(lockedCoreRewards.mul(1000).div(unlockedCoreRewards).toNumber()).eq(
+			multiplier.toNumber()
+		);
+
+		const lockedLpRewards = await lpPool.pendingYieldRewards(firstUser.address);
+		const unlockedLpRewards = await lpPool.pendingYieldRewards(secondUser.address);
+		expect(lockedLpRewards.mul(1000).div(unlockedLpRewards)).eq(multiplier);
+	});
 });

@@ -204,9 +204,19 @@ abstract contract ModaPoolBase is
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
-		uint256 poolRewards = allPoolsTotalSinceLastReward * weight / modaPoolFactory.totalWeight();
+		uint256 poolRewards = (allPoolsTotalSinceLastReward * weight) /
+			modaPoolFactory.totalWeight();
 
-		return poolRewards * users[_staker].totalWeight / usersLockingWeight;
+		uint256 userWeight = 0;
+		for (uint256 i = 0; i < depositCount; i++) {
+			if (user.deposits[i].lockedUntil == 0) userWeight += user.deposits[i].weight;
+			else
+				userWeight +=
+					user.deposits[i].weight *
+					(1000 + 1000 * (user.deposits[i].lockedUntil - user.deposits[i].lockedFrom) / 365 days) / 1000;
+		}
+
+		return (poolRewards * userWeight) / usersLockingWeight;
 	}
 
 	/**
