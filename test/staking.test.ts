@@ -67,7 +67,7 @@ describe('Staking and unstaking', () => {
 		expect(await modaCorePool.pendingYieldRewards(thirdUser.address)).to.be.eq(BigNumber.from(0));
 	});
 
-	// cannot run this test because it necer returns zero if time difference is positive
+	// cannot run this test because it never returns zero if time difference is positive
 	it('Should have zero rewards at the time of staking', async () => {
 		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
 
@@ -295,7 +295,7 @@ describe('Staking and unstaking', () => {
 		expect(lockedLpRewards.mul(1000).div(unlockedLpRewards)).eq(multiplier);
 	});
 
-	it('APY < 100%', async () => {
+	it('0% < APY < 100%', async () => {
 		const { start, firstUser, secondUser, modaCorePool, lpPool } = data;
 		const userStakeAmount = parseEther('10');
 		const lockUntil = toTimestampBN(add(start, { years: 1 }));
@@ -334,8 +334,15 @@ describe('Staking and unstaking', () => {
 		const lockedAPY = lockedCoreRewards.mul(1000).div(userStakeAmount);
 		expect(lockedAPY).gt(0);
 		expect(lockedAPY).lt(1000);
+	});
 
-		const lockedLpRewards = await lpPool.pendingYieldRewards(firstUser.address);
-		const unlockedLpRewards = await lpPool.pendingYieldRewards(secondUser.address);
+	it('User can stake all their MODA', async () => {
+		const { start, firstUser, secondUser, modaCorePool, lpPool, moda } = data;
+		const userStakeAmount = parseEther('2000');
+		await modaCorePool.connect(firstUser).stake(userStakeAmount, 0);
+		const unlockedDeposit = await modaCorePool.getDeposit(firstUser.address, 0);
+		expect(unlockedDeposit.tokenAmount).eq(userStakeAmount);
+		const afterBalance = await moda.allowance(firstUser.address, modaCorePool.address);
+		expect(afterBalance).eq(0);
 	});
 });
