@@ -152,7 +152,7 @@ describe('Rewards', () => {
 		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 
 		const totalRewards = deposit2.tokenAmount.add(deposit1.tokenAmount);
-		expect(totalRewards.div(eth)).to.eq(999999);
+		expect(totalRewards.div(eth)).to.eq(1000000);
 	});
 
 	it('Should have more rewards in months 1-9 than in months 10-18', async () => {
