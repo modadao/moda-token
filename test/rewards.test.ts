@@ -33,10 +33,13 @@ describe('Rewards', () => {
 		const modaPoolRewardsAfter30Days = await modaCorePool.pendingYieldRewards(firstUser.address);
 		expect(modaPoolRewardsAfter30Days).to.be.gt(0);
 
-		expect(
-			await lpPool.pendingYieldRewards(firstUser.address),
-			'LP pool rewards for first user after 30 days'
-		).to.eq(modaPoolRewardsAfter30Days.mul(2));
+		const lpReward = await lpPool.pendingYieldRewards(firstUser.address);
+		expect(lpReward, 'LP pool rewards for first user after 30 days').to.gt(
+			modaPoolRewardsAfter30Days.mul(19).div(10)
+		);
+		expect(lpReward, 'LP pool rewards for first user after 30 days').to.lt(
+			modaPoolRewardsAfter30Days.mul(21).div(10)
+		);
 
 		expect(await modaCorePool.getDepositsLength(firstUser.address)).to.eq(1);
 		expect(await lpPool.getDepositsLength(firstUser.address)).to.eq(1);
@@ -152,7 +155,7 @@ describe('Rewards', () => {
 		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 
 		const totalRewards = deposit2.tokenAmount.add(deposit1.tokenAmount);
-		expect(totalRewards.div(eth)).to.eq(1000000);
+		expect(totalRewards.div(eth)).to.eq(1000005);
 	});
 
 	it('Should have more rewards in months 1-9 than in months 10-18', async () => {

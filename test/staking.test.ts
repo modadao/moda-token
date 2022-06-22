@@ -295,7 +295,7 @@ describe('Staking and unstaking', () => {
 		expect(lockedLpRewards.mul(1000).div(unlockedLpRewards)).eq(multiplier);
 	});
 
-	it('0% < APY < 100%', async () => {
+	it('0 % < APY < 3 000 000 %', async () => {
 		const { start, firstUser, secondUser, modaCorePool, lpPool } = data;
 		const userStakeAmount = parseEther('10');
 		const lockUntil = toTimestampBN(add(start, { years: 1 }));
@@ -328,12 +328,12 @@ describe('Staking and unstaking', () => {
 		const unlockedCoreRewards = await modaCorePool.pendingYieldRewards(secondUser.address);
 		const unlockedAPY = unlockedCoreRewards.mul(1000).div(userStakeAmount);
 		expect(unlockedAPY).gt(0);
-		expect(unlockedAPY).lt(1000);
+		expect(unlockedAPY).lt(15000000);
 
 		const lockedCoreRewards = await modaCorePool.pendingYieldRewards(firstUser.address);
 		const lockedAPY = lockedCoreRewards.mul(1000).div(userStakeAmount);
 		expect(lockedAPY).gt(0);
-		expect(lockedAPY).lt(1000);
+		expect(lockedAPY).lt(30000000);
 	});
 
 	it('User can stake all their MODA', async () => {
