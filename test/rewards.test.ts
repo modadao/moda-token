@@ -101,7 +101,7 @@ describe('Rewards', () => {
 		).to.eq('0');
 	});
 
-	it('Should have 1 000 000 after 18 months', async () => {
+	it('Should have 1 000 000 MODA total rewards after 18 months', async () => {
 		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
 
 		const eth = parseEther('1');
@@ -149,11 +149,10 @@ describe('Rewards', () => {
 
 		const deposit1 = await modaCorePool.getDeposit(firstUser.address, 1);
 		const deposit2 = await modaCorePool.getDeposit(firstUser.address, 3);
-		const tokens1 = deposit1.tokenAmount.div(eth);
 		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 
 		const totalRewards = deposit2.tokenAmount.add(deposit1.tokenAmount);
-		expect(totalRewards.div(eth).toNumber()).to.eq(999999);
+		expect(totalRewards.div(eth)).to.eq(1000000);
 	});
 
 	it('Should have more rewards in months 1-9 than in months 10-18', async () => {

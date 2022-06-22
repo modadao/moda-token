@@ -204,9 +204,10 @@ abstract contract ModaPoolBase is
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
-		uint256 poolRewards = allPoolsTotalSinceLastReward * weight / modaPoolFactory.totalWeight();
+		uint256 poolRewards = (allPoolsTotalSinceLastReward * weight) /
+			modaPoolFactory.totalWeight();
 
-		return poolRewards * users[_staker].totalWeight / usersLockingWeight;
+		return (poolRewards * user.totalWeight) / usersLockingWeight / WEIGHT_MULTIPLIER;
 	}
 
 	/**
@@ -360,7 +361,7 @@ abstract contract ModaPoolBase is
 		// Stake weight rewards formula for locking
 		uint256 stakeWeight = lockUntil == 0
 			? WEIGHT_MULTIPLIER * addedAmount
-			: ((lockUntil - lockFrom) / 365 days + 1) * (WEIGHT_MULTIPLIER * addedAmount);
+			: (WEIGHT_MULTIPLIER * (lockUntil - lockFrom) / 365 days + WEIGHT_MULTIPLIER) * addedAmount;
 
 		require(stakeWeight > 0, "Stake weight is zero");
 
