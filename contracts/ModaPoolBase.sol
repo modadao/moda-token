@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
@@ -18,6 +19,7 @@ import './ModaPoolFactory.sol';
  *          - pool token address, it can be MODA token address, MODA/ETH pair address, and others
  */
 abstract contract ModaPoolBase is
+	Ownable,
 	IPool,
 	ModaAware,
 	ReentrancyGuard
@@ -65,6 +67,11 @@ abstract contract ModaPoolBase is
 
 	/// @dev Used to calculate yield rewards, keeps track of when the pool started
 	uint256 public immutable override startTimestamp;
+
+
+	/// @dev Reward locking period, added to block.timestamp when rewards are locked up in the pool
+	///      Can be changed by the contract owner.
+	uint public rewardLockingPeriod = 150 days;
 
 	/**
 	 * @dev Stake weight is proportional to deposit amount and time locked, precisely
@@ -133,6 +140,15 @@ abstract contract ModaPoolBase is
 	 * @param _toVal new pool weight value
 	 */
 	event PoolWeightUpdated(address indexed _by, uint32 _fromVal, uint32 _toVal);
+
+	/**
+	 * @dev Fired whenever the owner sets the reward locking period. Existing stakes
+	 *      are not affected by this change, as it's queried and added on lock up.
+	 *
+	 * @param _from the previous reward locking period in seconds
+	 * @param _to the new reward locking period in seconds
+	 */
+	event RewardLockingPeriodUpdated(uint _from, uint _to);
 
 	/**
 	 * @dev Overridden in sub-contracts to construct the pool
@@ -448,7 +464,7 @@ abstract contract ModaPoolBase is
 			Deposit memory newDeposit = Deposit({
 				tokenAmount: pendingYield,
 				lockedFrom: block.timestamp,
-				lockedUntil: block.timestamp + 150 days,
+				lockedUntil: block.timestamp + rewardLockingPeriod,
 				weight: depositWeight,
 				isYield: true
 			});
@@ -528,4 +544,22 @@ abstract contract ModaPoolBase is
 	) internal nonReentrant {
 		SafeERC20.safeTransferFrom(IERC20(poolToken), _from, _to, _value);
 	}
+
+	/**
+	 * @dev Allows the owner to update the reward locking period
+	 */
+	function setRewardLockingPeriod(uint newRewardLockingPeriod) external override onlyOwner {
+		uint oldRewardLockingPeriod = rewardLockingPeriod;
+		rewardLockingPeriod = newRewardLockingPeriod;
+
+		emit RewardLockingPeriodUpdated(oldRewardLockingPeriod, rewardLockingPeriod);
+	}
+
+	/**
+	* @dev Here because of multiple inheritance, we have to override.
+	*/
+	function transferOwnership(address newOwner) public virtual override(IPool, Ownable) onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _transferOwnership(newOwner);
+    }
 }

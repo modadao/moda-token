@@ -45,6 +45,7 @@ export const toTimestamp = (date: Date) => Math.floor(date.getTime() / 1000);
 export const toTimestampBN = (date: Date) => BigNumber.from(toTimestamp(date));
 export const fromTimestamp = (timeSeconds: number) => new Date(timeSeconds * 1000);
 export const fromTimestampBN = (timeSeconds: BigNumber) => fromTimestamp(timeSeconds.toNumber());
+export const toSeconds = (days: number) => BigNumber.from(days).mul(24).mul(60).mul(60);
 
 export const addTimestamp = (
 	date: Date,

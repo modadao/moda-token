@@ -11,6 +11,7 @@ import {
 	toTimestampBN,
 	addTimestamp,
 	toTimestamp,
+	toSeconds,
 } from './utils';
 
 chai.use(chaiDateTime);
@@ -342,5 +343,73 @@ describe('Core Pool', () => {
 			expect(lockedUntil).to.equal(0);
 			expect(isYield).to.be.false;
 		}
+	});
+
+	it('Should allow an owner to update the reward locking period', async () => {
+		const { owner, modaCorePool, lpPool } = data;
+
+		await expect(modaCorePool.connect(owner).setRewardLockingPeriod(toSeconds(300)))
+			.to.emit(modaCorePool, 'RewardLockingPeriodUpdated')
+			.withArgs(toSeconds(150), toSeconds(300));
+
+		await expect(lpPool.connect(owner).setRewardLockingPeriod(toSeconds(300)))
+			.to.emit(lpPool, 'RewardLockingPeriodUpdated')
+			.withArgs(toSeconds(150), toSeconds(300));
+	});
+
+	it('Should reject non-owner requests to update the reward locking period', async () => {
+		const { firstUser, modaCorePool, lpPool } = data;
+
+		await expect(
+			modaCorePool.connect(firstUser).setRewardLockingPeriod(toSeconds(300))
+		).to.be.revertedWith('Ownable: caller is not the owner');
+
+		await expect(
+			lpPool.connect(firstUser).setRewardLockingPeriod(toSeconds(300))
+		).to.be.revertedWith('Ownable: caller is not the owner');
+	});
+
+	it('Should should use the updated locking period when set', async () => {
+		const { start, owner, firstUser, modaCorePool, moda } = data;
+
+		// Set our locking period to 10 days instead of 150.
+		await expect(modaCorePool.connect(owner).setRewardLockingPeriod(toSeconds(10)))
+			.to.emit(modaCorePool, 'RewardLockingPeriodUpdated')
+			.withArgs(toSeconds(150), toSeconds(10));
+
+		expect(await moda.balanceOf(firstUser.address)).to.equal(userBalances[0]);
+
+		// Calculate a suitable locking end date
+		const lockUntil = toTimestampBN(add(start, { years: 1 }));
+		const amount = parseEther('104');
+		await moda.connect(firstUser).approve(modaCorePool.address, amount);
+		expect(await moda.allowance(firstUser.address, modaCorePool.address)).to.equal(amount);
+		await modaCorePool.connect(firstUser).stake(amount, lockUntil);
+
+		// Wait for more than a year
+		const futureDate = add(start, { days: 365 });
+		await fastForward(futureDate);
+
+		// Then we can unstake
+		await modaCorePool.connect(firstUser).unstake(0, amount);
+
+		// Did our 10 days get taken into account?
+		const [
+			tokenAmount, // @dev token amount staked
+			weight, //      @dev stake weight
+			lockedFrom, //  @dev locking period - from
+			lockedUntil, // @dev locking period - until
+			isYield, //     @dev indicates if the stake was created as a yield reward
+		] = await modaCorePool.getDeposit(firstUser.address, 1);
+		expect(fromTimestampBN(lockedFrom)).to.equalDate(futureDate);
+		expect(fromTimestampBN(lockedUntil)).to.equalDate(add(futureDate, { days: 10 }));
+		expect(isYield).to.equal(true);
+	});
+
+	it('Should should default the reward locking period to 150 days', async () => {
+		const { modaCorePool, lpPool } = data;
+
+		expect(await modaCorePool.rewardLockingPeriod()).to.equal(toSeconds(150));
+		expect(await lpPool.rewardLockingPeriod()).to.equal(toSeconds(150));
 	});
 });

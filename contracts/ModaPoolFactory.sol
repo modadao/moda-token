@@ -200,6 +200,9 @@ contract ModaPoolFactory is Ownable, ModaAware {
             poolStartTimestamp
         );
 
+        // Now the owner needs to be set to whoever is calling this function.
+        pool.transferOwnership(msg.sender);
+
         // register it within this factory
         registerPool(address(pool));
 

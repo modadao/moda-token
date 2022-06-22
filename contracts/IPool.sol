@@ -59,4 +59,8 @@ interface IPool is ILinkedToMODA {
 	function processRewards() external;
 
 	function setWeight(uint32 _weight) external;
+
+	function setRewardLockingPeriod(uint newRewardLockingPeriod) external;
+
+	function transferOwnership(address newOwner) external;
 }

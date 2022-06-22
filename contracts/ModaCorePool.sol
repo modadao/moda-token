@@ -90,7 +90,7 @@ contract ModaCorePool is ModaPoolBase {
 		Deposit memory newDeposit = Deposit({
 			tokenAmount: _amount,
 			lockedFrom: block.timestamp,
-			lockedUntil: block.timestamp + 150 days,
+			lockedUntil: block.timestamp + rewardLockingPeriod,
 			weight: depositWeight,
 			isYield: true
 		});
