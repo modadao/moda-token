@@ -6,6 +6,8 @@
 		"compile": "hardhat compile",
 		"recompile": "hardhat clean && hardhat compile",
 		"deploy": "hardhat run scripts/deploy.js",
+		"deploy-vesting": "hardhat run scripts/05-deploy-moda-vesting-wallet.ts",
+		"verify-vesting": "hardhat run scripts/06-verify-moda-vesting-wallet.ts",
 		"run:script": "hardhat run",
 		"node": "hardhat node",
 		"test": "hardhat test",
