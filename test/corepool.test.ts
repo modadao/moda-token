@@ -2,6 +2,7 @@ import { BigNumber } from '@ethersproject/bignumber';
 import { parseEther } from '@ethersproject/units';
 import chai, { expect } from 'chai';
 import chaiDateTime from 'chai-datetime';
+import { ModaCorePool } from '../typechain-types';
 import { revertSnapshot, takeSnapshot } from './helper';
 import { setup, Setup } from './setup';
 import {
@@ -12,6 +13,7 @@ import {
 	addTimestamp,
 	toTimestamp,
 	toSeconds,
+	blockNow,
 } from './utils';
 
 chai.use(chaiDateTime);
@@ -406,10 +408,31 @@ describe('Core Pool', () => {
 		expect(isYield).to.equal(true);
 	});
 
-	it('Should should default the reward locking period to 150 days', async () => {
+	it('Should default the reward locking period to 150 days', async () => {
 		const { modaCorePool, lpPool } = data;
 
 		expect(await modaCorePool.rewardLockingPeriod()).to.equal(toSeconds(150));
 		expect(await lpPool.rewardLockingPeriod()).to.equal(toSeconds(150));
+	});
+
+	it('Should prevent users from staking before the pool starts', async () => {
+		const { firstUser, corePoolFactory, moda, factory, modaCorePool, lpToken } = data;
+		const amount = parseEther('100');
+
+		const testPool = (await corePoolFactory.deploy(
+			moda.address,
+			factory.address,
+			modaCorePool.address,
+			lpToken.address,
+			100,
+			addTimestamp(await blockNow(), { months: 1 })
+		)) as ModaCorePool;
+
+		await moda.connect(firstUser).approve(modaCorePool.address, amount);
+
+		// It should fail before the pool is ready
+		await expect(
+			testPool.connect(firstUser).stake(amount, addTimestamp(await blockNow(), { months: 6 }))
+		).to.be.revertedWith('pool not active');
 	});
 });

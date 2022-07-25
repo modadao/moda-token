@@ -348,6 +348,7 @@ abstract contract ModaPoolBase is
 		bool _isYield
 	) internal virtual {
 		require(_amount > 0, 'zero amount');
+		require(block.timestamp >= startTimestamp, 'pool not active');
 		require(
 			_lockUntil == 0 ||
 				(_lockUntil > block.timestamp && _lockUntil - block.timestamp <= 365 days),
