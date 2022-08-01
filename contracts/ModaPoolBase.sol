@@ -173,6 +173,7 @@ abstract contract ModaPoolBase is
 		require(_modaPoolFactory != address(0), 'pool factory address not set');
 		require(_weight > 0, 'pool weight not set');
 		require(_startTimestamp >= block.timestamp, 'start already passed');
+		require(_startTimestamp < ModaPoolFactory(_modaPoolFactory).endTimestamp(), 'start too late compared to factory');
 		require(
 			((_poolToken == _moda ? 1 : 0) ^ (_modaPool != address(0) ? 1 : 0)) == 1,
 			'Either a MODA pool or manage external tokens, never both'
@@ -348,6 +349,7 @@ abstract contract ModaPoolBase is
 		bool _isYield
 	) internal virtual {
 		require(_amount > 0, 'zero amount');
+		require(block.timestamp >= startTimestamp, 'pool not active');
 		require(
 			_lockUntil == 0 ||
 				(_lockUntil > block.timestamp && _lockUntil - block.timestamp <= 365 days),
