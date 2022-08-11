@@ -217,7 +217,7 @@ abstract contract ModaPoolBase is
 
 		uint256 timeElapsedSinceLastReward = endOfTimeframe < startTimestamp
 			? endOfTimeframe - startTimestamp
-			: block.timestamp - lastRewards;
+			: endOfTimeframe - lastRewards;
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
