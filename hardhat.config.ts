@@ -6,9 +6,9 @@ import 'solidity-coverage';
 import { config } from 'dotenv';
 config();
 
-if (!process.env.MNEMONIC) {
+if (!process.env.EVM_DEPLOYMENT_PRIVATE_KEY) {
 	throw new Error(
-		'MNEMONIC environment variable must be defined. Copy .env.example to .env and set values accordingly.'
+		'EVM_DEPLOYMENT_PRIVATE_KEY env not found'
 	);
 }
 
@@ -25,33 +25,23 @@ export default {
 	networks: {
 		hardhat: {
 			chainId: 1337,
-			accounts: {
-				mnemonic: 'stadium nest because drastic fatal sibling pretty load jar occur figure vivid',
-			},
+                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		kovan: {
 			url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-			accounts: {
-				mnemonic: process.env.MNEMONIC,
-			},
+                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		ropsten: {
 			url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-			accounts: {
-				mnemonic: process.env.MNEMONIC,
-			},
+                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		rinkeby: {
 			url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-			accounts: {
-				mnemonic: process.env.MNEMONIC,
-			},
+                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		mainnet: {
 			url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-			accounts: {
-				mnemonic: process.env.MNEMONIC,
-			},
+                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		localhost: {
 			chainId: 1337,
