@@ -5,12 +5,16 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/finance/VestingWallet.sol';
 
 contract MODAVestingWallet is VestingWallet, Ownable {
-	constructor(uint64 startTimestamp, uint64 durationSeconds)
-		VestingWallet(msg.sender, startTimestamp, durationSeconds)
-	{}
+	constructor(
+		address _owner,
+		uint64 startTimestamp,
+		uint64 durationSeconds
+	) VestingWallet(_owner, startTimestamp, durationSeconds) {
+		_transferOwnership(_owner);
+	}
 
 	/**
-	 * @dev Use ownership so that beneficiary can be transferred
+	 * @dev Use ownership so that "beneficiary" can be transferred
 	 */
 	function beneficiary() public view override returns (address) {
 		return owner();

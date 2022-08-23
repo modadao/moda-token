@@ -4,6 +4,7 @@ import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
 import 'solidity-coverage';
 import { config } from 'dotenv';
+
 config();
 
 if (!process.env.EVM_DEPLOYMENT_PRIVATE_KEY) {
@@ -25,7 +26,6 @@ export default {
 	networks: {
 		hardhat: {
 			chainId: 1337,
-                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		kovan: {
 			url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
