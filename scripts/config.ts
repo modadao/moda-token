@@ -1,0 +1,24 @@
+import { parseEther } from 'ethers/lib/utils';
+
+const MAINNET_MODA_TOKEN = '';
+
+// const GOERLI_MODA_TOKEN = '0x03152fe681eD035D41178C5b6E6a4b8D70902345';
+const GOERLI_MODA_TOKEN_UPGRADABLE = '0x68d449757daf7652cd6d443bac23fb7a77ec39fd';
+const GOERLI_FACTORY_ADDRESS = '0xEE884B8ef01186C002e691cf0DB843C51b0034D9';
+const GOERLI_CORE_POOL_ADDRESS = '0x64617e75D3e32a06c98342CEe01D7F3e6Bf13d12';
+const GOERLI_SLP_TOKEN_ADDRESS = '0x9fC84a564cCe8dd502eC199aDdEeE8FF0fBdd060';
+const GOERLI_SLP_POOL_ADDRESS = '0x4014E7B39564d9d95e933D69122B5F8fC3E11B37';
+
+// ===================================================
+// Change this when deploying...
+export const MODA_TOKEN_ADDRESS = GOERLI_MODA_TOKEN_UPGRADABLE;
+export const FACTORY_ADDRESS = GOERLI_FACTORY_ADDRESS;
+export const CORE_POOL_ADDRESS = GOERLI_CORE_POOL_ADDRESS;
+export const SLP_POOL_ADDRESS = GOERLI_SLP_POOL_ADDRESS;
+export const SLP_TOKEN_ADDRESS = GOERLI_SLP_TOKEN_ADDRESS;
+export const START_TIMESTAMP = 1668233196;
+export const END_TIMESTAMP = 1699769196;
+export const SLP_POOL_START_TIMESTAMP = 1668282018;
+export const WEIGHT = 200;
+export const ETH_AMOUNT = parseEther('1');
+// ===================================================

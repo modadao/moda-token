@@ -1,0 +1,23 @@
+$ hardhat run scripts/02-add-staking.ts --network goerli
+No need to generate any newer typings.
+Deploying factory contract...
+Deployed to  0x6bC60bdd829b44a34459CdE9a39B38D0f7e5D18B
+Initial Moda per Second:  1.0
+Deploying CorePool contract...
+Transaction sent: 0xdb887cfa6960ceb9d8b31a97308694991c3730dfe36d309dccdae1ed35889d62
+Done! 0xc23c26684c7Af54f14720822e56A74a4B119a5cE
+✨  Done in 81.02s.
+samruberti ~/src/veracity/MODA/moda-token $ yarn 3_add_second_pool --network goerli
+yarn run v1.22.19
+warning ../../../../package.json: No license field
+$ hardhat run scripts/03-add-second-pool.ts --network goerli
+No need to generate any newer typings.
+start 2022-11-04T17:19:00.000Z
+Deploying test token
+Test token: 0xAFc5A45d643fb0ff142233Fb23C3991934E0045e
+Minting 1,000,000 test tokens
+Deploying lpTokenPool...
+Deployed at 0x6387D27bb1545F1C30984D92D02850DD6Af0D48e
+Registered!
+✨  Done in 56.99s.
+

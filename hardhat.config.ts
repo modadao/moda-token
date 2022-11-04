@@ -9,9 +9,7 @@ import { config } from 'dotenv';
 config();
 
 if (!process.env.EVM_DEPLOYMENT_PRIVATE_KEY) {
-	throw new Error(
-		'EVM_DEPLOYMENT_PRIVATE_KEY env not found'
-	);
+	throw new Error('EVM_DEPLOYMENT_PRIVATE_KEY env not found');
 }
 
 export default {
@@ -28,21 +26,13 @@ export default {
 		hardhat: {
 			chainId: 1337,
 		},
-		kovan: {
-			url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
-		},
-		ropsten: {
-			url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
-		},
-		rinkeby: {
-			url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
+		goerli: {
+			url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+			accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		mainnet: {
 			url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-                        accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
+			accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
 		localhost: {
 			chainId: 1337,
@@ -51,8 +41,12 @@ export default {
 	},
 	etherscan: {
 		apiKey: process.env.ETH_SCAN_API_KEY,
+		// apiKey: {
+		// 	mainnet: process.env.ETHERSCAN_API_KEY || '',
+		// 	goerli: process.env.ETHERSCAN_API_KEY || '',
+		// },
 	},
 	contractSizer: {
-		runOnCompile: true,
+		runOnCompile: false,
 	},
 };
