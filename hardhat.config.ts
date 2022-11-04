@@ -2,6 +2,7 @@ import '@typechain/hardhat';
 import '@openzeppelin/hardhat-upgrades';
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-etherscan';
+import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import { config } from 'dotenv';
 
@@ -50,5 +51,8 @@ export default {
 	},
 	etherscan: {
 		apiKey: process.env.ETH_SCAN_API_KEY,
+	},
+	contractSizer: {
+		runOnCompile: true,
 	},
 };

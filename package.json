@@ -9,6 +9,7 @@
 		"deploy-vesting": "hardhat run scripts/05-deploy-moda-vesting-wallet.ts",
 		"verify-vesting": "hardhat run scripts/06-verify-moda-vesting-wallet.ts",
 		"run:script": "hardhat run",
+		"size-contracts": "npx hardhat size-contracts",
 		"node": "hardhat node",
 		"test": "hardhat test",
 		"coverage": "hardhat coverage --testfiles \"./test/*.test.ts\"",
@@ -19,7 +20,8 @@
 		"@openzeppelin/contracts": "4.4.1",
 		"@openzeppelin/contracts-upgradeable": "4.4.1",
 		"abdk-libraries-solidity": "3.0.0",
-		"chai-datetime": "1.8.0"
+		"chai-datetime": "1.8.0",
+		"hardhat-contract-sizer": "^2.6.1"
 	},
 	"devDependencies": {
 		"@nomiclabs/hardhat-ethers": "2.0.4",
