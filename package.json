@@ -4,7 +4,7 @@
 		"build": "hardhat compile",
 		"clean": "hardhat clean",
 		"1_deploy_token": "hardhat run scripts/01-deploy-token.ts",
-		"1b_verify_token": "hardhat run scripts/01b-verify-token.ts",
+		"1_verify_token": "hardhat run scripts/01-verify-token.ts",
 		"2_deploy_factory": "hardhat run scripts/02-deploy-factory.ts",
 		"2_verify_factory": "hardhat run scripts/02-verify-factory.ts",
 		"3_deploy_core_pool": "hardhat run scripts/03-deploy-core-pool.ts",
