@@ -1,13 +1,11 @@
 import hre from 'hardhat';
-
-const GOERLI_MODA_TOKEN = '0x68D449757Daf7652CD6d443bac23fB7a77Ec39FD';
-const MODA_TOKEN = GOERLI_MODA_TOKEN;
+import { MODA_TOKEN_ADDRESS } from './config';
 
 const verify = async () => {
 	console.log('Verifying token...');
 
 	await hre.run('verify:verify', {
-		address: MODA_TOKEN,
+		address: MODA_TOKEN_ADDRESS,
 		constructorArguments: [],
 	});
 };
