@@ -31,4 +31,4 @@ const deploy = async () => {
 	console.log('Done!', registrations[0].args.poolAddress);
 };
 
-deploy();
+deploy().catch(console.error);
