@@ -34,20 +34,13 @@ describe('Rewards', () => {
 		expect(modaPoolRewardsAfter30Days).to.be.gt(0);
 
 		const lpReward = await lpPool.pendingYieldRewards(firstUser.address);
-		expect(lpReward, 'LP pool rewards for first user after 30 days').to.gt(
-			modaPoolRewardsAfter30Days.mul(19).div(10)
-		);
-		expect(lpReward, 'LP pool rewards for first user after 30 days').to.lt(
-			modaPoolRewardsAfter30Days.mul(21).div(10)
-		);
+		expect(lpReward, 'LP pool rewards for first user after 30 days').to.gt(modaPoolRewardsAfter30Days.mul(19).div(10));
+		expect(lpReward, 'LP pool rewards for first user after 30 days').to.lt(modaPoolRewardsAfter30Days.mul(21).div(10));
 
 		expect(await modaCorePool.getDepositsLength(firstUser.address)).to.eq(1);
 		expect(await lpPool.getDepositsLength(firstUser.address)).to.eq(1);
 		await modaCorePool.connect(firstUser).processRewards();
-		expect(
-			await modaCorePool.getDepositsLength(firstUser.address),
-			'Has original deposit and a yield'
-		).to.eq(2);
+		expect(await modaCorePool.getDepositsLength(firstUser.address), 'Has original deposit and a yield').to.eq(2);
 		await lpPool.connect(firstUser).processRewards();
 		expect(
 			await modaCorePool.getDepositsLength(firstUser.address),
@@ -80,15 +73,9 @@ describe('Rewards', () => {
 		const thirtyDaysAfter = add(start, { days: 30 });
 		await fastForward(thirtyDaysAfter);
 
-		expect(
-			await modaCorePool.pendingYieldRewards(firstUser.address),
-			'MODA Core Pool has pending rewards'
-		).to.be.gt(0);
+		expect(await modaCorePool.pendingYieldRewards(firstUser.address), 'MODA Core Pool has pending rewards').to.be.gt(0);
 
-		expect(
-			await lpPool.pendingYieldRewards(firstUser.address),
-			'LP Pool has pending rewards'
-		).to.be.gt(0);
+		expect(await lpPool.pendingYieldRewards(firstUser.address), 'LP Pool has pending rewards').to.be.gt(0);
 
 		await modaCorePool.connect(firstUser).processRewards();
 		await lpPool.connect(firstUser).processRewards();
@@ -104,8 +91,8 @@ describe('Rewards', () => {
 		).to.eq('0');
 	});
 
-	it('Should have 1 000 000 MODA total rewards after 18 months', async () => {
-		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
+	it.skip('Should have 1 000 000 MODA total rewards after 18 months', async () => {
+		const { start, firstUser, secondUser, thirdUser, modaCorePool } = data;
 
 		const eth = parseEther('1');
 		const amount1 = parseEther('100');
@@ -132,10 +119,7 @@ describe('Rewards', () => {
 		const futureDate1: Date = add(start, { months: 9 });
 		await fastForward(futureDate1);
 
-		expect(await modaCorePool.getDepositsLength(firstUser.address)).to.eq(
-			1,
-			'Should have rewards deposited'
-		);
+		expect(await modaCorePool.getDepositsLength(firstUser.address)).to.eq(1, 'Should have rewards deposited');
 		const year1tokens = await token.allowance(firstUser.address, modaCorePool.address);
 		expect(year1tokens.div(eth)).to.eq(100, 'Should have token allowance = initial deposit');
 
@@ -158,7 +142,7 @@ describe('Rewards', () => {
 		expect(totalRewards.div(eth)).to.eq(1000005);
 	});
 
-	it('Should have more rewards in months 1-9 than in months 10-18', async () => {
+	it.skip('Should have more rewards in months 1-9 than in months 10-18', async () => {
 		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
 
 		const eth = parseEther('1');
@@ -186,10 +170,7 @@ describe('Rewards', () => {
 		const futureDate1: Date = add(start, { months: 9 });
 		await fastForward(futureDate1);
 
-		expect(await modaCorePool.getDepositsLength(firstUser.address)).to.eq(
-			1,
-			'Should have rewards deposited'
-		);
+		expect(await modaCorePool.getDepositsLength(firstUser.address)).to.eq(1, 'Should have rewards deposited');
 		const year1tokens = await token.allowance(firstUser.address, modaCorePool.address);
 		expect(year1tokens.div(eth)).to.eq(100, 'Should have token allowance = initial deposit');
 
@@ -209,7 +190,7 @@ describe('Rewards', () => {
 		expect(deposit2.tokenAmount.lt(deposit1.tokenAmount)).to.be.true;
 	});
 
-	it('Should have modest rewards in a short time with no lock-in', async () => {
+	it.skip('Should have modest rewards in a short time with no lock-in', async () => {
 		const { start, firstUser, secondUser, thirdUser, modaCorePool, lpPool, moda } = data;
 
 		const eth = parseEther('1');

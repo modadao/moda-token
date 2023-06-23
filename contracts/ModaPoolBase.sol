@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './IPool.sol';
@@ -18,12 +18,7 @@ import './ModaPoolFactory.sol';
  *          - MODA token address
  *          - pool token address, it can be MODA token address, MODA/ETH pair address, and others
  */
-abstract contract ModaPoolBase is
-	Ownable,
-	IPool,
-	ModaAware,
-	ReentrancyGuard
-{
+abstract contract ModaPoolBase is Ownable, IPool, ModaAware, ReentrancyGuard {
 	// @dev POOL_UID defined to add another check to ensure compliance with the contract.
 	function POOL_UID() public pure returns (uint256) {
 		return ModaConstants.POOL_UID;
@@ -68,7 +63,6 @@ abstract contract ModaPoolBase is
 	/// @dev Used to calculate yield rewards, keeps track of when the pool started
 	uint256 public immutable override startTimestamp;
 
-
 	/// @dev Reward locking period, added to block.timestamp when rewards are locked up in the pool
 	///      Can be changed by the contract owner.
 	uint public rewardLockingPeriod = 150 days;
@@ -107,12 +101,7 @@ abstract contract ModaPoolBase is
 	 * @param lockedFrom deposit locked from value
 	 * @param lockedUntil updated deposit locked until value
 	 */
-	event StakeLockUpdated(
-		address indexed _by,
-		uint256 depositId,
-		uint256 lockedFrom,
-		uint256 lockedUntil
-	);
+	event StakeLockUpdated(address indexed _by, uint256 depositId, uint256 lockedFrom, uint256 lockedUntil);
 
 	/**
 	 * @dev Fired in _unstake() and unstake()
@@ -173,16 +162,22 @@ abstract contract ModaPoolBase is
 		require(_modaPoolFactory != address(0), 'pool factory address not set');
 		require(_weight > 0, 'pool weight not set');
 		require(_startTimestamp >= block.timestamp, 'start already passed');
-		require(_startTimestamp < ModaPoolFactory(_modaPoolFactory).endTimestamp(), 'start too late compared to factory');
+		require(
+			_startTimestamp < ModaPoolFactory(_modaPoolFactory).endTimestamp(),
+			'start too late compared to factory'
+		);
 		require(
 			((_poolToken == _moda ? 1 : 0) ^ (_modaPool != address(0) ? 1 : 0)) == 1,
 			'Either a MODA pool or manage external tokens, never both'
 		);
 
 		require(Token(_moda).TOKEN_UID() == ModaConstants.TOKEN_UID, 'Moda TOKEN_UID invalid');
-		require(ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID, 'Moda FACTORY_UID invalid');
+		require(
+			ModaPoolFactory(_modaPoolFactory).FACTORY_UID() == ModaConstants.FACTORY_UID,
+			'Moda FACTORY_UID invalid'
+		);
 		if (_modaPool != address(0)) {
-			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID, "Moda POOL_UID invalid");
+			require(ModaPoolBase(_modaPool).POOL_UID() == ModaConstants.POOL_UID, 'Moda POOL_UID invalid');
 		}
 
 		modaPool = _modaPool;
@@ -211,9 +206,7 @@ abstract contract ModaPoolBase is
 		if (depositCount < 1) return 0;
 
 		Deposit memory stakeDeposit = user.deposits[depositCount - 1];
-		uint256 lastRewards = user.lastProcessedRewards > 0
-			? user.lastProcessedRewards
-			: stakeDeposit.lockedFrom;
+		uint256 lastRewards = user.lastProcessedRewards > 0 ? user.lastProcessedRewards : stakeDeposit.lockedFrom;
 
 		uint256 timeElapsedSinceLastReward = endOfTimeframe < startTimestamp
 			? endOfTimeframe - startTimestamp
@@ -221,10 +214,9 @@ abstract contract ModaPoolBase is
 
 		uint256 modaPerSecond = modaPoolFactory.modaPerSecondAt(endOfTimeframe);
 		uint256 allPoolsTotalSinceLastReward = modaPerSecond * timeElapsedSinceLastReward;
-		uint256 poolRewards = (allPoolsTotalSinceLastReward * weight) /
-			modaPoolFactory.totalWeight();
+		uint256 poolRewards = (allPoolsTotalSinceLastReward * weight) / modaPoolFactory.totalWeight();
 
-		return (poolRewards * user.totalWeight) / usersLockingWeight / WEIGHT_MULTIPLIER;
+		return (poolRewards * user.totalWeight) / usersLockingWeight;
 	}
 
 	/**
@@ -244,12 +236,7 @@ abstract contract ModaPoolBase is
 	 * @param _depositId zero-indexed deposit ID for the address specified
 	 * @return deposit info as Deposit structure
 	 */
-	function getDeposit(address _user, uint256 _depositId)
-		external
-		view
-		override
-		returns (Deposit memory)
-	{
+	function getDeposit(address _user, uint256 _depositId) external view override returns (Deposit memory) {
 		return users[_user].deposits[_depositId];
 	}
 
@@ -270,11 +257,8 @@ abstract contract ModaPoolBase is
 	 * @param _amount amount of tokens to stake
 	 * @param _lockUntil stake period as unix timestamp; zero means no locking
 	 */
-	function stake(
-		uint256 _amount,
-		uint256 _lockUntil
-	) external override {
-		_stake(msg.sender, _amount, _lockUntil,  false);
+	function stake(uint256 _amount, uint256 _lockUntil) external override {
+		_stake(msg.sender, _amount, _lockUntil, false);
 	}
 
 	/**
@@ -283,10 +267,7 @@ abstract contract ModaPoolBase is
 	 * @param _depositId deposit ID to unstake from, zero-indexed
 	 * @param _amount amount of tokens to unstake
 	 */
-	function unstake(
-		uint256 _depositId,
-		uint256 _amount
-	) external override {
+	function unstake(uint256 _depositId, uint256 _amount) external override {
 		_unstake(msg.sender, _depositId, _amount);
 	}
 
@@ -299,10 +280,7 @@ abstract contract ModaPoolBase is
 	 * @param depositId updated deposit ID
 	 * @param lockedUntil updated deposit locked until value
 	 */
-	function updateStakeLock(
-		uint256 depositId,
-		uint256 lockedUntil
-	) external {
+	function updateStakeLock(uint256 depositId, uint256 lockedUntil) external {
 		_processRewards(msg.sender);
 		_updateStakeLock(msg.sender, depositId, lockedUntil);
 	}
@@ -342,17 +320,11 @@ abstract contract ModaPoolBase is
 	 * @param _isYield a flag indicating if that stake is created to store yield reward
 	 *      from the previously unstaked stake
 	 */
-	function _stake(
-		address _staker,
-		uint256 _amount,
-		uint256 _lockUntil,
-		bool _isYield
-	) internal virtual {
+	function _stake(address _staker, uint256 _amount, uint256 _lockUntil, bool _isYield) internal virtual {
 		require(_amount > 0, 'zero amount');
 		require(block.timestamp >= startTimestamp, 'pool not active');
 		require(
-			_lockUntil == 0 ||
-				(_lockUntil > block.timestamp && _lockUntil - block.timestamp <= 365 days),
+			_lockUntil == 0 || (_lockUntil > block.timestamp && _lockUntil - block.timestamp <= 365 days),
 			'invalid lock interval'
 		);
 
@@ -379,9 +351,9 @@ abstract contract ModaPoolBase is
 		// Stake weight rewards formula for locking
 		uint256 stakeWeight = lockUntil == 0
 			? WEIGHT_MULTIPLIER * addedAmount
-			: (WEIGHT_MULTIPLIER * (lockUntil - lockFrom) / 365 days + WEIGHT_MULTIPLIER) * addedAmount;
+			: ((WEIGHT_MULTIPLIER * (lockUntil - lockFrom)) / 365 days + WEIGHT_MULTIPLIER) * addedAmount;
 
-		require(stakeWeight > 0, "Stake weight is zero");
+		require(stakeWeight > 0, 'Stake weight is zero');
 
 		Deposit memory deposit = Deposit({
 			tokenAmount: addedAmount,
@@ -406,11 +378,7 @@ abstract contract ModaPoolBase is
 	 * @param _depositId deposit ID to unstake from, zero-indexed
 	 * @param _amount amount of tokens to unstake
 	 */
-	function _unstake(
-		address _staker,
-		uint256 _depositId,
-		uint256 _amount
-	) internal virtual {
+	function _unstake(address _staker, uint256 _depositId, uint256 _amount) internal virtual {
 		require(_amount > 0, 'zero amount');
 
 		User storage user = users[_staker];
@@ -426,7 +394,7 @@ abstract contract ModaPoolBase is
 			? WEIGHT_MULTIPLIER * (stakeDeposit.tokenAmount - _amount)
 			: ((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) / 365 days + 1) *
 				(WEIGHT_MULTIPLIER * (stakeDeposit.tokenAmount - _amount));
-				
+
 		if (stakeDeposit.tokenAmount - _amount == 0) {
 			delete user.deposits[_depositId];
 		} else {
@@ -477,7 +445,7 @@ abstract contract ModaPoolBase is
 
 			usersLockingWeight += depositWeight;
 		} else {
-			require(modaPool != address(0), "modaPool address is zero");
+			require(modaPool != address(0), 'modaPool address is zero');
 
 			ICorePool(modaPool).stakeAsPool(_staker, pendingYield);
 		}
@@ -491,11 +459,7 @@ abstract contract ModaPoolBase is
 	 * @param _depositId updated deposit ID
 	 * @param _lockedUntil updated deposit locked until value
 	 */
-	function _updateStakeLock(
-		address _staker,
-		uint256 _depositId,
-		uint256 _lockedUntil
-	) internal {
+	function _updateStakeLock(address _staker, uint256 _depositId, uint256 _lockedUntil) internal {
 		require(_lockedUntil > block.timestamp, 'lock should be in the future');
 
 		User storage user = users[_staker];
@@ -506,15 +470,11 @@ abstract contract ModaPoolBase is
 			require(_lockedUntil - block.timestamp <= 365 days, 'max lock period is 365 days');
 			stakeDeposit.lockedFrom = block.timestamp;
 		} else {
-			require(
-				_lockedUntil - stakeDeposit.lockedFrom <= 365 days,
-				'max lock period is 365 days'
-			);
+			require(_lockedUntil - stakeDeposit.lockedFrom <= 365 days, 'max lock period is 365 days');
 		}
 
 		stakeDeposit.lockedUntil = _lockedUntil;
-		uint256 newWeight = (((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) *
-			WEIGHT_MULTIPLIER) /
+		uint256 newWeight = (((stakeDeposit.lockedUntil - stakeDeposit.lockedFrom) * WEIGHT_MULTIPLIER) /
 			365 days +
 			WEIGHT_MULTIPLIER) * stakeDeposit.tokenAmount;
 
@@ -539,11 +499,7 @@ abstract contract ModaPoolBase is
 	 * @dev Executes SafeERC20.safeTransferFrom on a pool token
 	 * @dev Reentrancy safety enforced via `ReentrancyGuard.nonReentrant`
 	 */
-	function transferPoolTokenFrom(
-		address _from,
-		address _to,
-		uint256 _value
-	) internal nonReentrant {
+	function transferPoolTokenFrom(address _from, address _to, uint256 _value) internal nonReentrant {
 		SafeERC20.safeTransferFrom(IERC20(poolToken), _from, _to, _value);
 	}
 
@@ -558,10 +514,10 @@ abstract contract ModaPoolBase is
 	}
 
 	/**
-	* @dev Here because of multiple inheritance, we have to override.
-	*/
+	 * @dev Here because of multiple inheritance, we have to override.
+	 */
 	function transferOwnership(address newOwner) public virtual override(IPool, Ownable) onlyOwner {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        _transferOwnership(newOwner);
-    }
+		require(newOwner != address(0), 'Ownable: new owner is the zero address');
+		_transferOwnership(newOwner);
+	}
 }

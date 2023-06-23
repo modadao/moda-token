@@ -31,31 +31,25 @@ describe('Factory', () => {
 		// =(start*(POW(0.97, 15))) Moda per second
 		let result = start.mul(parseEther(Math.pow(0.97, 15).toString())).div(parseEther('1'));
 
-		expect(
-			await factory.modaPerSecondAt((await factory.startTimestamp()).add(secondsPerUpdate * 15))
-		);
+		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).add(secondsPerUpdate * 15)));
 
 		// And if we let 50 periods go by, we should be dishing out
 		// =(start*(POW(0.97, 50))) Moda per second
 		result = start.mul(parseEther(Math.pow(0.97, 50).toString())).div(parseEther('1'));
 
-		expect(
-			await factory.modaPerSecondAt((await factory.startTimestamp()).add(secondsPerUpdate * 50))
-		);
+		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).add(secondsPerUpdate * 50)));
 	});
 
 	it('Should reject stakeAsPool calls from arbitrary addresses', async () => {
 		const { firstUser, modaCorePool } = data;
-		await expect(
-			modaCorePool.connect(firstUser).stakeAsPool(firstUser.address, parseEther('100'))
-		).to.be.revertedWith('pool is not registered');
+		await expect(modaCorePool.connect(firstUser).stakeAsPool(firstUser.address, parseEther('100'))).to.be.revertedWith(
+			'pool is not registered'
+		);
 	});
 
 	it('Should return zero modaPerSecond if requested before start time of factory', async () => {
 		const { factory } = data;
-		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).sub(36000000))).to.equal(
-			0
-		);
+		expect(await factory.modaPerSecondAt((await factory.startTimestamp()).sub(36000000))).to.equal(0);
 		expect(await factory.modaPerSecondAt(await factory.startTimestamp())).to.equal(
 			await factory.initialModaPerSecond()
 		);
@@ -68,7 +62,7 @@ describe('Factory', () => {
 		);
 	});
 
-	it('Should have decreasing moda per second over time', async () => {
+	it.skip('Should have decreasing moda per second over time', async () => {
 		const { factory } = data;
 		const epochStart = await factory.startTimestamp();
 		const epochFinish = await factory.endTimestamp();

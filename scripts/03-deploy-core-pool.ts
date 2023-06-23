@@ -4,14 +4,7 @@ import { add, addTimestamp, blockNow, toTimestamp } from '../test/utils';
 import { ModaPoolFactory__factory } from '../typechain-types';
 import { ONE_DAY } from './constants';
 
-import {
-  MODA_TOKEN_ADDRESS,
-  FACTORY_ADDRESS,
-  START_TIMESTAMP,
-  END_TIMESTAMP,
-  WEIGHT,
-  ETH_AMOUNT,
-} from './config';
+import { MODA_TOKEN_ADDRESS, FACTORY_ADDRESS, START_TIMESTAMP, END_TIMESTAMP, CORE_WEIGHT, ETH_AMOUNT } from './config';
 
 const deploy = async () => {
 	console.log('Deploying CorePool contract...');
@@ -19,7 +12,7 @@ const deploy = async () => {
 	const FactoryFactory = (await ethers.getContractFactory('ModaPoolFactory')) as ModaPoolFactory__factory;
 	const factory = await FactoryFactory.attach(FACTORY_ADDRESS);
 
-	const trx = await factory.createCorePool(START_TIMESTAMP, WEIGHT);
+	const trx = await factory.createCorePool(START_TIMESTAMP, CORE_WEIGHT);
 	console.log(`Transaction sent: ${trx.hash}`);
 	await trx.wait();
 

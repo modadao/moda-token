@@ -31,6 +31,7 @@ export const SLP_TOKEN_ADDRESS = SEPOLIA_SLP_TOKEN_ADDRESS;
 export const START_TIMESTAMP = 1668290449;
 export const END_TIMESTAMP = 1699826449;
 export const SLP_POOL_START_TIMESTAMP = 1668290449;
-export const WEIGHT = 200;
-export const ETH_AMOUNT = parseEther('1');
+export const CORE_WEIGHT = 40;
+export const SLP_WEIGHT = 60;
+export const ETH_AMOUNT = parseEther('0.0158548959918823');
 // ===================================================
