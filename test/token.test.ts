@@ -4,6 +4,9 @@ import { ethers, upgrades } from 'hardhat';
 import { Token, UpgradeTestToken } from '../typechain-types';
 import { accessControlError, ROLE_ADMIN, ROLE_TOKEN_CREATOR, ROLE_UPGRADER } from './utils';
 
+const RANDOM_ADDRESS_1 = '0x0364eAA7C884cb5495013804275120ab023619A5';
+const RANDOM_ADDRESS_2 = '0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C';
+
 describe('Token', () => {
 	let token: Token;
 	let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
@@ -12,11 +15,12 @@ describe('Token', () => {
 		[owner, addr1, addr2] = await ethers.getSigners();
 
 		const TokenFactory = await ethers.getContractFactory('Token');
+
 		token = (await upgrades.deployProxy(
 			TokenFactory,
 			[
-				['0x0364eAA7C884cb5495013804275120ab023619A5', '0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C'],
-				[ethers.utils.parseEther('6500000'), ethers.utils.parseEther('3500000')],
+				[owner.address, RANDOM_ADDRESS_1, RANDOM_ADDRESS_2],
+				[ethers.utils.parseEther('9500000'), ethers.utils.parseEther('6500000'), ethers.utils.parseEther('3500000')],
 			],
 			{ kind: 'uups' }
 		)) as Token;
@@ -26,76 +30,74 @@ describe('Token', () => {
 	it('Should revert when deploying with wrong intitialize args', async () => {
 		const TokenFactory = await ethers.getContractFactory('Token');
 		await expect(
-			upgrades.deployProxy(
-				TokenFactory,
-				[
-					['0x0364eAA7C884cb5495013804275120ab023619A5', '0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C'],
-					[ethers.utils.parseEther('6500000')],
-				],
-				{ kind: 'uups' }
-			)
+			upgrades.deployProxy(TokenFactory, [[RANDOM_ADDRESS_1, RANDOM_ADDRESS_2], [ethers.utils.parseEther('6500000')]], {
+				kind: 'uups',
+			})
 		).to.be.revertedWith('Token: recipients and amounts must match');
 	});
 
 	it('Should return total supply once deployed', async () => {
-		expect(await token.totalSupply()).to.equal(ethers.utils.parseEther('10000000')); // 10,000,000 tokens total
+		expect(await token.totalSupply()).to.equal(ethers.utils.parseEther('19500000')); // 10,000,000 tokens total
 	});
 
 	it('Should set holders allocations on deploy', async () => {
-		expect(await token.balanceOf('0x0364eAA7C884cb5495013804275120ab023619A5')).to.equal(
+		expect(await token.balanceOf(owner.address)).to.equal(
+			ethers.utils.parseEther('9500000') // 9,500,000 balance
+		);
+		expect(await token.balanceOf(RANDOM_ADDRESS_1)).to.equal(
 			ethers.utils.parseEther('6500000') // 6,500,000 balance
 		);
-		expect(await token.balanceOf('0xB1C0a6ea0c0E54c4150ffA3e984b057d25d8b28C')).to.equal(
+		expect(await token.balanceOf(RANDOM_ADDRESS_2)).to.equal(
 			ethers.utils.parseEther('3500000') // '3,500,000 balance
 		);
-		expect(await token.totalSupply()).to.equal(ethers.utils.parseEther('10000000'));
-		expect(await token.holderCount()).to.equal(2);
+		expect(await token.totalSupply()).to.equal(ethers.utils.parseEther('19500000'));
+		expect(await token.holderCount()).to.equal(3);
 	});
 
-	it.skip('Should allow a transfer of 100 tokens from owner', async () => {
+	it('Should allow a transfer of 100 tokens from owner', async () => {
 		const [owner, addr1] = await ethers.getSigners();
 		await token.connect(owner).transfer(addr1.address, ethers.utils.parseEther('100'));
 
 		expect(await token.balanceOf(addr1.address)).to.equal(ethers.utils.parseEther('100'));
 	});
 
-	it('Should have holder count as 2 on initial deployment', async () => {
-		expect(await token.holderCount()).to.equal(2);
+	it('Should have holder count as 3 on initial deployment', async () => {
+		expect(await token.holderCount()).to.equal(3);
 	});
 
-	it.skip('Should correctly track holder count on multiple transfers', async () => {
+	it('Should correctly track holder count on multiple transfers', async () => {
 		const [owner, addr1] = await ethers.getSigners();
 
-		// We should start with 2 holders.
-		expect(await token.holderCount()).to.equal(2);
-
-		// When we transfer 1 wei to another signer, we should have 3 holders
-		await token.connect(owner).transfer(addr1.address, 1);
+		// We should start with 3 holders.
 		expect(await token.holderCount()).to.equal(3);
 
-		// And when we transfer it back, we should be back down to 2 holders
+		// When we transfer 1 wei to another signer, we should have 4 holders
+		await token.connect(owner).transfer(addr1.address, 1);
+		expect(await token.holderCount()).to.equal(4);
+
+		// And when we transfer it back, we should be back down to 3 holders
 		await token.connect(addr1).transfer(owner.address, 1);
-		expect(await token.holderCount()).to.equal(2);
+		expect(await token.holderCount()).to.equal(3);
 	});
 
-	it.skip('Should correctly track holder count on multiple transfers (performed via transferFrom)', async () => {
+	it('Should correctly track holder count on multiple transfers (performed via transferFrom)', async () => {
 		const [owner, addr1, addr2] = await ethers.getSigners();
 
-		// We should start with 2 holders.
-		expect(await token.holderCount()).to.equal(2);
+		// We should start with 3 holders.
+		expect(await token.holderCount()).to.equal(3);
 
 		// When we transfer 1 wei to another signer, we should have 3 holders
 		await token.connect(owner).approve(addr1.address, 1);
 		await token.connect(addr1).transferFrom(owner.address, addr2.address, 1);
-		expect(await token.holderCount()).to.equal(3);
+		expect(await token.holderCount()).to.equal(4);
 
 		// And when we transfer it back, we should be back down to 2 holders
 		await token.connect(addr2).approve(addr1.address, 1);
 		await token.connect(addr1).transferFrom(addr2.address, owner.address, 1);
-		expect(await token.holderCount()).to.equal(2);
+		expect(await token.holderCount()).to.equal(3);
 	});
 
-	it.skip('Should emit a well formed Transfer event on transfer() and transferFrom()', async () => {
+	it('Should emit a well formed Transfer event on transfer() and transferFrom()', async () => {
 		const [owner, addr1, addr2] = await ethers.getSigners();
 
 		await expect(token.connect(owner).transfer(addr1.address, 1))
@@ -126,14 +128,14 @@ describe('Token', () => {
 		expect(await token.allowance(owner.address, addr1.address)).to.equal(allowance);
 	});
 
-	it.skip('Should reject a transferFrom if not approved', async () => {
+	it('Should reject a transferFrom if not approved', async () => {
 		const [owner, addr1] = await ethers.getSigners();
 		await expect(token.connect(addr1).transferFrom(owner.address, addr1.address, 1)).to.be.revertedWith(
 			'ERC20: transfer amount exceeds allowance'
 		);
 	});
 
-	it.skip('Should reject a transfer that exceeds balance', async () => {
+	it('Should reject a transfer that exceeds balance', async () => {
 		const [owner, addr1] = await ethers.getSigners();
 		expect(await token.balanceOf(addr1.address)).to.equal(0);
 		await expect(token.connect(addr1).transfer(owner.address, 1)).to.be.revertedWith(
@@ -158,7 +160,7 @@ describe('Token', () => {
 		const [first, second] = logs.map((log) => log.args.implementation);
 		expect(first).not.equal(second);
 
-		expect(await tokenV2.holderCount()).to.equal(2);
+		expect(await tokenV2.holderCount()).to.equal(3);
 	});
 
 	it('Should only accept upgrade requests from someone with the ROLE_UPGRADER role', async () => {

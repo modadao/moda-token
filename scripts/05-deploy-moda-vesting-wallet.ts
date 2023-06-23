@@ -9,9 +9,7 @@ const START_TIMESTAMP__DEC_1_2021 = 1_638_316_800;
 const DURATION_SECONDS__SIXTY_MONTHS = 157_680_000;
 
 const deploy = async () => {
-	const MODAVstingWalletFactory = (await ethers.getContractFactory(
-		'MODAVestingWallet'
-	)) as MODAVestingWallet__factory;
+	const MODAVstingWalletFactory = (await ethers.getContractFactory('MODAVestingWallet')) as MODAVestingWallet__factory;
 
 	try {
 		const wallet = await MODAVstingWalletFactory.deploy(

@@ -1,16 +1,10 @@
-import { formatEther, parseEther } from 'ethers/lib/utils';
-import hre, { ethers } from 'hardhat';
-import { add, addTimestamp, blockNow, toTimestamp } from '../test/utils';
-import { ModaPoolFactory__factory } from '../typechain-types';
-import { ONE_DAY } from './constants';
+import hre from 'hardhat';
 
 import {
 	MODA_TOKEN_ADDRESS,
 	CORE_POOL_ADDRESS,
 	SLP_POOL_START_TIMESTAMP,
-	END_TIMESTAMP,
 	SLP_WEIGHT,
-	ETH_AMOUNT,
 	FACTORY_ADDRESS,
 	SLP_TOKEN_ADDRESS,
 	SLP_POOL_ADDRESS,

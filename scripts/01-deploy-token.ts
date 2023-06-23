@@ -12,7 +12,7 @@ const deploy = async () => {
 				'0x3cd7a63Bf8c18f3180be616cDF049C0f0975e4c2',
 
 				// Liquidity
-                                '0x5a6C74F940F826854372a7C309B3f832D2a171F6',
+				'0x5a6C74F940F826854372a7C309B3f832D2a171F6',
 
 				// Community / KOL
 				'0xF7457779633d5F3b78041Acb4da82c2dB4B806eF',

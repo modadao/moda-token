@@ -1,7 +1,4 @@
-import { formatEther, parseEther } from 'ethers/lib/utils';
-import hre, { ethers } from 'hardhat';
-import { add, addTimestamp, blockNow, toTimestamp } from '../test/utils';
-import { ModaPoolFactory__factory } from '../typechain-types';
+import hre from 'hardhat';
 import { ONE_DAY } from './constants';
 
 import { MODA_TOKEN_ADDRESS, FACTORY_ADDRESS, START_TIMESTAMP, END_TIMESTAMP, ETH_AMOUNT } from './config';

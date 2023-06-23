@@ -1,10 +1,9 @@
-import { formatEther, parseEther } from 'ethers/lib/utils';
+import { formatEther } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
-import { add, addTimestamp, toTimestamp } from '../test/utils';
 import { ModaPoolFactory__factory } from '../typechain-types';
 import { ONE_DAY } from './constants';
 
-import { MODA_TOKEN_ADDRESS, FACTORY_ADDRESS, START_TIMESTAMP, END_TIMESTAMP, ETH_AMOUNT } from './config';
+import { MODA_TOKEN_ADDRESS, START_TIMESTAMP, END_TIMESTAMP, ETH_AMOUNT } from './config';
 
 const deploy = async () => {
 	console.log('Deploying factory contract...');

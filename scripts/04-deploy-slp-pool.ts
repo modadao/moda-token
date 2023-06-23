@@ -1,11 +1,5 @@
-import { parseEther } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
-import {
-	Token__factory,
-	ModaCorePool__factory,
-	ModaPoolFactory__factory,
-	MintableTestToken__factory,
-} from '../typechain-types';
+import { ModaCorePool__factory, ModaPoolFactory__factory } from '../typechain-types';
 import {
 	CORE_POOL_ADDRESS,
 	FACTORY_ADDRESS,

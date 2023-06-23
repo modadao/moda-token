@@ -62,6 +62,7 @@ describe('Factory', () => {
 		);
 	});
 
+	// Skipping for now since we are not using decreasing rewards
 	it.skip('Should have decreasing moda per second over time', async () => {
 		const { factory } = data;
 		const epochStart = await factory.startTimestamp();
