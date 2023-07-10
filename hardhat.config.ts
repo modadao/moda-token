@@ -34,17 +34,30 @@ export default {
 			url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
 			accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
 		},
+		sepolia: {
+			url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+			accounts: [process.env.EVM_DEPLOYMENT_PRIVATE_KEY],
+		},
 		localhost: {
 			chainId: 1337,
 			url: 'http://127.0.0.1:8545/',
 		},
 	},
 	etherscan: {
-		apiKey: process.env.ETH_SCAN_API_KEY,
-		// apiKey: {
-		// 	mainnet: process.env.ETHERSCAN_API_KEY || '',
-		// 	goerli: process.env.ETHERSCAN_API_KEY || '',
-		// },
+		// apiKey: process.env.ETH_SCAN_API_KEY,
+		apiKey: {
+			sepolia: process.env.ETH_SCAN_API_KEY || '',
+		},
+		customChains: [
+			{
+				network: 'sepolia',
+				chainId: 11155111,
+				urls: {
+					apiURL: 'https://api-sepolia.etherscan.io/api',
+					browserURL: 'https://sepolia.etherscan.io',
+				},
+			},
+		],
 	},
 	contractSizer: {
 		runOnCompile: false,
