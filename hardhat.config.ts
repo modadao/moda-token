@@ -44,10 +44,10 @@ export default {
 		},
 	},
 	etherscan: {
-		// apiKey: process.env.ETH_SCAN_API_KEY,
-		apiKey: {
-			sepolia: process.env.ETH_SCAN_API_KEY || '',
-		},
+		apiKey: process.env.ETH_SCAN_API_KEY,
+		// apiKey: {
+		// 	sepolia: process.env.ETH_SCAN_API_KEY || '',
+		// },
 		customChains: [
 			{
 				network: 'sepolia',
