@@ -212,7 +212,7 @@ describe('Staking and unstaking', () => {
 	});
 
 	it('Should create the correct deposits', async () => {
-		const { start, firstUser, secondUser, modaCorePool, lpPool } = data;
+		const { start, firstUser, modaCorePool, lpPool } = data;
 		const userStakeAmount = parseEther('10');
 		const lockUntil = toTimestampBN(add(start, { years: 1 }));
 		await modaCorePool.connect(firstUser).stake(userStakeAmount, lockUntil);
@@ -237,8 +237,10 @@ describe('Staking and unstaking', () => {
 		expect(lpPoolDepositLength).to.eq(1);
 
 		const lpYieldDepositIndex = 2;
-		const [lpTokenAmount, lpWeight, lpYieldLockedFrom, lpYieldLockedUntil, isYield] =
-			await modaCorePool.getDeposit(firstUser.address, lpYieldDepositIndex);
+		const [lpTokenAmount, lpWeight, lpYieldLockedFrom, lpYieldLockedUntil, isYield] = await modaCorePool.getDeposit(
+			firstUser.address,
+			lpYieldDepositIndex
+		);
 		const allowedDeltaForModaEarnedSinceLastQuery = parseEther('4');
 		const delta = lpTokenAmount.sub(lpPoolRewardsAfter30Days);
 		const blockDate = await blockNow();
@@ -286,16 +288,14 @@ describe('Staking and unstaking', () => {
 
 		const lockedCoreRewards = await modaCorePool.pendingYieldRewards(firstUser.address);
 		const unlockedCoreRewards = await modaCorePool.pendingYieldRewards(secondUser.address);
-		expect(lockedCoreRewards.mul(1000).div(unlockedCoreRewards).toNumber()).eq(
-			multiplier.toNumber()
-		);
+		expect(lockedCoreRewards.mul(1000).div(unlockedCoreRewards).toNumber()).eq(multiplier.toNumber());
 
 		const lockedLpRewards = await lpPool.pendingYieldRewards(firstUser.address);
 		const unlockedLpRewards = await lpPool.pendingYieldRewards(secondUser.address);
 		expect(lockedLpRewards.mul(1000).div(unlockedLpRewards)).eq(multiplier);
 	});
 
-	it('0 % < APY < 3 000 000 %', async () => {
+	it('APY should be more than 0% and less than 3,000,000%', async () => {
 		const { start, firstUser, secondUser, modaCorePool, lpPool } = data;
 		const userStakeAmount = parseEther('10');
 		const lockUntil = toTimestampBN(add(start, { years: 1 }));
@@ -337,12 +337,24 @@ describe('Staking and unstaking', () => {
 	});
 
 	it('User can stake all their MODA', async () => {
-		const { start, firstUser, secondUser, modaCorePool, lpPool, moda } = data;
+		const { firstUser, modaCorePool, moda } = data;
 		const userStakeAmount = parseEther('2000');
+
 		await modaCorePool.connect(firstUser).stake(userStakeAmount, 0);
 		const unlockedDeposit = await modaCorePool.getDeposit(firstUser.address, 0);
 		expect(unlockedDeposit.tokenAmount).eq(userStakeAmount);
 		const afterBalance = await moda.allowance(firstUser.address, modaCorePool.address);
 		expect(afterBalance).eq(0);
 	});
+
+	// it.only('User can unstake their MODA', async () => {
+	// 	const { start, firstUser, modaCorePool, moda } = data;
+	// 	const userStakeAmount = parseEther('2000');
+	// 	await modaCorePool.connect(firstUser).stake(userStakeAmount, 0);
+	// 	const unlockedDeposit = await modaCorePool.getDeposit(firstUser.address, 0);
+	// 	const afterBalance = await moda.allowance(firstUser.address, modaCorePool.address);
+	// 	const futureDate: Date = add(start, { years: 1 });
+	// 	await fastForward(futureDate);
+	// 	await modaCorePool.connect(firstUser).unstake(0, userStakeAmount);
+	// });
 });

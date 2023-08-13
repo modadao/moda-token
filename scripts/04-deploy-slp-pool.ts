@@ -1,16 +1,17 @@
-import { parseEther } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
+import { ModaCorePool__factory, ModaPoolFactory__factory } from '../typechain-types';
 import {
-	Token__factory,
-	ModaCorePool__factory,
-	ModaPoolFactory__factory,
-	MintableTestToken__factory,
-} from '../typechain-types';
-import { CORE_POOL_ADDRESS, FACTORY_ADDRESS, MODA_TOKEN_ADDRESS, SLP_TOKEN_ADDRESS, SLP_POOL_START_TIMESTAMP, WEIGHT } from './config';
+	CORE_POOL_ADDRESS,
+	FACTORY_ADDRESS,
+	MODA_TOKEN_ADDRESS,
+	SLP_TOKEN_ADDRESS,
+	SLP_POOL_START_TIMESTAMP,
+	SLP_WEIGHT,
+} from './config';
 
 const deploy = async () => {
 	const FactoryFactory = (await ethers.getContractFactory('ModaPoolFactory')) as ModaPoolFactory__factory;
-        const factory = FactoryFactory.attach(FACTORY_ADDRESS);
+	const factory = FactoryFactory.attach(FACTORY_ADDRESS);
 
 	const CorePoolFactory = (await ethers.getContractFactory('ModaCorePool')) as ModaCorePool__factory;
 	const corePool = CorePoolFactory.attach(CORE_POOL_ADDRESS);
@@ -21,8 +22,8 @@ const deploy = async () => {
 		FACTORY_ADDRESS,
 		CORE_POOL_ADDRESS,
 		SLP_TOKEN_ADDRESS,
-		WEIGHT,
-		SLP_POOL_START_TIMESTAMP,
+		SLP_WEIGHT,
+		SLP_POOL_START_TIMESTAMP
 	);
 	await lpTokenPool.deployed();
 	console.log(`Deployed at ${lpTokenPool.address}`);

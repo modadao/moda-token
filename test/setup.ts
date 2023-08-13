@@ -1,12 +1,6 @@
 import { ModaCorePool, ModaPoolFactory, TestERC20, Token } from '../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import {
-	addTimestamp,
-	blockNow,
-	fromTimestamp,
-	ROLE_TOKEN_CREATOR,
-	THIRTY_DAYS_IN_SECONDS,
-} from './utils';
+import { addTimestamp, blockNow, fromTimestamp, ROLE_TOKEN_CREATOR, THIRTY_DAYS_IN_SECONDS } from './utils';
 import { ethers, upgrades } from 'hardhat';
 import { parseEther } from '@ethersproject/units';
 import { ContractFactory } from 'ethers';
@@ -49,14 +43,17 @@ export const setup = async (): Promise<Setup> => {
 	)) as Token;
 	await moda.deployed();
 
-	const modaPerSecond = parseEther('94754');
+	// Using variables
+	const modaPerSecond = parseEther('0.0158548959918823');
+
+	const latestBlock = await ethers.provider.getBlock('latest');
 
 	const modaPoolFactory = await ethers.getContractFactory('ModaPoolFactory');
 	const factory = (await modaPoolFactory.deploy(
 		moda.address,
 		modaPerSecond,
-		THIRTY_DAYS_IN_SECONDS,
-		nextTimestamp,
+		latestBlock.timestamp, // startTimestamp
+		nextTimestamp, // endTimestamp
 		addTimestamp(fromTimestamp(nextTimestamp), { years: 2 })
 	)) as ModaPoolFactory;
 	await factory.deployed();
@@ -64,16 +61,10 @@ export const setup = async (): Promise<Setup> => {
 	await factory.createCorePool(nextTimestamp, MODA_POOL_WEIGHT);
 
 	const corePoolFactory = await ethers.getContractFactory('ModaCorePool');
-	const modaCorePool = corePoolFactory.attach(
-		await factory.getPoolAddress(moda.address)
-	) as ModaCorePool;
+	const modaCorePool = corePoolFactory.attach(await factory.getPoolAddress(moda.address)) as ModaCorePool;
 
 	const lpTokenFactory = await ethers.getContractFactory('TestERC20');
-	const lpToken = (await lpTokenFactory.deploy(
-		'Sushi LP',
-		'SLP',
-		parseEther('1000000')
-	)) as TestERC20;
+	const lpToken = (await lpTokenFactory.deploy('Sushi LP', 'SLP', parseEther('1000000'))) as TestERC20;
 	await lpToken.setBalance(firstUser.address, parseEther('2000'));
 	await lpToken.setBalance(secondUser.address, parseEther('200'));
 
